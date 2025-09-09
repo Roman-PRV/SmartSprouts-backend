@@ -1,0 +1,33 @@
+includes:
+  - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+  - phpstan-baseline.neon
+
+parameters:
+  level: max
+  paths:
+    - app
+    - routes
+    - config
+
+  excludePaths:
+    - tests
+    - storage
+    - bootstrap
+    - vendor
+
+  inferPrivatePropertyTypeFromConstructor: true
+  reportUnmatchedIgnoredErrors: false
+
+  scanFiles:
+    - bootstrap/app.php
+    - routes/web.php
+    - routes/api.php
+
+  bootstrapFiles:
+    - vendor/laravel/framework/src/Illuminate/Foundation/helpers.php
+
+  ignoreErrors:
+    - '#Call to an undefined method Illuminate\\Support\\Collection::someLaravelMacro#'
+
+  
+

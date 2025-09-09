@@ -1,0 +1,28 @@
+{
+  "name": "smartsprouts-backend",
+  "version": "1.0.0",
+  "description": "## Description",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "docker exec -i pp_laravel_app php vendor/bin/phpstan analyse app --level=max",
+    "format": "docker exec -i pp_laravel_app php vendor/bin/pint",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Roman-PRV/SmartSprouts-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Roman-PRV/SmartSprouts-backend/issues"
+  },
+  "homepage": "https://github.com/Roman-PRV/SmartSprouts-backend#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7"
+  }
+}
