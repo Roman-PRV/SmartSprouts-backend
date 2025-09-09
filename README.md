@@ -12,6 +12,4 @@ Template for a project with basic settings
 
 - Backend: Laravel 10
 - DB: MySQL 8.0
-- Frontend: React 19+TypeScript
 - Bundler: Vite
-
