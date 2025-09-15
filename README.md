@@ -14,6 +14,9 @@ This app helps children improve their cognitive skills.
 - DB: MySQL 8.0
 - Bundler: Vite
 - Containerization: Docker + Docker Compose
+- Testing: PHPUnit
+- Code Quality: Laravel Pint, PHPStan
+- Commit Control: Husky + Commitlint
 
 ---
 
@@ -31,6 +34,12 @@ See the instructions in the corresponding repository.
 ```
 
 ## 4. Scripts
+
+- `lint` Runs PHPStan inside the Laravel container to perform static code analysis at the highest level (max). Helps catch bugs and enforce code quality.
+- `format` Executes Laravel Pint inside the container to automatically format PHP code according to Laravel's coding standards.
+- `test` Runs Laravel's PHPUnit test suite inside the container to validate application logic and ensure everything works as expected.
+- `quality` Aggregates all quality checks: formatting (pint), static analysis (phpstan), and tests (phpunit). Ideal for pre-commit or CI pipelines.
+- `prepare` Initializes Husky Git hooks. Required once after installing dependencies to enable commit message and pre-commit checks.
 
 ## 5. Database Schema
 
