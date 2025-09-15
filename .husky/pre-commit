@@ -1,2 +1,2 @@
-echo "🔍 Перевірка коду перед комітом..."
-npm run lint && npm run format
+echo "🔍 Running backend quality checks…"
+npm run quality
