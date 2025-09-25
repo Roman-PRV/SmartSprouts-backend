@@ -16,9 +16,9 @@ class GameController extends Controller
     {
         $games = Game::where('is_active', true)->get([
             'id',
-            'title',
-            'description',
+            'key',
             'icon_url',
+            'is_active',
         ]);
 
         return response()->json(GameResource::collection($games));

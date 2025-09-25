@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('games', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('description');
+            $table->string('key')->unique();
             $table->string('icon_url');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
