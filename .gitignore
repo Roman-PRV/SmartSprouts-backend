@@ -4,6 +4,8 @@
 /bootstrap/cache/
 .env
 **/.env
+**/.env.*
+!.env.example
 .phpunit.result.cache
 
 # Docker
