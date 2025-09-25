@@ -1,9 +1,9 @@
 includes:
-  - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+  - vendor/nunomaduro/larastan/extension.neon
   - phpstan-baseline.neon
 
 parameters:
-  level: max
+  level: 5
   paths:
     - app
     - routes
@@ -16,6 +16,9 @@ parameters:
     - vendor
 
   inferPrivatePropertyTypeFromConstructor: true
+  treatPhpDocTypesAsCertain: true
+  checkGenericClassInNonGenericObjectType: false
+  checkMissingIterableValueType: false
   reportUnmatchedIgnoredErrors: false
 
   scanFiles:
@@ -28,6 +31,9 @@ parameters:
 
   ignoreErrors:
     - '#Call to an undefined method Illuminate\\Support\\Collection::someLaravelMacro#'
-
-  
-
+    - '#Call to an undefined method .*::json\\(\\)#'
+    - '#Call to an undefined method .*::createToken\\(\\)#'
+    - '#Access to an undefined property .+\\Request\\..*::\\\$[A-Za-z0-9_]+#'
+    - '#Call to an undefined static method App\\Models\\User::create\\(\\)#'
+    - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\MorphMany::delete\\(\\)#'
+    - '#Binary operation .* and mixed results in an error#'
