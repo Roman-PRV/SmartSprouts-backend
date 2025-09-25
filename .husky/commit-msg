@@ -1,0 +1,2 @@
+echo "🔍 Running backend commit message checks…"
+npx --no-install commitlint --edit "$1"
