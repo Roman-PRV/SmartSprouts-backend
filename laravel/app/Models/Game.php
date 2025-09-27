@@ -10,6 +10,8 @@ class Game extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
+
     public function getIconUrlAttribute(): string
     {
         $raw = $this->attributes['icon_url'] ?? '';
