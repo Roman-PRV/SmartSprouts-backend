@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
  *     type="object",
  *     title="Game",
  *     required={"id", "key", "icon_url", "is_active"},
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="key", type="string", example="find_the_wrong"),
  *     @OA\Property(property="icon_url", type="string", format="url", example="https://example.com/storage/icons/game1.png"),

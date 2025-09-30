@@ -18,11 +18,14 @@ class GameController extends Controller
      *     description="Returns a list of games that are marked as active.",
      *     operationId="getActiveGames",
      *     tags={"Games"},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response with list of games",
+     *
      *         @OA\JsonContent(
      *             type="array",
+     *
      *             @OA\Items(ref="#/components/schemas/Game")
      *         )
      *     )
