@@ -10,7 +10,26 @@ use Illuminate\Http\Request;
 class GameController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of active games.
+     *
+     * @OA\Get(
+     *     path="/api/games",
+     *     summary="Get list of active games",
+     *     description="Returns a list of games that are marked as active.",
+     *     operationId="getActiveGames",
+     *     tags={"Games"},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response with list of games",
+     *
+     *         @OA\JsonContent(
+     *             type="array",
+     *
+     *             @OA\Items(ref="#/components/schemas/Game")
+     *         )
+     *     )
+     * )
      */
     public function index(): JsonResponse
     {

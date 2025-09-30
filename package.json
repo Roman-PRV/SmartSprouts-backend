@@ -4,7 +4,7 @@
   "description": "## Description",
   "main": "index.js",
   "scripts": {
-    "lint": "docker exec -i pp_laravel_app php vendor/bin/phpstan analyse app --level=max",
+    "lint": "docker exec -i pp_laravel_app php vendor/bin/phpstan analyse app --level=max --memory-limit=512M",
     "format": "docker exec -i pp_laravel_app php vendor/bin/pint",
     "prepare": "husky install",
     "quality": "npm run format && npm run lint && npm run test",

@@ -1,0 +1,77 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "SmartSprouts API",
+        "description": "API documentation for SmartSprouts backend",
+        "contact": {
+            "email": "support@smartsprouts.local"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/games": {
+            "get": {
+                "tags": [
+                    "Games"
+                ],
+                "summary": "Get list of active games",
+                "description": "Returns a list of games that are marked as active.",
+                "operationId": "getActiveGames",
+                "responses": {
+                    "200": {
+                        "description": "Successful response with list of games",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Game"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Game": {
+                "title": "Game",
+                "required": [
+                    "id",
+                    "key",
+                    "icon_url",
+                    "is_active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "key": {
+                        "type": "string",
+                        "example": "find_the_wrong"
+                    },
+                    "icon_url": {
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com/storage/icons/game1.png"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Games",
+            "description": "Games"
+        }
+    ]
+}
