@@ -17,6 +17,7 @@ This app helps children improve their cognitive skills.
 - Testing: PHPUnit
 - Code Quality: Laravel Pint, PHPStan
 - Commit Control: Husky + Commitlint
+- API Documentation: Swagger (L5-Swagger)
 
 ---
 
@@ -43,11 +44,27 @@ See the instructions in the corresponding repository.
 
 ## 5. Database Schema
 
-## 6. Folder Structure
+## 6. API Documentation
 
-## 7. Development Flow
+The API specification is available via Swagger UI.
 
-### 7.1 Pull Request Flow
+- Local (development): http://localhost:3000/docs/api-docs.json or open Swagger UI at http://localhost:3000/api/documentation
+- Production / staging: {REPLACE_WITH_YOUR_ENV_URL}/api/documentation
+
+To regenerate the local spec if it is out of date:
+
+```bash
+# inside the Laravel container
+php artisan l5-swagger:generate
+# make the spec public (if your setup requires it)
+mkdir -p public/docs && cp storage/api-docs/api-docs.json public/docs/api-docs.json
+```
+
+## 7. Folder Structure
+
+## 8. Development Flow
+
+### 8.1 Pull Request Flow
 
 ```
 <type>: <ticket-title> <project-prefix>-<issue-number>
@@ -59,7 +76,7 @@ Examples:
 
 - `feat: add dashboard screen ss-123`
 
-### 7.2 Branch Flow
+### 8.2 Branch Flow
 
 ```
 <issue-number>-<type>-<short-desc>
@@ -71,7 +88,7 @@ Examples:
 - `12-feat-add-user-flow`
 - `34-fix-user-flow`
 
-### 7.3 Commit Flow
+### 8.3 Commit Flow
 
 We use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) to handle commit messages
 
@@ -84,6 +101,6 @@ Examples:
 - `feat: add dashboard component ss-45`
 - `fix: update dashboard card size ss-212`
 
-## Contributors:
+## 9. Contributors:
 
 - **Prokopenko Roman** github: _roman-prv_, discord: _@roman_27794_
