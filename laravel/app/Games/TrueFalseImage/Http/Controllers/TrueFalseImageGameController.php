@@ -2,6 +2,8 @@
 
 namespace App\Games\TrueFalseImage\Http\Controllers;
 
+use App\Games\TrueFalseImage\Http\Resources\TrueFalseImageResource;
+use App\Games\TrueFalseImage\Http\Resources\TrueFalseImageResultResource;
 use App\Games\TrueFalseImage\Models\TrueFalseImage;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Http\Controllers\Controller;
@@ -14,14 +16,14 @@ class TrueFalseImageGameController extends Controller
     {
         $levels = TrueFalseImage::with('statements:id,image_id,statement')->get();
 
-        return response()->json($levels);
+        return response()->json(TrueFalseImageResource::collection($levels));
     }
 
     public function show(int $id): JsonResponse
     {
         $level = TrueFalseImage::with('statements:id,image_id,statement')->findOrFail($id);
 
-        return response()->json($level);
+        return response()->json(new TrueFalseImageResource($level));
     }
 
     public function checkAnswers(CheckAnswersRequest $request): JsonResponse
@@ -44,7 +46,7 @@ class TrueFalseImageGameController extends Controller
 
         return response()->json([
             'image_id' => $request->validated()['image_id'],
-            'results' => $results,
+            'results' => TrueFalseImageResultResource::collection($results),
         ]);
     }
 }
