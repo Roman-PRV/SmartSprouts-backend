@@ -5,8 +5,8 @@ namespace App\Games\TrueFalseImage\Http\Controllers;
 use App\Games\TrueFalseImage\Models\TrueFalseImage;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Games\TrueFalseImage\Http\Requests\CheckAnswersRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class TrueFalseImageGameController extends Controller
 {
@@ -24,17 +24,11 @@ class TrueFalseImageGameController extends Controller
         return response()->json($level);
     }
 
-    public function checkAnswers(Request $request): JsonResponse
+    public function checkAnswers(CheckAnswersRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'image_id' => 'required|exists:true_false_image_levels,id',
-            'answers' => 'required|array',
-            'answers.*.statement_id' => 'required|exists:true_false_image_statements,id',
-            'answers.*.answer' => 'required|boolean',
-        ]);
 
         /** @var array<int, array{statement_id: int, answer: bool}> $answers */
-        $answers = $validated['answers'];
+        $answers = $request->validated()['answers'];
 
         $results = collect($answers)->map(function ($answer) {
             /** @var TrueFalseImageStatement $statement */
@@ -49,7 +43,7 @@ class TrueFalseImageGameController extends Controller
         });
 
         return response()->json([
-            'image_id' => $validated['image_id'],
+            'image_id' => $request->validated()['image_id'],
             'results' => $results,
         ]);
     }
