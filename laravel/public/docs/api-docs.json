@@ -40,7 +40,6 @@
                     "TrueFalseImage"
                 ],
                 "summary": "Retrieve a specific True/False Image level",
-                "description": "Returns a single level with its associated image and statements.",
                 "operationId": "8140a79502937b47c84f088feeecb6ca",
                 "parameters": [
                     {
@@ -56,7 +55,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Level data retrieved successfully",
+                        "description": "Level data",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -77,45 +76,13 @@
                     "TrueFalseImage"
                 ],
                 "summary": "Validate player's answers for a True/False Image level",
-                "description": "Checks the submitted answers against the correct values and returns the result per statement.",
                 "operationId": "ba1d6ab26bf7febbd7046234941878e8",
                 "requestBody": {
-                    "description": "Player's submitted answers for a specific image level",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "image_id",
-                                    "answers"
-                                ],
-                                "properties": {
-                                    "image_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "answers": {
-                                        "type": "array",
-                                        "items": {
-                                            "required": [
-                                                "statement_id",
-                                                "answer"
-                                            ],
-                                            "properties": {
-                                                "statement_id": {
-                                                    "type": "integer",
-                                                    "example": 10
-                                                },
-                                                "answer": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/TrueFalseImage.AnswerRequest"
                             }
                         }
                     }
@@ -216,7 +183,7 @@
                 "type": "object"
             },
             "TrueFalseImage.Level": {
-                "description": "Represents a game level with an image and a set of true/false statements",
+                "description": "Represents a game level with an image and a list of true/false statements",
                 "properties": {
                     "id": {
                         "description": "Unique identifier of the level",
@@ -235,10 +202,22 @@
                         "example": "https://example.com/image.jpg"
                     },
                     "statements": {
-                        "description": "List of statements related to the image",
+                        "description": "Array of statements for this level",
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TrueFalseImage.Statement"
+                            "properties": {
+                                "id": {
+                                    "description": "Statement identifier",
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "statement": {
+                                    "description": "Text of the statement to evaluate",
+                                    "type": "string",
+                                    "example": "This is a cat"
+                                }
+                            },
+                            "type": "object"
                         }
                     }
                 },
