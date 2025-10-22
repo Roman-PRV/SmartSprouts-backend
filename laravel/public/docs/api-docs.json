@@ -9,6 +9,146 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/true-false-images": {
+            "get": {
+                "tags": [
+                    "TrueFalseImage"
+                ],
+                "summary": "List all True/False Image levels",
+                "description": "Returns a list of available game levels, each with an image and associated statements.",
+                "operationId": "59d03db9b6056c1e69f6e930398fa528",
+                "responses": {
+                    "200": {
+                        "description": "List of levels retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TrueFalseImage.Level"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/true-false-images/{id}": {
+            "get": {
+                "tags": [
+                    "TrueFalseImage"
+                ],
+                "summary": "Retrieve a specific True/False Image level",
+                "description": "Returns a single level with its associated image and statements.",
+                "operationId": "8140a79502937b47c84f088feeecb6ca",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of the level to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Level data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrueFalseImage.Level"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Level not found"
+                    }
+                }
+            }
+        },
+        "/api/true-false-images/check": {
+            "post": {
+                "tags": [
+                    "TrueFalseImage"
+                ],
+                "summary": "Validate player's answers for a True/False Image level",
+                "description": "Checks the submitted answers against the correct values and returns the result per statement.",
+                "operationId": "ba1d6ab26bf7febbd7046234941878e8",
+                "requestBody": {
+                    "description": "Player's submitted answers for a specific image level",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image_id",
+                                    "answers"
+                                ],
+                                "properties": {
+                                    "image_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "answers": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "statement_id",
+                                                "answer"
+                                            ],
+                                            "properties": {
+                                                "statement_id": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "answer": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Answer validation results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "image_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TrueFalseImage.Result"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
         "/api/games": {
             "get": {
                 "tags": [
@@ -37,6 +177,115 @@
     },
     "components": {
         "schemas": {
+            "TrueFalseImage.AnswerRequest": {
+                "description": "Request payload for validating player's answers in the True/False Image game",
+                "required": [
+                    "image_id",
+                    "answers"
+                ],
+                "properties": {
+                    "image_id": {
+                        "description": "ID of the image level being answered",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "answers": {
+                        "description": "List of player's answers for each statement",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "statement_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "statement_id": {
+                                    "description": "ID of the statement being answered",
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "answer": {
+                                    "description": "Player's answer: true or false",
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalseImage.Level": {
+                "description": "Represents a game level with an image and a set of true/false statements",
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the level",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "description": "Title of the level",
+                        "type": "string",
+                        "example": "Animals"
+                    },
+                    "image_url": {
+                        "description": "URL of the image associated with the level",
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com/image.jpg"
+                    },
+                    "statements": {
+                        "description": "List of statements related to the image",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TrueFalseImage.Statement"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalseImage.Result": {
+                "description": "Validation result for a single statement in the True/False Image game",
+                "properties": {
+                    "statement_id": {
+                        "description": "ID of the evaluated statement",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "correct": {
+                        "description": "Whether the player's answer was correct",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_true": {
+                        "description": "The actual truth value of the statement",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "explanation": {
+                        "description": "Explanation for the correct answer",
+                        "type": "string",
+                        "example": "Cats have pointy ears"
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalseImage.Statement": {
+                "description": "A statement related to the image that must be evaluated as true or false",
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the statement",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "statement": {
+                        "description": "Text of the statement to evaluate",
+                        "type": "string",
+                        "example": "This is a cat"
+                    }
+                },
+                "type": "object"
+            },
             "Game": {
                 "title": "Game",
                 "required": [
@@ -69,6 +318,10 @@
         }
     },
     "tags": [
+        {
+            "name": "TrueFalseImage",
+            "description": "TrueFalseImage"
+        },
         {
             "name": "Games",
             "description": "Games"

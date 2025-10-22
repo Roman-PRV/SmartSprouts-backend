@@ -5,6 +5,18 @@ namespace App\Games\TrueFalseImage\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @OA\Schema(
+ *     schema="TrueFalseImage.Result",
+ *     type="object",
+ *     description="Validation result for a single statement in the True/False Image game",
+ *
+ *     @OA\Property(property="statement_id", type="integer", example=10, description="ID of the evaluated statement"),
+ *     @OA\Property(property="correct", type="boolean", example=true, description="Whether the player's answer was correct"),
+ *     @OA\Property(property="is_true", type="boolean", example=true, description="The actual truth value of the statement"),
+ *     @OA\Property(property="explanation", type="string", example="Cats have pointy ears", description="Explanation for the correct answer")
+ * )
+ */
 class TrueFalseImageResultResource extends JsonResource
 {
     public function toArray(Request $request): array
