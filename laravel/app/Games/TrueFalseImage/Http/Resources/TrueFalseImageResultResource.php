@@ -10,7 +10,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     schema="TrueFalseImage.Result",
  *     type="object",
  *     description="Validation result for a single statement in the True/False Image game",
- *
  *     @OA\Property(property="statement_id", type="integer", example=10, description="ID of the evaluated statement"),
  *     @OA\Property(property="correct", type="boolean", example=true, description="Whether the player's answer was correct"),
  *     @OA\Property(property="is_true", type="boolean", example=true, description="The actual truth value of the statement"),

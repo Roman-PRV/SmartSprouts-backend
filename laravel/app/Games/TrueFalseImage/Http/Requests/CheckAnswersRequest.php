@@ -10,34 +10,16 @@ use Illuminate\Foundation\Http\FormRequest;
  *     type="object",
  *     description="Request payload for validating player's answers in the True/False Image game",
  *     required={"image_id", "answers"},
- *
- *     @OA\Property(
- *         property="image_id",
- *         type="integer",
- *         example=1,
- *         description="ID of the image level being answered"
- *     ),
+ *     @OA\Property(property="image_id", type="integer", example=1, description="ID of the image level being answered"),
  *     @OA\Property(
  *         property="answers",
  *         type="array",
  *         description="List of player's answers for each statement",
- *
  *         @OA\Items(
  *             type="object",
  *             required={"statement_id", "answer"},
- *
- *             @OA\Property(
- *                 property="statement_id",
- *                 type="integer",
- *                 example=10,
- *                 description="ID of the statement being answered"
- *             ),
- *             @OA\Property(
- *                 property="answer",
- *                 type="boolean",
- *                 example=true,
- *                 description="Player's answer: true or false"
- *             )
+ *             @OA\Property(property="statement_id", type="integer", example=10, description="ID of the statement being answered"),
+ *             @OA\Property(property="answer", type="boolean", example=true, description="Player's answer: true or false")
  *         )
  *     )
  * )
