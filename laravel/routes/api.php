@@ -1,5 +1,6 @@
 <?php
 
+use App\Games\TrueFalseImage\Http\Controllers\TrueFalseImageGameController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use Illuminate\Http\Request;
@@ -25,3 +26,9 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 Route::apiResource('games', GameController::class)->only(['index']);
+
+Route::prefix('true-false-images')->group(function () {
+    Route::get('/', [TrueFalseImageGameController::class, 'index']);
+    Route::get('/{id}', [TrueFalseImageGameController::class, 'show']);
+    Route::post('/check', [TrueFalseImageGameController::class, 'checkAnswers']);
+});
