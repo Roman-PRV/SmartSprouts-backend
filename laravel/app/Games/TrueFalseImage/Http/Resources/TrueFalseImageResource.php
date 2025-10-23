@@ -10,6 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     schema="TrueFalseImage.Level",
  *     type="object",
  *     description="Represents a game level with an image and a list of true/false statements",
+ *
  *     @OA\Property(property="id", type="integer", example=1, description="Unique identifier of the level"),
  *     @OA\Property(property="title", type="string", example="Animals", description="Title of the level"),
  *     @OA\Property(property="image_url", type="string", format="url", example="https://example.com/image.jpg", description="URL of the image associated with the level"),
@@ -17,8 +18,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *         property="statements",
  *         type="array",
  *         description="Array of statements for this level",
+ *
  *         @OA\Items(
  *             type="object",
+ *
  *             @OA\Property(property="id", type="integer", example=10, description="Statement identifier"),
  *             @OA\Property(property="statement", type="string", example="This is a cat", description="Text of the statement to evaluate")
  *         )
