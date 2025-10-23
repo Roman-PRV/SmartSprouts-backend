@@ -29,7 +29,7 @@ class Game extends Model
     {
         $raw = $this->attributes['icon_url'] ?? '';
 
-        if (is_string($raw) && $raw !== '') {
+        if (is_string($raw) && $raw !== '' && Storage::disk('public')->exists($raw)) {
             return url(Storage::url($raw));
         }
 

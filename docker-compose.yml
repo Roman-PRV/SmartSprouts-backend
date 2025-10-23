@@ -1,15 +1,14 @@
 services:
   laravel:
     build:
-      context: ./laravel
       dockerfile: /docker/Dockerfile
     container_name: pp_laravel_app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
       - ./laravel:/var/www
+      - ./laravel/storage:/var/www/storage
       - vendor_data:/var/www/vendor
-      - laravel_storage:/var/www/storage
     networks:
       - app-network
     depends_on:
