@@ -27,12 +27,24 @@ class Game extends Model
 
     public function getIconUrlAttribute(): string
     {
-        $raw = $this->attributes['icon_url'] ?? '';
+        /** @var \App\Helpers\ConfigHelper $cfg */
+        $cfg = app(\App\Helpers\ConfigHelper::class);
 
-        if (is_string($raw) && $raw !== '' && Storage::disk('public')->exists($raw)) {
-            return url(Storage::url($raw));
+        $cfgDisk = $cfg->getString('games.default_icon_disk', 'public');
+        $diskName = is_string($cfgDisk) && $cfgDisk !== '' ? $cfgDisk : 'public';
+
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
+
+        $raw = $this->attributes['icon_url'] ?? null;
+        $path = is_string($raw) ? ltrim($raw, '/') : '';
+
+        if ($path !== '' && $disk->exists($path)) {
+            return url($disk->url($path));
         }
 
-        return url(Storage::url('icons/default-icon.png'));
+        $cfgDefaultIcon = $cfg->getString('games.default_icon', 'icons/default-icon.png');
+
+        return url($disk->url($cfgDefaultIcon));
     }
 }
