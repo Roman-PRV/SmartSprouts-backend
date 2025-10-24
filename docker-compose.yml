@@ -1,6 +1,7 @@
 services:
   laravel:
     build:
+      context: ./laravel
       dockerfile: ./docker/Dockerfile
     container_name: pp_laravel_app
     restart: unless-stopped
@@ -47,7 +48,6 @@ services:
 volumes:
   mysql_data:
   vendor_data:
-  laravel_storage:
 
 networks:
   app-network:
