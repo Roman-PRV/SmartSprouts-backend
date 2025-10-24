@@ -30,8 +30,7 @@ class Game extends Model
         /** @var \App\Helpers\ConfigHelper $cfg */
         $cfg = app(\App\Helpers\ConfigHelper::class);
 
-        $cfgDisk = $cfg->getString('games.default_icon_disk', 'public');
-        $diskName = is_string($cfgDisk) && $cfgDisk !== '' ? $cfgDisk : 'public';
+        $diskName = $cfg->getString('games.default_icon_disk', 'public');
 
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
