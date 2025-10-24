@@ -1,7 +1,7 @@
 services:
   laravel:
     build:
-      dockerfile: /docker/Dockerfile
+      dockerfile: ./docker/Dockerfile
     container_name: pp_laravel_app
     restart: unless-stopped
     working_dir: /var/www
