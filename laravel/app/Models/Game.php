@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\ConfigHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -27,10 +28,7 @@ class Game extends Model
 
     public function getIconUrlAttribute(): string
     {
-        /** @var \App\Helpers\ConfigHelper $cfg */
-        $cfg = app(\App\Helpers\ConfigHelper::class);
-
-        $diskName = $cfg->getString('games.default_icon_disk', 'public');
+        $diskName = ConfigHelper::getString('games.default_icon_disk', 'public');
 
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
@@ -42,7 +40,7 @@ class Game extends Model
             return url($disk->url($path));
         }
 
-        $cfgDefaultIcon = $cfg->getString('games.default_icon', 'icons/default-icon.png');
+        $cfgDefaultIcon = ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
         return url($disk->url($cfgDefaultIcon));
     }

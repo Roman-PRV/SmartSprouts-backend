@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 class ConfigHelper
 {
-    public function getString(string $key, string $default = ''): string
+    public static function getString(string $key, string $default = ''): string
     {
         $value = config($key);
 
