@@ -8,8 +8,8 @@ services:
     working_dir: /var/www
     volumes:
       - ./laravel:/var/www
+      - ./laravel/storage:/var/www/storage
       - vendor_data:/var/www/vendor
-      - laravel_storage:/var/www/storage
     networks:
       - app-network
     depends_on:
@@ -48,7 +48,6 @@ services:
 volumes:
   mysql_data:
   vendor_data:
-  laravel_storage:
 
 networks:
   app-network:
