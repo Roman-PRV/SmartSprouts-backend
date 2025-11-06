@@ -25,7 +25,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-Route::apiResource('games', GameController::class)->only(['index']);
+Route::apiResource('games', GameController::class)->only(['index', 'show']);
 
 Route::prefix('true-false-images')->group(function () {
     Route::get('/', [TrueFalseImageGameController::class, 'index']);

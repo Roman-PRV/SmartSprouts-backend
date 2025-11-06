@@ -59,13 +59,44 @@ class GameController extends Controller
     //     //
     // }
 
-    // /**
-    //  * Display the specified resource.
-    //  */
-    // public function show(string $id)
-    // {
-    //     //
-    // }
+    /**
+     * Display the specified game details.
+     *
+     * @OA\Get(
+     * path="/api/games/{id}",
+     * summary="Get details for a specific game",
+     * description="Returns the full details for a game by its ID.",
+     * operationId="getGameDetails",
+     * tags={"Games"},
+     *
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID of the game to retrieve",
+     *
+     * @OA\Schema(
+     * type="integer"
+     * )
+     * ),
+     *
+     * @OA\Response(
+     * response=200,
+     * description="Successful response with game details",
+     *
+     * @OA\JsonContent(ref="#/components/schemas/Game")
+     * ),
+     *
+     * @OA\Response(
+     * response=404,
+     * description="Game not found"
+     * )
+     * )
+     */
+    public function show(Game $game): JsonResponse
+    {
+        return response()->json(new GameResource($game));
+    }
 
     // /**
     //  * Show the form for editing the specified resource.
