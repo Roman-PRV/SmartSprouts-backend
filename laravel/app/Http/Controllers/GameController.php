@@ -76,7 +76,7 @@ class GameController extends Controller
      * description="ID of the game to retrieve",
      *
      * @OA\Schema(
-     * type="string"
+     * type="integer"
      * )
      * ),
      *
@@ -87,7 +87,7 @@ class GameController extends Controller
      * @OA\JsonContent(ref="#/components/schemas/Game")
      * ),
      *
-     * * @OA\Response(
+     * @OA\Response(
      * response=404,
      * description="Game not found"
      * )

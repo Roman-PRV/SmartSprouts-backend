@@ -156,7 +156,7 @@
                         "description": "ID of the game to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
