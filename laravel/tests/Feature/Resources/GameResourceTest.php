@@ -29,6 +29,7 @@ class GameResourceTest extends TestCase
             ->andReturn([
                 'title' => 'Find the Wrong',
                 'description' => 'Choose the wrong item',
+                'key' => 'find_the_wrong',
             ]);
 
         $game = new Game([
@@ -43,6 +44,7 @@ class GameResourceTest extends TestCase
         $this->assertEquals([
             'id' => 1,
             'title' => 'Find the Wrong',
+            'key' => 'find_the_wrong',
             'description' => 'Choose the wrong item',
             'icon_url' => $expectedUrl,
             'is_active' => true,

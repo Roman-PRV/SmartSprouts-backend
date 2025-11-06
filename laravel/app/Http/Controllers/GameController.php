@@ -59,13 +59,13 @@ class GameController extends Controller
     //     //
     // }
 
-    // /**
-    //  * Display the specified resource.
-    //  */
-    // public function show(string $id)
-    // {
-    //     //
-    // }
+    /**
+     * Display the specified resource.
+     */
+    public function show(Game $game): JsonResponse
+    {
+        return response()->json(new GameResource($game));
+    }
 
     // /**
     //  * Show the form for editing the specified resource.
