@@ -43,6 +43,7 @@ class GameResourceTest extends TestCase
         $this->assertEquals([
             'id' => 1,
             'title' => 'Find the Wrong',
+            'key' => 'find_the_wrong',
             'description' => 'Choose the wrong item',
             'icon_url' => $expectedUrl,
             'is_active' => true,
