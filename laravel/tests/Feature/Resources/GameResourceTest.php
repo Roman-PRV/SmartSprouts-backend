@@ -29,7 +29,6 @@ class GameResourceTest extends TestCase
             ->andReturn([
                 'title' => 'Find the Wrong',
                 'description' => 'Choose the wrong item',
-                'key' => 'find_the_wrong',
             ]);
 
         $game = new Game([
