@@ -176,6 +176,80 @@
                     }
                 }
             }
+        },
+        "/api/games/{game}/levels": {
+            "get": {
+                "tags": [
+                    "Games",
+                    "Levels"
+                ],
+                "summary": "Get levels for a game",
+                "description": "Return list of levels for the specified game. Table prefix is read from the game record and used to query the corresponding levels table. Levels are ordered by created_at ascending.",
+                "operationId": "getGameLevels",
+                "parameters": [
+                    {
+                        "name": "game",
+                        "in": "path",
+                        "description": "Game id (route model binding)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of level descriptions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Level"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid table prefix or failed to read levels table",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid table prefix"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Game not found or levels table not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Levels table not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -307,7 +381,9 @@
                     "id",
                     "key",
                     "icon_url",
-                    "is_active"
+                    "is_active",
+                    "title",
+                    "description"
                 ],
                 "properties": {
                     "id": {
@@ -318,6 +394,16 @@
                         "type": "string",
                         "example": "find_the_wrong"
                     },
+                    "title": {
+                        "description": "Full title of the game.",
+                        "type": "string",
+                        "example": "Find The Wrong"
+                    },
+                    "description": {
+                        "description": "Short description of the game.",
+                        "type": "string",
+                        "example": "Find the incorrect statement among the options."
+                    },
                     "icon_url": {
                         "type": "string",
                         "format": "url",
@@ -326,6 +412,30 @@
                     "is_active": {
                         "type": "boolean",
                         "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "Level": {
+                "title": "Level",
+                "required": [
+                    "id",
+                    "title",
+                    "image_url"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Level 1"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com/storage/levels/level1.png"
                     }
                 },
                 "type": "object"
@@ -340,6 +450,10 @@
         {
             "name": "Games",
             "description": "Games"
+        },
+        {
+            "name": "Levels",
+            "description": "Levels"
         }
     ]
 }
