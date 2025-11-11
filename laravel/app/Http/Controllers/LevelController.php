@@ -26,7 +26,7 @@ class LevelController extends Controller
      *         required=true,
      *         description="Game id (route model binding)",
      *
-     *         @OA\Schema(type="string")
+     *         @OA\Schema(type="integer")
      *     ),
      *
      *     @OA\Response(
@@ -62,7 +62,7 @@ class LevelController extends Controller
      *     security={{ "bearerAuth": {} }}
      * )
      */
-    public function index(Game $game): JsonResponse|LevelDescriptionResource
+    public function index(Game $game): JsonResponse
     {
         $prefix = $game->table_prefix;
         // validate prefix to avoid injection
@@ -70,7 +70,7 @@ class LevelController extends Controller
             return response()->json(['message' => 'Invalid table prefix'], Response::HTTP_BAD_REQUEST);
         }
 
-        $table = $prefix.'_levels';
+        $table = $prefix . '_levels';
 
         if (! Schema::hasTable($table)) {
             return response()->json(['message' => 'Levels table not found'], Response::HTTP_NOT_FOUND);
@@ -88,5 +88,4 @@ class LevelController extends Controller
 
         return response()->json(LevelDescriptionResource::collection($levels), Response::HTTP_OK);
     }
-    //
 }

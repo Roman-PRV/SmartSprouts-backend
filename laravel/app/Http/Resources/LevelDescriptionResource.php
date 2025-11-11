@@ -22,7 +22,7 @@ class LevelDescriptionResource extends JsonResource
         return [
             'id' => $level->id,
             'title' => $level->title,
-            'image_url' => $level->imageUrl,
+            'image_url' => $level->image_url,
         ];
     }
 }

@@ -193,7 +193,7 @@
                         "description": "Game id (route model binding)",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
