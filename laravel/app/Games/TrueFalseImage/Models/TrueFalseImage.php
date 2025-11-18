@@ -19,6 +19,6 @@ class TrueFalseImage extends Model
 
     public function statements(): HasMany
     {
-        return $this->hasMany(TrueFalseImageStatement::class, 'image_id');
+        return $this->hasMany(TrueFalseImageStatement::class, 'level_id');
     }
 }

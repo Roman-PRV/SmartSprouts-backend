@@ -13,7 +13,7 @@ class TrueFalseImageStatement extends Model
     protected $table = 'true_false_image_statements';
 
     protected $fillable = [
-        'image_id',
+        'level_id',
         'statement',
         'is_true',
         'explanation',
@@ -21,6 +21,6 @@ class TrueFalseImageStatement extends Model
 
     public function trueFalseImage(): BelongsTo
     {
-        return $this->belongsTo(TrueFalseImage::class, 'image_id');
+        return $this->belongsTo(TrueFalseImage::class, 'level_id');
     }
 }
