@@ -17,7 +17,7 @@ class GameResource extends JsonResource
         $labels = Lang::get("games.{$game->key}");
 
         return [
-            'id' => $game->id,
+            'id' => (string) $game->id,
             'title' => $labels['title'],
             'key' => $game->key,
             'description' => $labels['description'],

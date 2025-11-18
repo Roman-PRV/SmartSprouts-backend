@@ -70,7 +70,7 @@ class LevelController extends Controller
             return response()->json(['message' => 'Invalid table prefix'], Response::HTTP_BAD_REQUEST);
         }
 
-        $table = $prefix . '_levels';
+        $table = $prefix.'_levels';
 
         if (! Schema::hasTable($table)) {
             return response()->json(['message' => 'Levels table not found'], Response::HTTP_NOT_FOUND);
