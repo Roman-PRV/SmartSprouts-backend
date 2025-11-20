@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $level_id
+ * @property string $statement
+ * @property bool $is_true
+ * @property string|null $explanation
+ */
 class TrueFalseImageStatement extends Model
 {
     use HasFactory;
@@ -21,6 +28,6 @@ class TrueFalseImageStatement extends Model
 
     public function trueFalseImage(): BelongsTo
     {
-        return $this->belongsTo(TrueFalseImage::class, 'level_id');
+        return $this->belongsTo(TrueFalseImageLevel::class, 'level_id');
     }
 }
