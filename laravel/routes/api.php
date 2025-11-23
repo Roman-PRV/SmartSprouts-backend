@@ -27,4 +27,6 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 Route::apiResource('games', GameController::class)->only(['index', 'show']);
 Route::get('games/{game}/levels', [LevelController::class, 'index'])
-    ->name('games.levels');
+    ->name('games.levels.index');
+Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
+    ->name('games.levels.show');
