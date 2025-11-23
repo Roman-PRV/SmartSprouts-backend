@@ -24,7 +24,7 @@ class TrueFalseImageStatementResource extends JsonResource
             'level_id' => $statement->level_id,
             'statement' => $statement->statement,
             'is_true' => (bool) ($statement->is_true ?? false),
-            'explanation' => $statement->explanation ?? null,
+            'explanation' => $statement->explanation,
         ];
     }
 }
