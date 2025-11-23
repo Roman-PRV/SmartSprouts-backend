@@ -2,31 +2,29 @@
 
 namespace App\Games\TrueFalseImage\Http\Resources;
 
-use Illuminate\Http\Request;
+use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @OA\Schema(
- *     schema="TrueFalseImage.Statement",
- *     type="object",
- *     description="A statement related to the image that must be evaluated as true or false",
- *
- *     @OA\Property(property="id", type="integer", example=10, description="Unique identifier of the statement"),
- *     @OA\Property(property="statement", type="string", example="This is a cat", description="Text of the statement to evaluate")
- * )
- *
- * @mixin \App\Games\TrueFalseImage\Models\TrueFalseImageStatement
- */
 class TrueFalseImageStatementResource extends JsonResource
 {
     /**
-     * @param  Request  $request
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array<string,mixed>
      */
     public function toArray($request): array
     {
+
+        /** @var TrueFalseImageStatement $statement */
+        $statement = $this->resource;
+
         return [
-            'id' => $this->id,
-            'statements' => TrueFalseImageStatementResource::collection($this->whenLoaded('statements')),
+            'id' => $statement->id,
+            'level_id' => $statement->level_id,
+            'statement' => $statement->statement,
+            'is_true' => (bool) ($statement->is_true ?? false),
+            'explanation' => $statement->explanation ?? null,
         ];
     }
 }
