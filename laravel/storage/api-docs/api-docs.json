@@ -70,14 +70,14 @@
                 }
             }
         },
-        "/games/{game}/levels": {
+        "/api/games/{game}/levels": {
             "get": {
                 "tags": [
                     "Levels"
                 ],
                 "summary": "Get levels for a game",
                 "description": "Returns collection of levels for the specified game. Throws 404 if the underlying levels table for the game is missing.",
-                "operationId": "c1ff1063e6b70f9db67cdf0167d60953",
+                "operationId": "fe7d3a6d6ec9ac0114563d91e6989873",
                 "parameters": [
                     {
                         "name": "game",
@@ -125,14 +125,14 @@
                 }
             }
         },
-        "/games/{game}/levels/{levelId}": {
+        "/api/games/{game}/levels/{levelId}": {
             "get": {
                 "tags": [
                     "Levels"
                 ],
                 "summary": "Get a level",
                 "description": "Returns single level data for the specified game and level id. Throws 404 when level or levels table is missing.",
-                "operationId": "8bab17ed072fa00a7ff82c68bb5dab50",
+                "operationId": "4ca0478b229d137747917ad7f59da69f",
                 "parameters": [
                     {
                         "name": "game",
