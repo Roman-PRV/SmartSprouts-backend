@@ -47,7 +47,12 @@ class ResourceResolver
      */
     public function resourceFor(Game $game, Model $model): JsonResource
     {
+
         $class = $this->resourceClassFor($game);
+
+        if (! class_exists($class)) {
+            throw new InvalidArgumentException("Resource class {$class} does not exist");
+        }
 
         /** @var JsonResource */
         return new $class($model);
