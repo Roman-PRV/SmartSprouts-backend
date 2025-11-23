@@ -2,90 +2,148 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\LevelDescriptionResource;
+use App\Exceptions\LevelsTableMissingException;
 use App\Models\Game;
-use App\Models\Level;
-use Illuminate\Database\QueryException;
+use App\Services\GameServiceFactory;
+use App\Services\ResourceResolver;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Schema;
-use Symfony\Component\HttpFoundation\Response;
+use InvalidArgumentException;
 
+/**
+ * @OA\Tag(
+ *     name="Levels",
+ *     description="API for game levels"
+ * )
+ */
 class LevelController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     path="/api/games/{game}/levels",
-     *     summary="Get levels for a game",
-     *     description="Return list of levels for the specified game. Table prefix is read from the game record and used to query the corresponding levels table. Levels are ordered by created_at ascending.",
-     *     operationId="getGameLevels",
-     *     tags={"Games","Levels"},
-     *
-     *     @OA\Parameter(
-     *         name="game",
-     *         in="path",
-     *         required=true,
-     *         description="Game id (route model binding)",
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of level descriptions",
-     *
-     *         @OA\JsonContent(
-     *             type="array",
-     *
-     *             @OA\Items(ref="#/components/schemas/Level")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=400,
-     *         description="Invalid table prefix or failed to read levels table",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Invalid table prefix")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=404,
-     *         description="Game not found or levels table not found",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Levels table not found")
-     *         )
-     *     ),
-     *     security={{ "bearerAuth": {} }}
-     * )
-     */
-    public function index(Game $game): JsonResponse
-    {
-        $prefix = $game->table_prefix;
-        // validate prefix to avoid injection
-        if (! is_string($prefix) || $prefix === '' || ! preg_match('/^[A-Za-z0-9_]+$/', $prefix)) {
-            return response()->json(['message' => 'Invalid table prefix'], Response::HTTP_BAD_REQUEST);
-        }
+  public function __construct(
+    protected GameServiceFactory $factory,
+    protected ResourceResolver $resources
+  ) {}
 
-        $table = $prefix.'_levels';
-
-        if (! Schema::hasTable($table)) {
-            return response()->json(['message' => 'Levels table not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $levelModel = (new Level)->setTableForPrefix($prefix);
-
-        try {
-            $levels = $levelModel->select(['id', 'title', 'image_url', 'created_at'])
-                ->orderBy('created_at', 'asc')
-                ->get();
-        } catch (QueryException $e) {
-            return response()->json(['message' => 'Failed to read levels table'], Response::HTTP_BAD_REQUEST);
-        }
-
-        return response()->json(LevelDescriptionResource::collection($levels), Response::HTTP_OK);
+  /**
+   * List levels for a game
+   *
+   * @OA\Get(
+   *     path="/games/{game}/levels",
+   *     tags={"Levels"},
+   *     summary="Get levels for a game",
+   *     description="Returns collection of levels for the specified game. Throws 404 if the underlying levels table for the game is missing.",
+   *
+   *     @OA\Parameter(
+   *         name="game",
+   *         in="path",
+   *         description="Game identifier (route-model bound). The controller resolves the game and its table_prefix.",
+   *         required=true,
+   *
+   *         @OA\Schema(type="integer", format="int64", example=1)
+   *     ),
+   *
+   *     @OA\Response(
+   *         response=200,
+   *         description="List of levels",
+   *
+   *         @OA\JsonContent(ref="#/components/schemas/LevelCollection")
+   *     ),
+   *
+   *     @OA\Response(
+   *         response=404,
+   *         description="Levels table missing",
+   *
+   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *     ),
+   *
+   *     @OA\Response(
+   *         response=400,
+   *         description="Bad request",
+   *
+   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *     )
+   * )
+   */
+  public function index(Game $game): JsonResponse
+  {
+    try {
+      $service = $this->factory->for($game);
+      $levels = $service->fetchAllLevels();
+    } catch (LevelsTableMissingException $e) {
+      return response()->json(['message' => $e->getMessage()], 404);
+    } catch (InvalidArgumentException $e) {
+      return response()->json(['message' => $e->getMessage()], 404);
     }
+
+    $resourceCollection = $this->resources->collectionFor($game, $levels);
+
+    return response()->json($resourceCollection->resolve(request()), 200);
+  }
+
+  /**
+   * Get single level by id
+   *
+   * @OA\Get(
+   *     path="/games/{game}/levels/{levelId}",
+   *     tags={"Levels"},
+   *     summary="Get a level",
+   *     description="Returns single level data for the specified game and level id. Throws 404 when level or levels table is missing.",
+   *
+   *     @OA\Parameter(
+   *         name="game",
+   *         in="path",
+   *         description="Game identifier (route-model bound).",
+   *         required=true,
+   *
+   *         @OA\Schema(type="integer", format="int64", example=1)
+   *     ),
+   *
+   *     @OA\Parameter(
+   *         name="levelId",
+   *         in="path",
+   *         description="Level id",
+   *         required=true,
+   *
+   *         @OA\Schema(type="integer", format="int64", example=42)
+   *     ),
+   *
+   *     @OA\Response(
+   *         response=200,
+   *         description="Level data",
+   *
+   *         @OA\JsonContent(ref="#/components/schemas/Level")
+   *     ),
+   *
+   *     @OA\Response(
+   *         response=404,
+   *         description="Level not found or levels table missing",
+   *
+   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *     ),
+   *
+   *     @OA\Response(
+   *         response=400,
+   *         description="Bad request",
+   *
+   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *     )
+   * )
+   */
+  public function show(Game $game, int $levelId): JsonResponse
+  {
+    try {
+      $service = $this->factory->for($game);
+      $level = $service->fetchLevel($levelId);
+    } catch (LevelsTableMissingException $e) {
+      return response()->json(['message' => $e->getMessage()], 404);
+    } catch (InvalidArgumentException $e) {
+      return response()->json(['message' => $e->getMessage()], 404);
+    }
+
+    if (! $level) {
+      return response()->json(['message' => 'Level not found'], 404);
+    }
+
+    $resource = $this->resources->resourceFor($game, $level);
+
+    return response()->json($resource->resolve(request()), 200);
+  }
 }
