@@ -32,7 +32,7 @@ class TrueFalseImageService implements GameServiceInterface
      */
     public function fetchLevel(int $levelId): ?Level
     {
-        return TrueFalseImageLevel::find($levelId);
+        return TrueFalseImageLevel::with('statements')->find($levelId);
     }
 
     /**
