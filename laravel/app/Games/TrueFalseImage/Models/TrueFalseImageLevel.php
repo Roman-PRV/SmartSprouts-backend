@@ -2,11 +2,11 @@
 
 namespace App\Games\TrueFalseImage\Models;
 
+use App\Models\Level;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class TrueFalseImageLevel extends Model
+class TrueFalseImageLevel extends Level
 {
     use HasFactory;
 

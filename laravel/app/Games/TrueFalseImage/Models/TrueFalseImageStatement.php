@@ -26,7 +26,7 @@ class TrueFalseImageStatement extends Model
         'explanation',
     ];
 
-    public function trueFalseImage(): BelongsTo
+    public function level(): BelongsTo
     {
         return $this->belongsTo(TrueFalseImageLevel::class, 'level_id');
     }
