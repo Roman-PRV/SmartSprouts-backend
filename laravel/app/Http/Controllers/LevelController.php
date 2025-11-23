@@ -26,7 +26,7 @@ class LevelController extends Controller
      * List levels for a game
      *
      * @OA\Get(
-     *     path="/games/{game}/levels",
+     *     path="/api/games/{game}/levels",
      *     tags={"Levels"},
      *     summary="Get levels for a game",
      *     description="Returns collection of levels for the specified game. Throws 404 if the underlying levels table for the game is missing.",
@@ -82,7 +82,7 @@ class LevelController extends Controller
      * Get single level by id
      *
      * @OA\Get(
-     *     path="/games/{game}/levels/{levelId}",
+     *     path="/api/games/{game}/levels/{levelId}",
      *     tags={"Levels"},
      *     summary="Get a level",
      *     description="Returns single level data for the specified game and level id. Throws 404 when level or levels table is missing.",
