@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Game;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LevelControllerTest extends TestCase
@@ -14,7 +14,7 @@ class LevelControllerTest extends TestCase
 
     protected function routeFor(Game|int|string $game): string
     {
-        $id = $game instanceof Game ? $game->id : $game;
+        $id = $game instanceof Game ? $game->id : (int) $game;
 
         return "/api/games/{$id}/levels";
     }
@@ -32,99 +32,126 @@ class LevelControllerTest extends TestCase
         ]);
 
         $response = $this->json('GET', $this->routeFor($game));
+        $expectedMessage = "Levels table {$game->table_prefix}_levels not found";
 
         $response->assertStatus(404)
-            ->assertJson([
-                'message' => 'Levels table not found',
-            ]);
+            ->assertJsonStructure(['message'])
+            ->assertJsonFragment(['message' => $expectedMessage]);
     }
 
-    public function test_empty_levels_table_returns_empty_array(): void
+    public function test_index_returns_levels(): void
     {
-        $prefix = 'emptytest';
         $game = Game::factory()->create([
-            'table_prefix' => $prefix,
+            'table_prefix' => 'true_false_image',
         ]);
 
-        $table = $prefix.'_levels';
+        DB::table('true_false_image_levels')->truncate();
 
-        Schema::create($table, function ($tableBlueprint) {
-            $tableBlueprint->bigIncrements('id');
-            $tableBlueprint->string('title')->nullable();
-            $tableBlueprint->string('image_url')->nullable();
-            $tableBlueprint->timestamps();
-        });
-
-        $this->json('GET', $this->routeFor($game))
-            ->assertStatus(200)
-            ->assertExactJson([]);
-    }
-
-    public function test_happy_path_returns_levels(): void
-    {
-        $prefix = 'happytest';
-        $game = Game::factory()->create([
-            'table_prefix' => $prefix,
-        ]);
-
-        $table = $prefix.'_levels';
-
-        Schema::create($table, function ($tableBlueprint) {
-            $tableBlueprint->bigIncrements('id');
-            $tableBlueprint->string('title')->nullable();
-            $tableBlueprint->string('image_url')->nullable();
-            $tableBlueprint->timestamps();
-        });
-
-        DB::table($table)->insert([
+        DB::table('true_false_image_levels')->insert([
             [
+                'id' => 1,
                 'title' => 'First level',
                 'image_url' => 'levels/first.png',
-                'created_at' => now()->subMinutes(2),
-                'updated_at' => now()->subMinutes(2),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
+                'id' => 2,
                 'title' => 'Second level',
                 'image_url' => 'levels/second.png',
-                'created_at' => now()->subMinute(),
-                'updated_at' => now()->subMinute(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
 
-        $response = $this->json('GET', $this->routeFor($game));
+        $response = $this->getJson("/api/games/{$game->id}/levels");
 
         $response->assertStatus(200)
             ->assertJsonCount(2)
             ->assertJsonStructure([
-                [
-                    'id',
-                    'title',
-                    'image_url',
-                ],
+                ['id', 'title', 'image_url'],
             ]);
 
-        $json = $response->json();
+        $titles = array_column($response->json(), 'title');
+        $this->assertEqualsCanonicalizing(['First level', 'Second level'], $titles);
+    }
 
-        $this->assertSame('First level', $json[0]['title']);
-        $this->assertSame('Second level', $json[1]['title']);
+    public function test_show_returns_single_level_with_file_url_and_statements(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('levels/first.png', 'dummy');
 
-        // image_url is produced by Level accessor: either full URL to file or default icon URL.
-        $this->assertIsString($json[0]['image_url']);
-        $this->assertStringStartsWith('http', $json[0]['image_url']);
-        $this->assertIsString($json[1]['image_url']);
-        $this->assertStringStartsWith('http', $json[1]['image_url']);
+        $game = Game::factory()->create([
+            'table_prefix' => 'true_false_image',
+        ]);
 
-        // Accept either the expected path inside URL or the default icon filename
-        $this->assertTrue(
-            str_contains($json[0]['image_url'], 'levels/first.png') ||
-              str_contains($json[0]['image_url'], 'default-icon.png'),
-            'First image_url should contain expected path or default icon'
-        );
+        config(['filesystems.default' => 'public']);
 
-        $this->assertTrue(
-            str_contains($json[1]['image_url'], 'levels/second.png') ||
-              str_contains($json[1]['image_url'], 'default-icon.png'),
-            'Second image_url should contain expected path or default icon'
-        );
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_statements')->truncate();
+
+        DB::table('true_false_image_levels')->insert([
+            'id' => 1,
+            'title' => 'First level',
+            'image_url' => 'levels/first.png',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('true_false_image_statements')->insert([
+            [
+                'id' => 10,
+                'level_id' => 1,
+                'statement' => 'The sky is blue',
+                'is_true' => true,
+                'explanation' => 'Because of Rayleigh scattering',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 11,
+                'level_id' => 1,
+                'statement' => 'Cats can fly',
+                'is_true' => false,
+                'explanation' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $response = $this->getJson("/api/games/{$game->id}/levels/1");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'id',
+                'title',
+                'image_url',
+                'statements' => [
+                    ['id', 'level_id', 'statement', 'is_true', 'explanation'],
+                ],
+            ])
+            ->assertJson([
+                'id' => 1,
+                'title' => 'First level',
+                'image_url' => 'http://localhost/storage/levels/first.png',
+            ]);
+
+        $response->assertJsonFragment([
+            'id' => 10,
+            'level_id' => 1,
+            'statement' => 'The sky is blue',
+            'is_true' => true,
+            'explanation' => 'Because of Rayleigh scattering',
+        ]);
+
+        $response->assertJsonFragment([
+            'id' => 11,
+            'level_id' => 1,
+            'statement' => 'Cats can fly',
+            'is_true' => false,
+            'explanation' => null,
+        ]);
+
+        $this->assertCount(2, $response->json('statements'));
     }
 }
