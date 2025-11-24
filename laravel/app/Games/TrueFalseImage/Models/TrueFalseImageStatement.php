@@ -26,6 +26,10 @@ class TrueFalseImageStatement extends Model
         'explanation',
     ];
 
+    protected $casts = [
+        'is_true' => 'boolean',
+    ];
+
     public function level(): BelongsTo
     {
         return $this->belongsTo(TrueFalseImageLevel::class, 'level_id');
