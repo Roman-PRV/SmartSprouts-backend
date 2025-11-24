@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Contracts\GameServiceInterface;
-use App\Exceptions\TableMissingException;
 use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class GameServiceFactory

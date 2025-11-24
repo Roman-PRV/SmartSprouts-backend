@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use App\Models\Game;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -40,7 +38,6 @@ class LevelControllerTest extends TestCase
             ->assertJsonStructure(['message'])
             ->assertJsonFragment(['message' => $expectedMessage]);
     }
-
 
     public function test_index_returns_levels(): void
     {
