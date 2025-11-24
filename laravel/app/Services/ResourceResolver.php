@@ -50,7 +50,6 @@ class ResourceResolver
      */
     public function resourceFor(Game $game, Model $model): JsonResource
     {
-
         $class = $this->resourceClassFor($game);
 
         /** @var JsonResource */
