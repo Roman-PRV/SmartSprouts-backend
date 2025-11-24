@@ -49,11 +49,9 @@ class TrueFalseImageService implements GameServiceInterface
             throw new InvalidArgumentException("Level {$levelId} not found in {$table}");
         }
 
-        if ($level->statements === null) {
-            $statementsTable = (new TrueFalseImageStatement)->getTable();
-            if (! Schema::hasTable($statementsTable)) {
-                throw new TableMissingException($statementsTable);
-            }
+        $statementsTable = (new TrueFalseImageStatement)->getTable();
+        if (! Schema::hasTable($statementsTable)) {
+            throw new TableMissingException($statementsTable);
         }
 
         return $level;
