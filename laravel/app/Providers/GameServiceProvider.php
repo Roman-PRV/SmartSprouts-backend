@@ -30,22 +30,8 @@ class GameServiceProvider extends ServiceProvider
 
             return new GameServiceFactory($app, $map, $default);
         });
-
-        $this->app->bind(GameServiceInterface::class, function (Container $app): GameServiceInterface {
-            $default = config('game_services.default', null);
-
-            if ($default === null || ! is_string($default) || $default === '') {
-                throw new RuntimeException('No default GameService configured (config.game_services.default).');
-            }
-
-            $instance = $app->make($default);
-
-            if (! $instance instanceof GameServiceInterface) {
-                throw new RuntimeException("Configured default service {$default} must implement ".GameServiceInterface::class);
-            }
-
-            return $instance;
-        });
+        // Direct binding of GameServiceInterface is intentionally omitted.
+        // Use GameServiceFactory to resolve game services as needed.
     }
 
     public function boot(): void
