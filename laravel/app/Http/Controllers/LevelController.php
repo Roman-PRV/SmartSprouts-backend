@@ -70,7 +70,7 @@ class LevelController extends Controller
         } catch (LevelsTableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
 
         $resourceCollection = $this->resources->collectionFor($game, $levels);
@@ -135,7 +135,7 @@ class LevelController extends Controller
         } catch (LevelsTableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
 
         if (! $level) {
