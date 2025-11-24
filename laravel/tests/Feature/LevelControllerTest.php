@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use App\Models\Game;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -25,19 +27,20 @@ class LevelControllerTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_missing_table_returns_404(): void
+    public function test_missing_service_returns_400(): void
     {
         $game = Game::factory()->create([
             'table_prefix' => 'no_such_prefix',
         ]);
 
         $response = $this->json('GET', $this->routeFor($game));
-        $expectedMessage = "Table {$game->table_prefix}_levels not found";
+        $expectedMessage = "No game service configured for table prefix: {$game->table_prefix}";
 
-        $response->assertStatus(404)
+        $response->assertStatus(400)
             ->assertJsonStructure(['message'])
             ->assertJsonFragment(['message' => $expectedMessage]);
     }
+
 
     public function test_index_returns_levels(): void
     {

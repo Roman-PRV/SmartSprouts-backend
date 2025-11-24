@@ -7,6 +7,7 @@ use App\Exceptions\TableMissingException;
 use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class GameServiceFactory
@@ -46,6 +47,6 @@ class GameServiceFactory
             return $this->container->make($this->default);
         }
 
-        throw new TableMissingException("{$key}_levels");
+        throw new InvalidArgumentException("No game service configured for table prefix: {$key}");
     }
 }
