@@ -65,13 +65,11 @@ class RenameImageIdToLevelIdInTrueFalseImageStatements extends Migration
 
     protected function dropForeignKeyIfExists(string $table, string $column): void
     {
-        $convention = $table.'_'.$column.'_foreign';
+        $convention = $table . '_' . $column . '_foreign';
 
         try {
             Schema::table($table, function (Blueprint $t) use ($table, $convention, $column) {
-                if (Schema::hasColumn($table, $column)) {
-                    $t->dropForeign($convention);
-                }
+                $t->dropForeign($convention);
             });
 
             return;
