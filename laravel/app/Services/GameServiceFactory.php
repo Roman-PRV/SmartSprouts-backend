@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\GameServiceInterface;
-use App\Exceptions\LevelsTableMissingException;
+use App\Exceptions\TableMissingException;
 use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use Illuminate\Contracts\Container\Container;
@@ -46,6 +46,6 @@ class GameServiceFactory
             return $this->container->make($this->default);
         }
 
-        throw new LevelsTableMissingException("{$key}_levels");
+        throw new TableMissingException("{$key}_levels");
     }
 }

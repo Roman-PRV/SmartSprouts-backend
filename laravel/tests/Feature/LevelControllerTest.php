@@ -32,7 +32,7 @@ class LevelControllerTest extends TestCase
         ]);
 
         $response = $this->json('GET', $this->routeFor($game));
-        $expectedMessage = "Levels table {$game->table_prefix}_levels not found";
+        $expectedMessage = "Table {$game->table_prefix}_levels not found";
 
         $response->assertStatus(404)
             ->assertJsonStructure(['message'])

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\LevelsTableMissingException;
+use App\Exceptions\TableMissingException;
 use App\Models\Game;
 use App\Services\GameServiceFactory;
 use App\Services\ResourceResolver;
@@ -67,7 +67,7 @@ class LevelController extends Controller
         try {
             $service = $this->factory->for($game);
             $levels = $service->fetchAllLevels();
-        } catch (LevelsTableMissingException $e) {
+        } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 400);
@@ -132,7 +132,7 @@ class LevelController extends Controller
         try {
             $service = $this->factory->for($game);
             $level = $service->fetchLevel($levelId);
-        } catch (LevelsTableMissingException $e) {
+        } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 400);
