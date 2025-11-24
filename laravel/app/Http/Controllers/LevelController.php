@@ -17,133 +17,129 @@ use InvalidArgumentException;
  */
 class LevelController extends Controller
 {
-  public function __construct(
-    protected GameServiceFactory $factory,
-    protected ResourceResolver $resources
-  ) {}
+    public function __construct(
+        protected GameServiceFactory $factory,
+        protected ResourceResolver $resources
+    ) {}
 
-  /**
-   * List levels for a game
-   *
-   * @OA\Get(
-   *     path="/api/games/{game}/levels",
-   *     tags={"Levels"},
-   *     summary="Get levels for a game",
-   *     description="Returns collection of levels for the specified game. Throws 404 if the underlying levels table for the game is missing.",
-   *
-   *     @OA\Parameter(
-   *         name="game",
-   *         in="path",
-   *         description="Game identifier (route-model bound). The controller resolves the game and its table_prefix.",
-   *         required=true,
-   *
-   *         @OA\Schema(type="integer", format="int64", example=1)
-   *     ),
-   *
-   *     @OA\Response(
-   *         response=200,
-   *         description="List of levels",
-   *
-   *         @OA\JsonContent(ref="#/components/schemas/LevelCollection")
-   *     ),
-   *
-   *     @OA\Response(
-   *         response=404,
-   *         description="Levels table missing",
-   *
-   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *     ),
-   *
-   *     @OA\Response(
-   *         response=400,
-   *         description="Bad request",
-   *
-   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *     )
-   * )
-   */
-  public function index(Game $game): JsonResponse
-  {
-    try {
-      $service = $this->factory->for($game);
-      $levels = $service->fetchAllLevels();
-    } catch (TableMissingException $e) {
-      return response()->json(['message' => $e->getMessage()], 404);
-    } catch (InvalidArgumentException $e) {
-      return response()->json(['message' => $e->getMessage()], 400);
+    /**
+     * List levels for a game
+     *
+     * @OA\Get(
+     *     path="/api/games/{game}/levels",
+     *     tags={"Levels"},
+     *     summary="Get levels for a game",
+     *     description="Returns collection of levels for the specified game. Throws 404 if the underlying levels table for the game is missing.",
+     *
+     *     @OA\Parameter(
+     *         name="game",
+     *         in="path",
+     *         description="Game identifier (route-model bound). The controller resolves the game and its table_prefix.",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", format="int64", example=1)
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of levels",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/LevelCollection")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Levels table missing",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
+    public function index(Game $game): JsonResponse
+    {
+        try {
+            $service = $this->factory->for($game);
+            $levels = $service->fetchAllLevels();
+        } catch (TableMissingException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+        $resourceCollection = $this->resources->collectionFor($game, $levels);
+
+        return response()->json($resourceCollection->resolve(request()), 200);
     }
 
-    $resourceCollection = $this->resources->collectionFor($game, $levels);
+    /**
+     * Get single level by id
+     *
+     * @OA\Get(
+     *     path="/api/games/{game}/levels/{levelId}",
+     *     tags={"Levels"},
+     *     summary="Get a level",
+     *     description="Returns single level data for the specified game and level id. Throws 404 when level or levels table is missing.",
+     *
+     *     @OA\Parameter(
+     *         name="game",
+     *         in="path",
+     *         description="Game identifier (route-model bound).",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", format="int64", example=1)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="levelId",
+     *         in="path",
+     *         description="Level id",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", format="int64", example=42)
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Level data",
+     *
+     *        @OA\JsonContent(ref="#/components/schemas/Level")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Level not found or levels table missing",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
+    public function show(Game $game, int $levelId): JsonResponse
+    {
+        try {
+            $service = $this->factory->for($game);
+            $level = $service->fetchLevel($levelId);
+        } catch (TableMissingException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
 
-    return response()->json($resourceCollection->resolve(request()), 200);
-  }
+        $resource = $this->resources->resourceFor($game, $level);
 
-  /**
-   * Get single level by id
-   *
-   * @OA\Get(
-   *     path="/api/games/{game}/levels/{levelId}",
-   *     tags={"Levels"},
-   *     summary="Get a level",
-   *     description="Returns single level data for the specified game and level id. Throws 404 when level or levels table is missing.",
-   *
-   *     @OA\Parameter(
-   *         name="game",
-   *         in="path",
-   *         description="Game identifier (route-model bound).",
-   *         required=true,
-   *
-   *         @OA\Schema(type="integer", format="int64", example=1)
-   *     ),
-   *
-   *     @OA\Parameter(
-   *         name="levelId",
-   *         in="path",
-   *         description="Level id",
-   *         required=true,
-   *
-   *         @OA\Schema(type="integer", format="int64", example=42)
-   *     ),
-   *
-   *     @OA\Response(
-   *         response=200,
-   *         description="Level data",
-   *
-   *        @OA\JsonContent(ref="#/components/schemas/LevelWithStatements")
-   *     ),
-   *
-   *     @OA\Response(
-   *         response=404,
-   *         description="Level not found or levels table missing",
-   *
-   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *     ),
-   *
-   *     @OA\Response(
-   *         response=400,
-   *         description="Bad request",
-   *
-   *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *     )
-   * )
-   */
-  public function show(Game $game, int $levelId): JsonResponse
-  {
-    try {
-      $service = $this->factory->for($game);
-      $level = $service->fetchLevel($levelId);
-    } catch (TableMissingException $e) {
-      return response()->json(['message' => $e->getMessage()], 404);
-    } catch (InvalidArgumentException $e) {
-      return response()->json(['message' => $e->getMessage()], 400);
+        return response()->json($resource->resolve(request()), 200);
     }
-
-    if (! $level) {
-      return response()->json(['message' => 'Level not found'], 404);
-    }
-
-    $resource = $this->resources->resourceFor($game, $level);
-
-    return response()->json($resource->resolve(request()), 200);
-  }
 }

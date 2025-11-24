@@ -31,15 +31,18 @@ class ResourceResolver
     {
         $key = $game->table_prefix ?? null;
 
-        if ($key && isset($this->map[$key])) {
-            return $this->map[$key];
+        $resourceClass = $this->map[$key] ?? $this->default;
+
+        if ($resourceClass && class_exists($resourceClass)) {
+            return $resourceClass;
         }
 
-        if ($this->default) {
-            return $this->default;
+        if ($resourceClass) {
+            throw new InvalidArgumentException("Resource class {$resourceClass} does not exist");
         }
 
-        throw new InvalidArgumentException("No resource mapped for game table_prefix: {$key}");
+        $errorKey = $key ?? 'null/undefined';
+        throw new InvalidArgumentException("No resource mapped for game table_prefix:{$errorKey}");
     }
 
     /**
@@ -49,10 +52,6 @@ class ResourceResolver
     {
 
         $class = $this->resourceClassFor($game);
-
-        if (! class_exists($class)) {
-            throw new InvalidArgumentException("Resource class {$class} does not exist");
-        }
 
         /** @var JsonResource */
         return new $class($model);
@@ -64,10 +63,6 @@ class ResourceResolver
     public function collectionFor(Game $game, Collection|array $collection): AnonymousResourceCollection
     {
         $class = $this->resourceClassFor($game);
-
-        if (! class_exists($class)) {
-            throw new InvalidArgumentException("Resource class {$class} does not exist");
-        }
 
         /** @var JsonResource $class */
         return $class::collection($collection);

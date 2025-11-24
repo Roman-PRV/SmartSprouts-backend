@@ -35,7 +35,7 @@ class TrueFalseImageService implements GameServiceInterface
      * @throws TableMissingException
      * @throws InvalidArgumentException
      */
-    public function fetchLevel(int $levelId): ?Level
+    public function fetchLevel(int $levelId): Level
     {
         $table = (new TrueFalseImageLevel)->getTable();
 

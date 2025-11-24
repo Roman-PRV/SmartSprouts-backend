@@ -23,8 +23,8 @@ class TrueFalseImageLevelResource extends JsonResource
 
         return [
             'id' => $level->id,
-            'title' => $level->title ?? null,
-            'image_url' => $level->image_url ?? null,
+            'title' => $level->title,
+            'image_url' => $level->image_url,
             'statements' => TrueFalseImageStatementResource::collection($this->whenLoaded('statements')),
         ];
     }

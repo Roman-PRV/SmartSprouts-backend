@@ -9,7 +9,7 @@ interface GameServiceInterface
 {
     public function fetchAllLevels(): Collection;
 
-    public function fetchLevel(int $levelId): ?Level;
+    public function fetchLevel(int $levelId): Level;
 
     public function fetchDataForLevel(int $levelId): Collection;
 }
