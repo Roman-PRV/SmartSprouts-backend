@@ -8,6 +8,7 @@ use App\Services\GameServiceFactory;
 use App\Services\ResourceResolver;
 use Illuminate\Http\JsonResponse;
 use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @OA\Tag(
@@ -129,6 +130,8 @@ class LevelController extends Controller
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 400);
+        } catch (NotFoundHttpException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
         }
 
         $resource = $this->resources->resourceFor($game, $level);
