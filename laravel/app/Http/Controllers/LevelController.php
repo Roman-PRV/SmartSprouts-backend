@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\TableMissingException;
+use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
 use App\Services\GameServiceFactory;
 use App\Services\ResourceResolver;
@@ -74,9 +75,10 @@ class LevelController extends Controller
             return response()->json(['message' => $e->getMessage()], 400);
         }
 
-        $resourceCollection = $this->resources->collectionFor($game, $levels);
+        return response()->json(LevelDescriptionResource::collection($levels)->resolve(request()), 200);
+        // $resourceCollection = $this->resources->collectionFor($game, $levels);
 
-        return response()->json($resourceCollection->resolve(request()), 200);
+        // return response()->json($resourceCollection->resolve(request()), 200);
     }
 
     /**
