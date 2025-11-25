@@ -42,7 +42,7 @@ class ResourceResolver
         }
 
         $errorKey = $key ?? 'null/undefined';
-        throw new InvalidArgumentException("No resource mapped for game table_prefix:{$errorKey}");
+        throw new InvalidArgumentException("No resource mapped for game table_prefix: {$errorKey}");
     }
 
     /**
