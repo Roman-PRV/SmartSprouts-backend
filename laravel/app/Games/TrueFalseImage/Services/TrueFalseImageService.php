@@ -10,6 +10,7 @@ use App\Models\Level;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrueFalseImageService implements GameServiceInterface
 {
@@ -33,7 +34,7 @@ class TrueFalseImageService implements GameServiceInterface
      * Fetch a Level row by id.
      *
      * @throws TableMissingException
-     * @throws InvalidArgumentException
+     * @throws NotFoundHttpException
      */
     public function fetchLevel(int $levelId): Level
     {
@@ -46,7 +47,7 @@ class TrueFalseImageService implements GameServiceInterface
         $level = TrueFalseImageLevel::with('statements')->find($levelId);
 
         if (! $level) {
-            throw new InvalidArgumentException("Level {$levelId} not found in {$table}");
+            throw new NotFoundHttpException("Level {$levelId} not found in {$table}");
         }
 
         $statementsTable = (new TrueFalseImageStatement)->getTable();
