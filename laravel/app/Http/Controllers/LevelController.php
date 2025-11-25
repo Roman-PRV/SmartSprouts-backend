@@ -76,9 +76,6 @@ class LevelController extends Controller
         }
 
         return response()->json(LevelDescriptionResource::collection($levels)->resolve(request()), 200);
-        // $resourceCollection = $this->resources->collectionFor($game, $levels);
-
-        // return response()->json($resourceCollection->resolve(request()), 200);
     }
 
     /**

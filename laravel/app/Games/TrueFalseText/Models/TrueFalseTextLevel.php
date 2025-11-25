@@ -15,6 +15,7 @@ class TrueFalseTextLevel extends Level
     protected $fillable = [
         'title',
         'image_url',
+        'text',
     ];
 
     public function statements(): HasMany
