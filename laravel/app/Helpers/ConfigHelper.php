@@ -18,4 +18,28 @@ class ConfigHelper
 
         return $default;
     }
+
+    /**
+     * Get array from config with validation
+     *
+     * @param  array<string, string>  $default
+     * @return array<string, string>
+     */
+    public static function getStringMap(string $key, array $default = []): array
+    {
+        $value = config($key);
+
+        if (! is_array($value)) {
+            return $default;
+        }
+
+        // Validate that all keys and values are strings
+        foreach ($value as $k => $v) {
+            if (! is_string($k) || ! is_string($v)) {
+                return $default;
+            }
+        }
+
+        return $value;
+    }
 }

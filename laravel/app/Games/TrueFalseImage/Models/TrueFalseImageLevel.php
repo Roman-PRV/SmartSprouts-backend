@@ -2,11 +2,11 @@
 
 namespace App\Games\TrueFalseImage\Models;
 
+use App\Models\Level;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class TrueFalseImage extends Model
+class TrueFalseImageLevel extends Level
 {
     use HasFactory;
 
@@ -19,6 +19,6 @@ class TrueFalseImage extends Model
 
     public function statements(): HasMany
     {
-        return $this->hasMany(TrueFalseImageStatement::class, 'image_id');
+        return $this->hasMany(TrueFalseImageStatement::class, 'level_id');
     }
 }
