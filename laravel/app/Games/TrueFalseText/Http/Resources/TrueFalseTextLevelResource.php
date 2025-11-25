@@ -24,6 +24,7 @@ class TrueFalseTextLevelResource extends JsonResource
         return [
             'id' => $level->id,
             'title' => $level->title,
+            'image_url' => $level->image_url,
             'text' => $level->text,
             'statements' => TrueFalseTextStatementResource::collection($this->whenLoaded('statements')),
         ];
