@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('true_false_text_levels', function (Blueprint $table) {
-            $table->string('image_url')->after('title')->default('/icons/game2.png');
+            $table->string('image_url')->after('title');
         });
     }
 
