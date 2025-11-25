@@ -21,19 +21,26 @@ use Illuminate\Database\Eloquent\Model;
  * @OA\Property(property="title", type="string", example="Level 1"),
  * @OA\Property(property="image_url", type="string", format="url", example="https://example.com/storage/levels/level1.png")
  * )
+ *
+ * @OA\Schema(
+ *   schema="LevelCollection",
+ *   type="array",
+ *
+ *   @OA\Items(ref="#/components/schemas/Level")
+ * )
+ *
+ * @OA\Schema(
+ *   schema="ErrorResponse",
+ *   type="object",
+ *
+ *   @OA\Property(property="message", type="string", example="Not found")
+ * )
  */
 class Level extends Model
 {
     use HasFactory;
 
     protected $guarded = [];
-
-    public function setTableForPrefix(string $prefix): static
-    {
-        $this->setTable($prefix.'_levels');
-
-        return $this;
-    }
 
     public function getImageUrlAttribute(): string
     {

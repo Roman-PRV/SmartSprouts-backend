@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * title="Game",
  * required={"id", "key", "icon_url", "is_active", "title", "description"},
  *
- * @OA\Property(property="id", type="integer", example=1),
+ * @OA\Property(property="id", type="string", example="1"),
  * @OA\Property(property="key", type="string", example="find_the_wrong"),
  * @OA\Property(property="title", type="string", description="Full title of the game.", example="Find The Wrong"),
  * @OA\Property(property="description", type="string", description="Short description of the game.", example="Find the incorrect statement among the options."),

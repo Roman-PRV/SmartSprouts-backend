@@ -9,113 +9,6 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/api/true-false-images": {
-            "get": {
-                "tags": [
-                    "TrueFalseImage"
-                ],
-                "summary": "List all True/False Image levels",
-                "description": "Returns a list of available game levels, each with an image and associated statements.",
-                "operationId": "59d03db9b6056c1e69f6e930398fa528",
-                "responses": {
-                    "200": {
-                        "description": "List of levels retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/TrueFalseImage.Level"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/true-false-images/{id}": {
-            "get": {
-                "tags": [
-                    "TrueFalseImage"
-                ],
-                "summary": "Retrieve a specific True/False Image level",
-                "operationId": "8140a79502937b47c84f088feeecb6ca",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID of the level to retrieve",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Level data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/TrueFalseImage.Level"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Level not found"
-                    }
-                }
-            }
-        },
-        "/api/true-false-images/check": {
-            "post": {
-                "tags": [
-                    "TrueFalseImage"
-                ],
-                "summary": "Validate player's answers for a True/False Image level",
-                "operationId": "ba1d6ab26bf7febbd7046234941878e8",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/TrueFalseImage.AnswerRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Answer validation results",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "image_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/TrueFalseImage.Result"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                }
-            }
-        },
         "/api/games": {
             "get": {
                 "tags": [
@@ -180,75 +73,112 @@
         "/api/games/{game}/levels": {
             "get": {
                 "tags": [
-                    "Games",
                     "Levels"
                 ],
                 "summary": "Get levels for a game",
-                "description": "Return list of levels for the specified game. Table prefix is read from the game record and used to query the corresponding levels table. Levels are ordered by created_at ascending.",
-                "operationId": "getGameLevels",
+                "description": "Returns collection of levels for the specified game. Returns a 404 response if the underlying levels table for the game is missing.",
+                "operationId": "fe7d3a6d6ec9ac0114563d91e6989873",
                 "parameters": [
                     {
                         "name": "game",
                         "in": "path",
-                        "description": "Game id (route model binding)",
+                        "description": "Game identifier (route-model bound). The controller resolves the game and its table_prefix.",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of level descriptions",
+                        "description": "List of levels",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Level"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid table prefix or failed to read levels table",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invalid table prefix"
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/LevelCollection"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "Game not found or levels table not found",
+                        "description": "Levels table missing",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Levels table not found"
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }
                     }
-                },
-                "security": [
+                }
+            }
+        },
+        "/api/games/{game}/levels/{levelId}": {
+            "get": {
+                "tags": [
+                    "Levels"
+                ],
+                "summary": "Get a level",
+                "description": "Returns single level data for the specified game and level id. Returns a 404 response when the level or levels table is missing.",
+                "operationId": "4ca0478b229d137747917ad7f59da69f",
+                "parameters": [
                     {
-                        "bearerAuth": []
+                        "name": "game",
+                        "in": "path",
+                        "description": "Game identifier (route-model bound).",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "levelId",
+                        "in": "path",
+                        "description": "Level id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 42
+                        }
                     }
-                ]
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Level data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Level"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Level not found or levels table missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     },
@@ -292,47 +222,6 @@
                 },
                 "type": "object"
             },
-            "TrueFalseImage.Level": {
-                "description": "Represents a game level with an image and a list of true/false statements",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier of the level",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "title": {
-                        "description": "Title of the level",
-                        "type": "string",
-                        "example": "Animals"
-                    },
-                    "image_url": {
-                        "description": "URL of the image associated with the level",
-                        "type": "string",
-                        "format": "url",
-                        "example": "https://example.com/image.jpg"
-                    },
-                    "statements": {
-                        "description": "Array of statements for this level",
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "id": {
-                                    "description": "Statement identifier",
-                                    "type": "integer",
-                                    "example": 10
-                                },
-                                "statement": {
-                                    "description": "Text of the statement to evaluate",
-                                    "type": "string",
-                                    "example": "This is a cat"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
             "TrueFalseImage.Result": {
                 "description": "Validation result for a single statement in the True/False Image game",
                 "properties": {
@@ -359,22 +248,6 @@
                 },
                 "type": "object"
             },
-            "TrueFalseImage.Statement": {
-                "description": "A statement related to the image that must be evaluated as true or false",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier of the statement",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "statement": {
-                        "description": "Text of the statement to evaluate",
-                        "type": "string",
-                        "example": "This is a cat"
-                    }
-                },
-                "type": "object"
-            },
             "Game": {
                 "title": "Game",
                 "required": [
@@ -387,8 +260,8 @@
                 ],
                 "properties": {
                     "id": {
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "example": "1"
                     },
                     "key": {
                         "type": "string",
@@ -439,21 +312,32 @@
                     }
                 },
                 "type": "object"
+            },
+            "LevelCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/Level"
+                }
+            },
+            "ErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Not found"
+                    }
+                },
+                "type": "object"
             }
         }
     },
     "tags": [
         {
-            "name": "TrueFalseImage",
-            "description": "TrueFalseImage"
+            "name": "Levels",
+            "description": "API for game levels"
         },
         {
             "name": "Games",
             "description": "Games"
-        },
-        {
-            "name": "Levels",
-            "description": "Levels"
         }
     ]
 }

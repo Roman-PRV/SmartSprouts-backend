@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $level_id
+ * @property string $statement
+ * @property bool $is_true
+ * @property string|null $explanation
+ */
 class TrueFalseImageStatement extends Model
 {
     use HasFactory;
@@ -13,14 +20,18 @@ class TrueFalseImageStatement extends Model
     protected $table = 'true_false_image_statements';
 
     protected $fillable = [
-        'image_id',
+        'level_id',
         'statement',
         'is_true',
         'explanation',
     ];
 
-    public function trueFalseImage(): BelongsTo
+    protected $casts = [
+        'is_true' => 'boolean',
+    ];
+
+    public function level(): BelongsTo
     {
-        return $this->belongsTo(TrueFalseImage::class, 'image_id');
+        return $this->belongsTo(TrueFalseImageLevel::class, 'level_id');
     }
 }
