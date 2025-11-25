@@ -16,7 +16,7 @@ return new class extends Migration
 
             $table->foreignId('level_id')
                 ->constrained('true_false_text_levels')
-                ->cascadeOnDelete()->cascadeOnUpdate();
+                ->cascadeOnDelete();
 
             $table->text('statement');
             $table->boolean('is_true');
