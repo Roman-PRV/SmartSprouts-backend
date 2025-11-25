@@ -118,6 +118,13 @@ class LevelController extends Controller
      *         description="Level not found or levels table missing",
      *
      *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
      *     )
      * )
      */
