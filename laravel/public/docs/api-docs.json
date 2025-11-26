@@ -258,6 +258,99 @@
                 },
                 "type": "object"
             },
+            "TrueFalseText.Level": {
+                "title": "TrueFalseText.Level",
+                "description": "True/False Text Level resource",
+                "required": [
+                    "id",
+                    "title",
+                    "image_url",
+                    "text",
+                    "statements"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Level ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "description": "Level title",
+                        "type": "string",
+                        "example": "Level 1"
+                    },
+                    "image_url": {
+                        "description": "Level image URL",
+                        "type": "string",
+                        "example": "https://example.com/image.png"
+                    },
+                    "text": {
+                        "description": "Level text",
+                        "type": "string",
+                        "example": "Some introductory text"
+                    },
+                    "statements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TrueFalseText.Statement"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalseText.Result": {
+                "description": "Validation result for a single statement in the True/False Text game",
+                "properties": {
+                    "statement_id": {
+                        "description": "ID of the evaluated statement",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "correct": {
+                        "description": "Whether the player's answer was correct",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_true": {
+                        "description": "The actual truth value of the statement",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "explanation": {
+                        "description": "Explanation for the correct answer",
+                        "type": "string",
+                        "example": "Cats have pointy ears"
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalseText.Statement": {
+                "title": "TrueFalseText.Statement",
+                "description": "True/False Text Statement resource",
+                "properties": {
+                    "id": {
+                        "description": "Statement ID",
+                        "type": "integer"
+                    },
+                    "level_id": {
+                        "description": "Level ID",
+                        "type": "integer"
+                    },
+                    "statement": {
+                        "description": "The statement text",
+                        "type": "string"
+                    },
+                    "is_true": {
+                        "description": "Whether the statement is true",
+                        "type": "boolean"
+                    },
+                    "explanation": {
+                        "description": "Explanation for the statement",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "Game": {
                 "title": "Game",
                 "required": [

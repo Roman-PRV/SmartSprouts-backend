@@ -1,6 +1,7 @@
 <?php
 
 use App\Games\TrueFalseImage\Http\Resources\TrueFalseImageLevelResource;
+use App\Games\TrueFalseText\Http\Resources\TrueFalseTextLevelResource;
 use App\Http\Resources\LevelDescriptionResource;
 
 return [
@@ -9,6 +10,7 @@ return [
      */
     'map' => [
         'true_false_image' => TrueFalseImageLevelResource::class,
+        'true_false_text' => TrueFalseTextLevelResource::class,
     ],
 
     /*
