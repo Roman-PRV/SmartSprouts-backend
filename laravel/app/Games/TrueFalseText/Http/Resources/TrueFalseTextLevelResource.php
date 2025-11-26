@@ -18,7 +18,7 @@ class TrueFalseTextLevelResource extends JsonResource
      *
      *     @OA\Property(property="id", type="integer", example=1, description="Level ID"),
      *     @OA\Property(property="title", type="string", example="Level 1", description="Level title"),
-     *     @OA\Property(property="image_url", type="string", nullable=true, example="https://example.com/image.png", description="Level image URL"),
+     *     @OA\Property(property="image_url", type="string", example="https://example.com/image.png", description="Level image URL"),
      *     @OA\Property(property="text", type="string", example="Some introductory text", description="Level text"),
      *     @OA\Property(
      *         property="statements",

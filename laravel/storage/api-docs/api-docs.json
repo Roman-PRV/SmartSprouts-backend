@@ -282,8 +282,7 @@
                     "image_url": {
                         "description": "Level image URL",
                         "type": "string",
-                        "example": "https://example.com/image.png",
-                        "nullable": true
+                        "example": "https://example.com/image.png"
                     },
                     "text": {
                         "description": "Level text",
