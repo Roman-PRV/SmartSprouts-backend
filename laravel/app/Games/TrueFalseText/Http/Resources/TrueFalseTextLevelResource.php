@@ -3,19 +3,32 @@
 namespace App\Games\TrueFalseText\Http\Resources;
 
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TrueFalseTextLevelResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
+     * @OA\Schema(
+     *     schema="TrueFalseText.Level",
+     *     type="object",
+     *     title="TrueFalseText.Level",
+     *     description="True/False Text Level resource",
+     *     required={"id", "title", "image_url", "text", "statements"},
      *
-     * Exposes level fields and nested statements (if loaded).
+     *     @OA\Property(property="id", type="integer", example=1, description="Level ID"),
+     *     @OA\Property(property="title", type="string", example="Level 1", description="Level title"),
+     *     @OA\Property(property="image_url", type="string", nullable=true, example="https://example.com/image.png", description="Level image URL"),
+     *     @OA\Property(property="text", type="string", example="Some introductory text", description="Level text"),
+     *     @OA\Property(
+     *         property="statements",
+     *         type="array",
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array<string,mixed>
+     *         @OA\Items(ref="#/components/schemas/TrueFalseText.Statement")
+     *     )
+     * )
      */
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
 
         /** @var TrueFalseTextLevel $level */
