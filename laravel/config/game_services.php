@@ -2,6 +2,7 @@
 
 use App\Contracts\GameServiceInterface;
 use App\Games\TrueFalseImage\Services\TrueFalseImageService;
+use App\Games\TrueFalseText\Services\TrueFalseTextService;
 
 return [
     /**
@@ -11,6 +12,7 @@ return [
      */
     'map' => [
         'true_false_image' => TrueFalseImageService::class,
+        'true_false_text' => TrueFalseTextService::class,
     ],
 
     /**
