@@ -2,6 +2,7 @@
 
 namespace App\Games\TrueFalseImage\Http\Requests;
 
+use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -9,9 +10,8 @@ use Illuminate\Foundation\Http\FormRequest;
  *     schema="TrueFalseImage.AnswerRequest",
  *     type="object",
  *     description="Request payload for validating player's answers in the True/False Image game",
- *     required={"image_id", "answers"},
+ *     required={"answers"},
  *
- *     @OA\Property(property="image_id", type="integer", example=1, description="ID of the image level being answered"),
  *     @OA\Property(
  *         property="answers",
  *         type="array",
@@ -30,8 +30,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class CheckAnswersRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     */
+     * Determine if the user is authorized to make this request. */
     public function authorize(): bool
     {
         return true;
@@ -45,8 +44,26 @@ class CheckAnswersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image_id' => 'required|exists:true_false_image_levels,id',
-            'answers' => 'required|array',
+            'answers' => [
+                'required',
+                'array',
+                function ($attribute, $value, $fail) {
+                    $levelId = (int) $this->route('levelId');
+
+                    foreach ($value as $index => $answer) {
+                        if (! isset($answer['statement_id'])) {
+                            continue;
+                        }
+
+                        /** @var TrueFalseImageStatement|null $statement */
+                        $statement = TrueFalseImageStatement::find($answer['statement_id']);
+
+                        if ($statement && $statement->level_id !== $levelId) {
+                            $fail("The statement {$answer['statement_id']} does not belong to level {$levelId}.");
+                        }
+                    }
+                },
+            ],
             'answers.*.statement_id' => 'required|exists:true_false_image_statements,id',
             'answers.*.answer' => 'required|boolean',
         ];
