@@ -80,4 +80,44 @@ class TrueFalseImageService implements GameServiceInterface
 
         return $statements;
     }
+
+    /**
+     * Check player answers for a level.
+     *
+     * @throws TableMissingException
+     * @throws NotFoundHttpException
+     */
+    public function check(int $levelId, array $payload): array
+    {
+        $table = (new TrueFalseImageStatement)->getTable();
+
+        if (! Schema::hasTable($table)) {
+            throw new TableMissingException($table);
+        }
+
+        $results = [];
+
+        foreach ($payload['answers'] as $answer) {
+            $statementId = $answer['statement_id'];
+            $playerAnswer = $answer['answer'];
+
+            /** @var TrueFalseImageStatement|null $statement */
+            $statement = TrueFalseImageStatement::find($statementId);
+
+            if (! $statement) {
+                throw new NotFoundHttpException("Statement {$statementId} not found in {$table}");
+            }
+
+            $correct = $playerAnswer === $statement->is_true;
+
+            $results[] = [
+                'statement_id' => $statementId,
+                'correct' => $correct,
+                'is_true' => $statement->is_true,
+                'explanation' => $statement->explanation,
+            ];
+        }
+
+        return ['results' => $results];
+    }
 }
