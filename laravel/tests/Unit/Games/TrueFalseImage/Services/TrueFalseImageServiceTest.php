@@ -110,18 +110,27 @@ class TrueFalseImageServiceTest extends TestCase
     /** @test */
     public function it_throws_exception_for_missing_table(): void
     {
-        $this->expectException(TableMissingException::class);
+        $exceptionThrown = false;
 
-        // Drop the table to simulate missing table
-        \Schema::dropIfExists('true_false_image_statements');
+        try {
+            // Drop the table to simulate missing table
+            \Schema::dropIfExists('true_false_image_statements');
 
-        $payload = [
-            'answers' => [
-                ['statement_id' => 1, 'answer' => true],
-            ],
-        ];
+            $payload = [
+                'answers' => [
+                    ['statement_id' => 1, 'answer' => true],
+                ],
+            ];
 
-        $this->service->check(1, $payload);
+            $this->service->check(1, $payload);
+        } catch (TableMissingException $e) {
+            $exceptionThrown = true;
+        } finally {
+            // Restore the table for other tests
+            \Artisan::call('migrate:fresh', ['--seed' => false]);
+        }
+
+        $this->assertTrue($exceptionThrown, 'Expected TableMissingException was not thrown');
     }
 
     /** @test */
