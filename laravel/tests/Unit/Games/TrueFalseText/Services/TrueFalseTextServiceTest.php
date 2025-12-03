@@ -114,7 +114,7 @@ class TrueFalseTextServiceTest extends TestCase
     public function fetch_level_throws_exception_when_level_not_found(): void
     {
         $this->expectException(NotFoundHttpException::class);
-        $this->expectExceptionMessage('Level 999 not found in true_false_text_levels');
+        $this->expectExceptionMessage('Level 999 not found');
 
         $this->service->fetchLevel(999);
     }
@@ -216,7 +216,7 @@ class TrueFalseTextServiceTest extends TestCase
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("No statements found for level {$level->id} in true_false_text_statements");
+        $this->expectExceptionMessage("No statements found for level {$level->id}");
 
         $this->service->fetchDataForLevel($level->id);
     }
@@ -225,7 +225,7 @@ class TrueFalseTextServiceTest extends TestCase
     public function fetch_data_for_level_throws_exception_when_level_does_not_exist(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No statements found for level 999 in true_false_text_statements');
+        $this->expectExceptionMessage('No statements found for level 999');
 
         $this->service->fetchDataForLevel(999);
     }

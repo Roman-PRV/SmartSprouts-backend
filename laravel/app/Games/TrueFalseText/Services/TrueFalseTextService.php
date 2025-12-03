@@ -47,7 +47,7 @@ class TrueFalseTextService implements GameServiceInterface
         $level = TrueFalseTextLevel::with('statements')->find($levelId);
 
         if (! $level) {
-            throw new NotFoundHttpException("Level {$levelId} not found in {$table}");
+            throw new NotFoundHttpException("Level {$levelId} not found");
         }
 
         $statementsTable = (new TrueFalseTextStatement)->getTable();
@@ -75,7 +75,7 @@ class TrueFalseTextService implements GameServiceInterface
         $statements = TrueFalseTextStatement::where('level_id', $levelId)->get();
 
         if ($statements->isEmpty()) {
-            throw new InvalidArgumentException("No statements found for level {$levelId} in {$table}");
+            throw new InvalidArgumentException("No statements found for level {$levelId}");
         }
 
         return $statements;
@@ -112,7 +112,7 @@ class TrueFalseTextService implements GameServiceInterface
             $statement = $statements->where('id', $statementId)->first();
 
             if (! $statement) {
-                throw new NotFoundHttpException("Statement {$statementId} not found in {$table}");
+                throw new NotFoundHttpException("Statement {$statementId} not found");
             }
 
             $correct = $playerAnswer === $statement->is_true;
