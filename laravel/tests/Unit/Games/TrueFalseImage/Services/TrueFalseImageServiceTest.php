@@ -7,7 +7,6 @@ use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 class TrueFalseImageServiceTest extends TestCase
@@ -102,8 +101,8 @@ class TrueFalseImageServiceTest extends TestCase
             ],
         ];
 
-        $this->expectException(NotFoundHttpException::class);
-        $this->expectExceptionMessage('Statement 99999 not found');
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessage('The statement 99999 does not exist or does not belong to level');
 
         $this->service->check($level->id, $payload);
     }

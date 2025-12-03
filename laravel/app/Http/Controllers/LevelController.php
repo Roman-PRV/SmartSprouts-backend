@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\TableMissingException;
-use App\Games\TrueFalseImage\Http\Requests\CheckAnswersRequest;
+use App\Http\Requests\CheckAnswersRequest;
 use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
 use App\Services\GameServiceFactory;
@@ -259,6 +259,11 @@ class LevelController extends Controller
         try {
             $service = $this->factory->for($game);
             $results = $service->check($levelId, $request->validated());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
         } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {

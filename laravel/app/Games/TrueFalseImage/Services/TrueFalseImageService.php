@@ -86,6 +86,7 @@ class TrueFalseImageService implements GameServiceInterface
      *
      * @throws TableMissingException
      * @throws NotFoundHttpException
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function check(int $levelId, array $payload): array
     {
@@ -103,6 +104,18 @@ class TrueFalseImageService implements GameServiceInterface
 
         $statements = $level->statements;
 
+        // Validate all statement_ids before processing
+        $statementIds = array_column($payload['answers'], 'statement_id');
+        $existingStatementIds = $statements->pluck('id')->all();
+
+        foreach ($statementIds as $statementId) {
+            if (! in_array($statementId, $existingStatementIds, true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'answers' => ["The statement {$statementId} does not exist or does not belong to level {$levelId}."],
+                ]);
+            }
+        }
+
         $results = [];
 
         foreach ($payload['answers'] as $answer) {
@@ -111,9 +124,8 @@ class TrueFalseImageService implements GameServiceInterface
 
             $statement = $statements->where('id', $statementId)->first();
 
-            if (! $statement) {
-                throw new NotFoundHttpException("Statement {$statementId} not found");
-            }
+            // This should never be null because we validated above, but PHPStan doesn't know that
+            assert($statement !== null, 'Statement must exist after validation');
 
             $correct = $playerAnswer === $statement->is_true;
 
