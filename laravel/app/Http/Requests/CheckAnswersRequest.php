@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Games\TrueFalseImage\Http\Requests;
+namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * @OA\Schema(
- *     schema="TrueFalseImage.AnswerRequest",
+ *     schema="CheckAnswersRequest",
  *     type="object",
- *     description="Request payload for validating player's answers in the True/False Image game",
- *     required={"image_id", "answers"},
+ *     description="Generic request payload for validating player's answers across all game types",
+ *     required={"answers"},
  *
- *     @OA\Property(property="image_id", type="integer", example=1, description="ID of the image level being answered"),
  *     @OA\Property(
  *         property="answers",
  *         type="array",
@@ -22,7 +21,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *             required={"statement_id", "answer"},
  *
  *             @OA\Property(property="statement_id", type="integer", example=10, description="ID of the statement being answered"),
- *             @OA\Property(property="answer", type="boolean", example=true, description="Player's answer: true or false")
+ *             @OA\Property(property="answer", type="boolean", example=true, description="Player's answer")
  *         )
  *     )
  * )
@@ -45,9 +44,8 @@ class CheckAnswersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image_id' => 'required|exists:true_false_image_levels,id',
             'answers' => 'required|array',
-            'answers.*.statement_id' => 'required|exists:true_false_image_statements,id',
+            'answers.*.statement_id' => 'required|integer',
             'answers.*.answer' => 'required|boolean',
         ];
     }

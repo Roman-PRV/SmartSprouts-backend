@@ -12,4 +12,6 @@ interface GameServiceInterface
     public function fetchLevel(int $levelId): Level;
 
     public function fetchDataForLevel(int $levelId): Collection;
+
+    public function check(int $levelId, array $payload): array;
 }
