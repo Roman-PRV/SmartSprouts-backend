@@ -102,7 +102,7 @@ class TrueFalseImageServiceTest extends TestCase
         ];
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
-        $this->expectExceptionMessage('The statement 99999 does not exist or does not belong to level');
+        $this->expectExceptionMessage('The statement 99999 does not belong to level');
 
         $this->service->check($level->id, $payload);
     }

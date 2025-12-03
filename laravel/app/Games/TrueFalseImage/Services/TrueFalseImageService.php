@@ -111,7 +111,7 @@ class TrueFalseImageService implements GameServiceInterface
         foreach ($statementIds as $statementId) {
             if (! in_array($statementId, $existingStatementIds, true)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'answers' => ["The statement {$statementId} does not exist or does not belong to level {$levelId}."],
+                    'answers' => ["The statement {$statementId} does not belong to level {$levelId}."],
                 ]);
             }
         }

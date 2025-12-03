@@ -197,7 +197,7 @@
                     "Levels"
                 ],
                 "summary": "Check player answers for a level",
-                "description": "Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game or level is not found.",
+                "description": "Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
                 "operationId": "ea2a7e9a47d694b2be8ca370b8ac2722",
                 "parameters": [
                     {
@@ -229,7 +229,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/TrueFalseImage.AnswerRequest"
+                                "$ref": "#/components/schemas/CheckAnswersRequest"
                             }
                         }
                     }
@@ -334,38 +334,6 @@
     },
     "components": {
         "schemas": {
-            "TrueFalseImage.AnswerRequest": {
-                "description": "Request payload for validating player's answers in the True/False Image game",
-                "required": [
-                    "answers"
-                ],
-                "properties": {
-                    "answers": {
-                        "description": "List of player's answers for each statement",
-                        "type": "array",
-                        "items": {
-                            "required": [
-                                "statement_id",
-                                "answer"
-                            ],
-                            "properties": {
-                                "statement_id": {
-                                    "description": "ID of the statement being answered",
-                                    "type": "integer",
-                                    "example": 10
-                                },
-                                "answer": {
-                                    "description": "Player's answer: true or false",
-                                    "type": "boolean",
-                                    "example": true
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
             "TrueFalseImage.Result": {
                 "description": "Validation result for a single statement in the True/False Image game",
                 "properties": {
@@ -481,6 +449,38 @@
                     "explanation": {
                         "description": "Explanation for the statement",
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CheckAnswersRequest": {
+                "description": "Generic request payload for validating player's answers across all game types",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "description": "List of player's answers for each statement",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "statement_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "statement_id": {
+                                    "description": "ID of the statement being answered",
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "answer": {
+                                    "description": "Player's answer",
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"

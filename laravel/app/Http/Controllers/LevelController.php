@@ -153,7 +153,7 @@ class LevelController extends Controller
      *     path="/api/games/{game}/levels/{levelId}/check",
      *     tags={"Levels"},
      *     summary="Check player answers for a level",
-     *     description: "Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
+     *     description="Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
      *
      *     @OA\Parameter(
      *         name="game",
@@ -177,7 +177,7 @@ class LevelController extends Controller
      *         required=true,
      *         description="Player answers to validate",
      *
-     *         @OA\JsonContent(ref="#/components/schemas/TrueFalseImage.AnswerRequest")
+     *         @OA\JsonContent(ref="#/components/schemas/CheckAnswersRequest")
      *     ),
      *
      *     @OA\Response(
@@ -194,7 +194,7 @@ class LevelController extends Controller
      *                 @OA\Items(ref="#/components/schemas/TrueFalseImage.Result")
      *             ),
      *             example={
-     *                 "results": [
+     *                 "results": {
      *                     {
      *                         "statement_id": 10,
      *                         "correct": true,
@@ -207,7 +207,7 @@ class LevelController extends Controller
      *                         "is_true": false,
      *                         "explanation": "Cats cannot fly naturally"
      *                     }
-     *                 ]
+     *                 }
      *             }
      *         )
      *     ),
@@ -235,8 +235,8 @@ class LevelController extends Controller
      *                 property="errors",
      *                 type="object",
      *                 example={
-     *                     "answers": ["The statement 20 does not belong to level 1."],
-     *                     "answers.0.answer": ["The answers.0.answer field is required."]
+     *                     "answers": {"The statement 20 does not belong to level 1."},
+     *                     "answers.0.answer": {"The answers.0.answer field is required."}
      *                 }
      *             )
      *         )
@@ -259,11 +259,6 @@ class LevelController extends Controller
         try {
             $service = $this->factory->for($game);
             $results = $service->check($levelId, $request->validated());
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'errors' => $e->errors(),
-            ], 422);
         } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
