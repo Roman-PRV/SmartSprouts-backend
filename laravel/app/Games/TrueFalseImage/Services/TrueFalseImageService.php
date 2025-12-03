@@ -23,7 +23,7 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageLevel)->getTable();
 
-        if (! Schema::hasTable($table)) {
+        if (!Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
@@ -40,18 +40,18 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageLevel)->getTable();
 
-        if (! Schema::hasTable($table)) {
+        if (!Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
         $level = TrueFalseImageLevel::with('statements')->find($levelId);
 
-        if (! $level) {
-            throw new NotFoundHttpException("Level {$levelId} not found in {$table}");
+        if (!$level) {
+            throw new NotFoundHttpException("Level {$levelId} not found");
         }
 
         $statementsTable = (new TrueFalseImageStatement)->getTable();
-        if (! Schema::hasTable($statementsTable)) {
+        if (!Schema::hasTable($statementsTable)) {
             throw new TableMissingException($statementsTable);
         }
 
@@ -68,14 +68,14 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageStatement)->getTable();
 
-        if (! Schema::hasTable($table)) {
+        if (!Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
         $statements = TrueFalseImageStatement::where('level_id', $levelId)->get();
 
         if ($statements->isEmpty()) {
-            throw new InvalidArgumentException("No statements found for level {$levelId} in {$table}");
+            throw new InvalidArgumentException("No statements found for level {$levelId}");
         }
 
         return $statements;
@@ -91,7 +91,7 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageStatement)->getTable();
 
-        if (! Schema::hasTable($table)) {
+        if (!Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
@@ -104,8 +104,8 @@ class TrueFalseImageService implements GameServiceInterface
             /** @var TrueFalseImageStatement|null $statement */
             $statement = TrueFalseImageStatement::find($statementId);
 
-            if (! $statement) {
-                throw new NotFoundHttpException("Statement {$statementId} not found in {$table}");
+            if (!$statement) {
+                throw new NotFoundHttpException("Statement {$statementId} not found");
             }
 
             $correct = $playerAnswer === $statement->is_true;
