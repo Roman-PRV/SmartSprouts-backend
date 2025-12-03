@@ -48,18 +48,37 @@ class CheckAnswersRequest extends FormRequest
                 'required',
                 'array',
                 function ($attribute, $value, $fail) {
+                    $ids = [];
+                    foreach ($value as $item) {
+                        if (isset($item['statement_id'])) {
+                            $ids[] = (int) $item['statement_id'];
+                        }
+                    }
+
+                    if (empty($ids)) {
+
+                        return;
+                    }
+
                     $levelId = (int) $this->route('levelId');
 
-                    foreach ($value as $index => $answer) {
-                        if (! isset($answer['statement_id'])) {
+                    /**
+                     * @var \Illuminate\Support\Collection<int, TrueFalseImageStatement> $statements
+                     */
+                    $statements = TrueFalseImageStatement::whereIn('id', $ids)->get();
+
+                    foreach ($ids as $id) {
+                        $statement = $statements->firstWhere('id', $id);
+                        if ($statement === null) {
+                            $fail("The statement {$id} does not exist.");
+
                             continue;
                         }
 
-                        /** @var TrueFalseImageStatement|null $statement */
-                        $statement = TrueFalseImageStatement::find($answer['statement_id']);
+                        $levelValue = $statement->level_id ?? null;
 
-                        if ($statement && $statement->level_id !== $levelId) {
-                            $fail("The statement {$answer['statement_id']} does not belong to level {$levelId}.");
+                        if ((int) $levelValue !== $levelId) {
+                            $fail("The statement {$id} does not belong to level {$levelId} {$statement}.");
                         }
                     }
                 },
