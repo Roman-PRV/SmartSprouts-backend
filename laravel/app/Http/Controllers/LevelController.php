@@ -22,8 +22,7 @@ class LevelController extends Controller
     public function __construct(
         protected GameServiceFactory $factory,
         protected ResourceResolver $resources
-    ) {
-    }
+    ) {}
 
     /**
      * List levels for a game

@@ -95,14 +95,21 @@ class TrueFalseTextService implements GameServiceInterface
             throw new TableMissingException($table);
         }
 
+        $level = TrueFalseTextLevel::with('statements')->find($levelId);
+
+        if (! $level) {
+            throw new NotFoundHttpException("Level {$levelId} not found");
+        }
+
+        $statements = $level->statements;
+
         $results = [];
 
         foreach ($payload['answers'] as $answer) {
             $statementId = $answer['statement_id'];
             $playerAnswer = $answer['answer'];
 
-            /** @var TrueFalseTextStatement|null $statement */
-            $statement = TrueFalseTextStatement::find($statementId);
+            $statement = $statements->where('id', $statementId)->first();
 
             if (! $statement) {
                 throw new NotFoundHttpException("Statement {$statementId} not found in {$table}");

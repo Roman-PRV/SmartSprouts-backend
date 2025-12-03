@@ -23,7 +23,7 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageLevel)->getTable();
 
-        if (!Schema::hasTable($table)) {
+        if (! Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
@@ -40,18 +40,18 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageLevel)->getTable();
 
-        if (!Schema::hasTable($table)) {
+        if (! Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
         $level = TrueFalseImageLevel::with('statements')->find($levelId);
 
-        if (!$level) {
+        if (! $level) {
             throw new NotFoundHttpException("Level {$levelId} not found");
         }
 
         $statementsTable = (new TrueFalseImageStatement)->getTable();
-        if (!Schema::hasTable($statementsTable)) {
+        if (! Schema::hasTable($statementsTable)) {
             throw new TableMissingException($statementsTable);
         }
 
@@ -68,7 +68,7 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageStatement)->getTable();
 
-        if (!Schema::hasTable($table)) {
+        if (! Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
 
@@ -91,9 +91,17 @@ class TrueFalseImageService implements GameServiceInterface
     {
         $table = (new TrueFalseImageStatement)->getTable();
 
-        if (!Schema::hasTable($table)) {
+        if (! Schema::hasTable($table)) {
             throw new TableMissingException($table);
         }
+
+        $level = TrueFalseImageLevel::with('statements')->find($levelId);
+
+        if (! $level) {
+            throw new NotFoundHttpException("Level {$levelId} not found");
+        }
+
+        $statements = $level->statements;
 
         $results = [];
 
@@ -101,10 +109,9 @@ class TrueFalseImageService implements GameServiceInterface
             $statementId = $answer['statement_id'];
             $playerAnswer = $answer['answer'];
 
-            /** @var TrueFalseImageStatement|null $statement */
-            $statement = TrueFalseImageStatement::find($statementId);
+            $statement = $statements->where('id', $statementId)->first();
 
-            if (!$statement) {
+            if (! $statement) {
                 throw new NotFoundHttpException("Statement {$statementId} not found");
             }
 
