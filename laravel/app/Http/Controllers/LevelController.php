@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\TableMissingException;
+use App\Games\TrueFalseImage\Http\Requests\CheckAnswersRequest;
 use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
 use App\Services\GameServiceFactory;
@@ -253,7 +254,7 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function check(Game $game, int $levelId, \App\Games\TrueFalseImage\Http\Requests\CheckAnswersRequest $request): JsonResponse
+    public function check(Game $game, int $levelId, CheckAnswersRequest $request): JsonResponse
     {
         try {
             $service = $this->factory->for($game);

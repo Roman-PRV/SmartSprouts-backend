@@ -187,7 +187,7 @@ class LevelControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_check_statement_from_different_level_returns_400(): void
+    public function test_check_statement_from_different_level_returns_422(): void
     {
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
@@ -230,7 +230,7 @@ class LevelControllerTest extends TestCase
             ],
         ]);
 
-        $response->assertStatus(422)  // Validation error
+        $response->assertStatus(422)
             ->assertJsonValidationErrors(['answers']);
     }
 
