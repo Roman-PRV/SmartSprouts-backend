@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\TableMissingException;
+use App\Http\Requests\CheckAnswersRequest;
 use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
 use App\Services\GameServiceFactory;
@@ -143,5 +144,129 @@ class LevelController extends Controller
         $resource = $this->resources->resourceFor($game, $level);
 
         return response()->json($resource->resolve(request()), 200);
+    }
+
+    /**
+     * Check player answers for a level
+     *
+     * @OA\Post(
+     *     path="/api/games/{game}/levels/{levelId}/check",
+     *     tags={"Levels"},
+     *     summary="Check player answers for a level",
+     *     description="Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
+     *
+     *     @OA\Parameter(
+     *         name="game",
+     *         in="path",
+     *         description="Game identifier (route-model bound).",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", format="int64", example=1)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="levelId",
+     *         in="path",
+     *         description="Level id",
+     *         required=true,
+     *
+     *         @OA\Schema(type="integer", format="int64", example=1)
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Player answers to validate",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/CheckAnswersRequest")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Validation results",
+     *
+     *         @OA\JsonContent(
+     *             type="object",
+     *
+     *             @OA\Property(
+     *                 property="results",
+     *                 type="array",
+     *
+     *                 @OA\Items(ref="#/components/schemas/TrueFalseImage.Result")
+     *             ),
+     *             example={
+     *                 "results": {
+     *                     {
+     *                         "statement_id": 10,
+     *                         "correct": true,
+     *                         "is_true": true,
+     *                         "explanation": "Because of Rayleigh scattering"
+     *                     },
+     *                     {
+     *                         "statement_id": 11,
+     *                         "correct": false,
+     *                         "is_true": false,
+     *                         "explanation": "Cats cannot fly naturally"
+     *                     }
+     *                 }
+     *             }
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Game or level not found",
+     *
+     *         @OA\JsonContent(
+     *             type="object",
+     *
+     *             @OA\Property(property="message", type="string", example="No query results for model [App\Models\Game] 99999")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error - invalid payload format, missing required fields, or statements don't belong to the specified level",
+     *
+     *         @OA\JsonContent(
+     *             type="object",
+     *
+     *             @OA\Property(property="message", type="string", example="The answers field is required."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={
+     *                     "answers": {"The statement 20 does not belong to level 1."},
+     *                     "answers.0.answer": {"The answers.0.answer field is required."}
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request - service configuration error",
+     *
+     *         @OA\JsonContent(
+     *             type="object",
+     *
+     *             @OA\Property(property="message", type="string", example="No game service configured for table prefix: invalid_prefix")
+     *         )
+     *     )
+     * )
+     */
+    public function check(Game $game, int $levelId, CheckAnswersRequest $request): JsonResponse
+    {
+        try {
+            $service = $this->factory->for($game);
+            $results = $service->check($levelId, $request->validated());
+        } catch (TableMissingException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        } catch (NotFoundHttpException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        }
+
+        return response()->json($results, 200);
     }
 }

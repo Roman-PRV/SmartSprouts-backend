@@ -140,7 +140,7 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
 
         // fetchDataForLevel should throw exception for level without statements
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("No statements found for level {$levelWithoutStatements->id} in true_false_text_statements");
+        $this->expectExceptionMessage("No statements found for level {$levelWithoutStatements->id}");
         $this->service->fetchDataForLevel($levelWithoutStatements->id);
     }
 

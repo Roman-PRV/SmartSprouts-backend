@@ -190,48 +190,150 @@
                     }
                 }
             }
+        },
+        "/api/games/{game}/levels/{levelId}/check": {
+            "post": {
+                "tags": [
+                    "Levels"
+                ],
+                "summary": "Check player answers for a level",
+                "description": "Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
+                "operationId": "ea2a7e9a47d694b2be8ca370b8ac2722",
+                "parameters": [
+                    {
+                        "name": "game",
+                        "in": "path",
+                        "description": "Game identifier (route-model bound).",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "levelId",
+                        "in": "path",
+                        "description": "Level id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Player answers to validate",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CheckAnswersRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Validation results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TrueFalseImage.Result"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "results": [
+                                        {
+                                            "statement_id": 10,
+                                            "correct": true,
+                                            "is_true": true,
+                                            "explanation": "Because of Rayleigh scattering"
+                                        },
+                                        {
+                                            "statement_id": 11,
+                                            "correct": false,
+                                            "is_true": false,
+                                            "explanation": "Cats cannot fly naturally"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Game or level not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model [App\\Models\\Game] 99999"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error - invalid payload format, missing required fields, or statements don't belong to the specified level",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The answers field is required."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "answers": [
+                                                    "The statement 20 does not belong to level 1."
+                                                ],
+                                                "answers.0.answer": [
+                                                    "The answers.0.answer field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - service configuration error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No game service configured for table prefix: invalid_prefix"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
-            "TrueFalseImage.AnswerRequest": {
-                "description": "Request payload for validating player's answers in the True/False Image game",
-                "required": [
-                    "image_id",
-                    "answers"
-                ],
-                "properties": {
-                    "image_id": {
-                        "description": "ID of the image level being answered",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "answers": {
-                        "description": "List of player's answers for each statement",
-                        "type": "array",
-                        "items": {
-                            "required": [
-                                "statement_id",
-                                "answer"
-                            ],
-                            "properties": {
-                                "statement_id": {
-                                    "description": "ID of the statement being answered",
-                                    "type": "integer",
-                                    "example": 10
-                                },
-                                "answer": {
-                                    "description": "Player's answer: true or false",
-                                    "type": "boolean",
-                                    "example": true
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
             "TrueFalseImage.Result": {
                 "description": "Validation result for a single statement in the True/False Image game",
                 "properties": {
@@ -347,6 +449,38 @@
                     "explanation": {
                         "description": "Explanation for the statement",
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CheckAnswersRequest": {
+                "description": "Generic request payload for validating player's answers across all game types",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "description": "List of player's answers for each statement",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "statement_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "statement_id": {
+                                    "description": "ID of the statement being answered",
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "answer": {
+                                    "description": "Player's answer",
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"

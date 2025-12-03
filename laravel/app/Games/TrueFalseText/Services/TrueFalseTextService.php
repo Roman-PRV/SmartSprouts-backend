@@ -47,7 +47,7 @@ class TrueFalseTextService implements GameServiceInterface
         $level = TrueFalseTextLevel::with('statements')->find($levelId);
 
         if (! $level) {
-            throw new NotFoundHttpException("Level {$levelId} not found in {$table}");
+            throw new NotFoundHttpException("Level {$levelId} not found");
         }
 
         $statementsTable = (new TrueFalseTextStatement)->getTable();
@@ -75,9 +75,68 @@ class TrueFalseTextService implements GameServiceInterface
         $statements = TrueFalseTextStatement::where('level_id', $levelId)->get();
 
         if ($statements->isEmpty()) {
-            throw new InvalidArgumentException("No statements found for level {$levelId} in {$table}");
+            throw new InvalidArgumentException("No statements found for level {$levelId}");
         }
 
         return $statements;
+    }
+
+    /**
+     * Check player answers for a level.
+     *
+     * @throws TableMissingException
+     * @throws NotFoundHttpException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function check(int $levelId, array $payload): array
+    {
+        $table = (new TrueFalseTextStatement)->getTable();
+
+        if (! Schema::hasTable($table)) {
+            throw new TableMissingException($table);
+        }
+
+        $level = TrueFalseTextLevel::with('statements')->find($levelId);
+
+        if (! $level) {
+            throw new NotFoundHttpException("Level {$levelId} not found");
+        }
+
+        $statements = $level->statements;
+
+        // Validate all statement_ids before processing
+        $statementIds = array_column($payload['answers'], 'statement_id');
+        $existingStatementIds = $statements->pluck('id')->all();
+
+        foreach ($statementIds as $statementId) {
+            if (! in_array($statementId, $existingStatementIds, true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'answers' => ["The statement {$statementId} does not belong to level {$levelId}."],
+                ]);
+            }
+        }
+
+        $results = [];
+
+        foreach ($payload['answers'] as $answer) {
+            $statementId = $answer['statement_id'];
+            $playerAnswer = $answer['answer'];
+
+            $statement = $statements->where('id', $statementId)->first();
+
+            // This should never be null because we validated above, but PHPStan doesn't know that
+            assert($statement !== null, 'Statement must exist after validation');
+
+            $correct = $playerAnswer === $statement->is_true;
+
+            $results[] = [
+                'statement_id' => $statementId,
+                'correct' => $correct,
+                'is_true' => $statement->is_true,
+                'explanation' => $statement->explanation,
+            ];
+        }
+
+        return ['results' => $results];
     }
 }
