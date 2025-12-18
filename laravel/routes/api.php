@@ -21,15 +21,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::post('auth/register', [AuthController::class, 'register']);
+Route::post('auth/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('auth/logout', [AuthController::class, 'logout']);
 
 Route::apiResource('games', GameController::class)->only(['index', 'show']);
 
-Route::get('games/{game}/levels', [LevelController::class, 'index'])
-    ->name('games.levels.index');
-Route::get('games/{game}/levels/{levelId}', [LevelController::class, 'show'])
-    ->name('games.levels.show');
+Route::apiResource('games.levels', LevelController::class)
+    ->only(['index', 'show']);
 Route::post('games/{game}/levels/{levelId}/check', [LevelController::class, 'check'])
     ->name('games.levels.check');
