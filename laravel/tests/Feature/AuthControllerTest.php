@@ -22,7 +22,7 @@ class AuthControllerTest extends TestCase
     /** @test */
     public function user_can_register_successfully(): void
     {
-        $response = $this->withMiddleware()->postJson('/api/register', [
+        $response = $this->withMiddleware()->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password123',
@@ -41,7 +41,7 @@ class AuthControllerTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'login@example.com',
             'password' => 'password123',
         ]);
@@ -58,7 +58,7 @@ class AuthControllerTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'wrong@example.com',
             'password' => 'wrongpass',
         ]);
@@ -72,7 +72,7 @@ class AuthControllerTest extends TestCase
     /** @test */
     public function registration_fails_without_password_confirmation(): void
     {
-        $response = $this->withMiddleware()->postJson('/api/register', [
+        $response = $this->withMiddleware()->postJson('/api/auth/register', [
             'name' => 'Edge User',
             'email' => 'edge@example.com',
             'password' => 'password123',
