@@ -43,6 +43,7 @@ See the instructions in the corresponding repository.
 - `prepare` Initializes Husky Git hooks. Required once after installing dependencies to enable commit message and pre-commit checks.
 
 ## 5. Database Schema
+```mermaid
 erDiagram
 	direction TB
 	failed_jobs {
@@ -115,6 +116,7 @@ erDiagram
 
 	true_false_image_levels||--o{true_false_image_statements:"has many"
 	true_false_text_levels||--o{true_false_text_statements:"has many"
+```
 
 ## 6. API Documentation
 
