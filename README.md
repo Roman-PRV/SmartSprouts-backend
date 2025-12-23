@@ -43,6 +43,80 @@ See the instructions in the corresponding repository.
 - `prepare` Initializes Husky Git hooks. Required once after installing dependencies to enable commit message and pre-commit checks.
 
 ## 5. Database Schema
+```mermaid
+erDiagram
+	direction TB
+	failed_jobs {
+		bigint id PK ""  
+		varchar uuid  "UNIQUE"  
+		text connection  ""  
+		text queue  ""  
+		longtext payload  ""  
+		longtext exception  ""  
+		timestamp failed_at  ""  
+	}
+
+	games {
+		bigint id PK ""  
+		varchar table_prefix  "UNIQUE NULLABLE"  
+		varchar key  "UNIQUE"  
+		varchar icon_url  ""  
+		tinyint is_active  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	true_false_image_levels {
+		bigint id PK ""  
+		varchar title  ""  
+		varchar image_url  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	true_false_image_statements {
+		bigint id PK ""  
+		bigint level_id FK ""  
+		text statement  ""  
+		tinyint is_true  ""  
+		text explanation  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	true_false_text_levels {
+		bigint id PK ""  
+		varchar title  ""  
+		varchar image_url  ""  
+		text text  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	true_false_text_statements {
+		bigint id PK ""  
+		bigint level_id FK ""  
+		text statement  ""  
+		tinyint is_true  ""  
+		text explanation  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	users {
+		bigint id PK ""  
+		varchar name  ""  
+		varchar email  "UNIQUE"  
+		timestamp email_verified_at  ""  
+		varchar password  ""  
+		varchar remember_token  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	true_false_image_levels||--o{true_false_image_statements:"has many"
+	true_false_text_levels||--o{true_false_text_statements:"has many"
+```
 
 ## 6. API Documentation
 
