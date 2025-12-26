@@ -334,6 +334,32 @@
     },
     "components": {
         "schemas": {
+            "TrueFalseImage.Level": {
+                "title": "TrueFalseImage.Level",
+                "description": "True/False Image Level resource",
+                "properties": {
+                    "id": {
+                        "description": "Level ID",
+                        "type": "integer"
+                    },
+                    "title": {
+                        "description": "The level title",
+                        "type": "string"
+                    },
+                    "image_url": {
+                        "description": "The level image URL",
+                        "type": "string"
+                    },
+                    "statements": {
+                        "description": "The level statements",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TrueFalseImage.Statement"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "TrueFalseImage.Result": {
                 "description": "Validation result for a single statement in the True/False Image game",
                 "properties": {
@@ -356,6 +382,29 @@
                         "description": "Explanation for the correct answer",
                         "type": "string",
                         "example": "Cats have pointy ears"
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalseImage.Statement": {
+                "title": "TrueFalseImage.Statement",
+                "description": "True/False Image Statement resource",
+                "properties": {
+                    "id": {
+                        "description": "Statement ID",
+                        "type": "integer"
+                    },
+                    "level_id": {
+                        "description": "Level ID",
+                        "type": "integer"
+                    },
+                    "statement": {
+                        "description": "The statement text",
+                        "type": "string"
+                    },
+                    "explanation": {
+                        "description": "Explanation for the statement",
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -441,10 +490,6 @@
                     "statement": {
                         "description": "The statement text",
                         "type": "string"
-                    },
-                    "is_true": {
-                        "description": "Whether the statement is true",
-                        "type": "boolean"
                     },
                     "explanation": {
                         "description": "Explanation for the statement",

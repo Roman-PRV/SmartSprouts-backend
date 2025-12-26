@@ -127,7 +127,7 @@ class LevelControllerTest extends TestCase
                 'title',
                 'image_url',
                 'statements' => [
-                    ['id', 'level_id', 'statement', 'is_true', 'explanation'],
+                    ['id', 'level_id', 'statement', 'explanation'],
                 ],
             ])
             ->assertJson([
@@ -140,7 +140,6 @@ class LevelControllerTest extends TestCase
             'id' => 10,
             'level_id' => 1,
             'statement' => 'The sky is blue',
-            'is_true' => true,
             'explanation' => 'Because of Rayleigh scattering',
         ]);
 
@@ -148,7 +147,6 @@ class LevelControllerTest extends TestCase
             'id' => 11,
             'level_id' => 1,
             'statement' => 'Cats can fly',
-            'is_true' => false,
             'explanation' => null,
         ]);
 
