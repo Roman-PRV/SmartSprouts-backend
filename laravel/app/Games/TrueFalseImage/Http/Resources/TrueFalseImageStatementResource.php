@@ -8,7 +8,33 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class TrueFalseImageStatementResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
+     * @OA\Schema(
+     *     schema="TrueFalseImage.Statement",
+     *     type="object",
+     *     title="TrueFalseImage.Statement",
+     *     description="True/False Image Statement resource",
+     *
+     *     @OA\Property(
+     *         property="id",
+     *         type="integer",
+     *         description="Statement ID"
+     *     ),
+     *     @OA\Property(
+     *         property="level_id",
+     *         type="integer",
+     *         description="Level ID"
+     *     ),
+     *     @OA\Property(
+     *         property="statement",
+     *         type="string",
+     *         description="The statement text"
+     *     ),
+     *     @OA\Property(
+     *         property="explanation",
+     *         type="string",
+     *         description="Explanation for the statement"
+     *     )
+     * )
      *
      * @param  \Illuminate\Http\Request  $request
      * @return array<string,mixed>
