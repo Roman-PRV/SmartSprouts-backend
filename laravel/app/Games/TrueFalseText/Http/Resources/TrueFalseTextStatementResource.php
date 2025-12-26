@@ -30,11 +30,6 @@ class TrueFalseTextStatementResource extends JsonResource
      *         description="The statement text"
      *     ),
      *     @OA\Property(
-     *         property="is_true",
-     *         type="boolean",
-     *         description="Whether the statement is true"
-     *     ),
-     *     @OA\Property(
      *         property="explanation",
      *         type="string",
      *         description="Explanation for the statement"
@@ -54,7 +49,6 @@ class TrueFalseTextStatementResource extends JsonResource
             'id' => $statement->id,
             'level_id' => $statement->level_id,
             'statement' => $statement->statement,
-            'is_true' => $statement->is_true,
             'explanation' => $statement->explanation,
         ];
     }
