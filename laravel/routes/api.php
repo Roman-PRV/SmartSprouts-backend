@@ -31,3 +31,12 @@ Route::apiResource('games.levels', LevelController::class)
     ->only(['index', 'show']);
 Route::post('games/{game}/levels/{levelId}/check', [LevelController::class, 'check'])
     ->name('games.levels.check');
+
+// Temporary debug route for localization verification
+Route::get('/debug/locale', function () {
+    return response()->json([
+        'locale' => app()->getLocale(),
+        'supported' => config('app.supported_locales'),
+        'fallback' => config('app.fallback_locale'),
+    ]);
+});
