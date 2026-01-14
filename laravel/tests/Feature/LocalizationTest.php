@@ -42,6 +42,14 @@ class LocalizationTest extends TestCase
         // 'fr' is not supported, 'es' is. So it should pick 'es'.
         $response = $this->getJson('/test-locale', ['Accept-Language' => 'fr;q=1.0, es;q=0.5']);
         $response->assertJson(['locale' => 'es']);
+
+        // Test Missing Header -> Should Fallback to 'en'
+        $response = $this->getJson('/test-locale');
+        $response->assertJson(['locale' => 'en']);
+
+        // Test Malformed Header -> Should Fallback to 'en'
+        $response = $this->getJson('/test-locale', ['Accept-Language' => 'malformed-header-value; garbage']);
+        $response->assertJson(['locale' => 'en']);
     }
 
     public function test_validation_messages_are_translated()
