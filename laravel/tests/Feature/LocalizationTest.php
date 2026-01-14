@@ -60,8 +60,16 @@ class LocalizationTest extends TestCase
         // Spanish
         $response = $this->postJson('/test-validation-loc', [], ['Accept-Language' => 'es']);
         $response->assertStatus(422);
-        // If translation works, it shouldn't be exactly the default English one.
-        // But checking locale via the previous test is the most robust way to verify the middleware.
-        // This test just ensures the hookup is end-to-end.
+
+        // Verify that the error message contains the specific localized substring
+        // We dynamically generate the expected message to make the test robust against copy changes
+        $expectedMessage = trans('validation.required', ['attribute' => 'missing field'], 'es');
+
+        $response->assertJsonFragment([
+            'missing_field' => [$expectedMessage],
+        ]);
+
+        // We do not check 'message' here because it depends on whether the exception is thrown
+        // from a FormRequest (which we customized) or generic validate() (which uses default).
     }
 }
