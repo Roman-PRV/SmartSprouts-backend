@@ -47,7 +47,7 @@ return [
     'timezone' => 'Поле :attribute має бути дійсною часовою зоною.',
     'unique' => 'Таке значення поля :attribute вже існує.',
     'uploaded' => 'Не вдалося завантажити :attribute.',
-    'uppercase' => 'Поле :attribute має бути верхньому регістрі.',
+    'uppercase' => 'Поле :attribute має бути у верхньому регістрі.',
     'url' => 'Поле :attribute має бути дійсним URL.',
     'ulid' => 'Поле :attribute має бути дійсним ULID.',
     'uuid' => 'Поле :attribute має бути дійсним UUID.',
