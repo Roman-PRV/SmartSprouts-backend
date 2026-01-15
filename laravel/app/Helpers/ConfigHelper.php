@@ -4,6 +4,9 @@ namespace App\Helpers;
 
 class ConfigHelper
 {
+    /**
+     * Get string from config with validation
+     */
     public static function getString(string $key, string $default = ''): string
     {
         $value = config($key);
