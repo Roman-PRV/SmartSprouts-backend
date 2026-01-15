@@ -64,11 +64,8 @@ class LocalizationTest extends TestCase
 			$request->validate(['missing_field' => 'required']);
 		});
 
-		// We assume 'es' lang files exist and have 'required' key.
-		// Standard Laravel 'es' validation for required usually contains "obligatorio" or "requerido".
-		// Let's just check it doesn't return the English "The missing field field is required."
-		// Actually, exact text assert is brittle.
-		// But I'll do a soft check.
+		// Verify that validation error messages are properly translated based on the Accept-Language header,
+		// using the Spanish ('es') localization for the 'required' rule on the 'missing field' attribute.
 
 		// Spanish
 		$response = $this->postJson('/test-validation-loc', [], ['Accept-Language' => 'es']);
