@@ -18,7 +18,7 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         /** @var array<string> $supportedLocales */
-        $supportedLocales = (array) config('app.supported_locales', []);
+        $supportedLocales = ConfigHelper::getStringList('app.supported_locales', []);
 
         $fallbackLocale = ConfigHelper::getString('app.fallback_locale', 'en');
 
