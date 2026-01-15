@@ -8,12 +8,19 @@ use Tests\TestCase;
 
 class LocalizationTest extends TestCase
 {
-	public function test_locale_middleware_sets_correct_locale_from_accept_language_header()
+	protected function setUp(): void
 	{
+		parent::setUp();
+
 		// Define a route for testing the locale setting
 		Route::middleware('api')->get('/test-locale', function () {
 			return response()->json(['locale' => app()->getLocale()]);
 		});
+	}
+
+	public function test_locale_middleware_sets_correct_locale_from_accept_language_header()
+	{
+		// Route is defined in setUp()
 
 		// Test English (Fallback or Explicit)
 		$response = $this->getJson('/test-locale', ['Accept-Language' => 'en']);
@@ -35,11 +42,9 @@ class LocalizationTest extends TestCase
 		$response = $this->getJson('/test-locale', ['Accept-Language' => 'fr']);
 		$response->assertJson(['locale' => 'en']);
 
-		// Test Unsupported + Supported (Supported should win if quality allows, or fallback?)
-		// If I send 'fr, es;q=0.5'. 'fr' is not supported. 'es' is.
-		// Symfony negotiation should pick 'es'???
-		// Let's test standard Symfony behavior: picks best *supported* match.
-		// 'fr' is not supported, 'es' is. So it should pick 'es'.
+		// Test Unsupported + Supported
+		// We request 'fr' (unsupported) with higher quality (1.0) and 'es' (supported) with lower quality (0.5).
+		// Standard Symfony negotiation ignores the unsupported 'fr' and picks the best *supported* match ('es').
 		$response = $this->getJson('/test-locale', ['Accept-Language' => 'fr;q=1.0, es;q=0.5']);
 		$response->assertJson(['locale' => 'es']);
 
@@ -77,7 +82,89 @@ class LocalizationTest extends TestCase
 			'missing_field' => [$expectedMessage],
 		]);
 
+		// Ukrainian
+		$response = $this->postJson('/test-validation-loc', [], ['Accept-Language' => 'uk']);
+		$response->assertStatus(422);
+
+		$expectedMessage = trans('validation.required', ['attribute' => 'missing field'], 'uk');
+
+		$response->assertJsonFragment([
+			'missing_field' => [$expectedMessage],
+		]);
+
 		// We do not check 'message' here because it depends on whether the exception is thrown
 		// from a FormRequest (which we customized) or generic validate() (which uses default).
+	}
+
+	public function test_locale_middleware_handles_empty_header()
+	{
+		$response = $this->getJson('/test-locale', ['Accept-Language' => '']);
+		$response->assertJson(['locale' => 'en']);
+	}
+
+	public function test_locale_middleware_handles_whitespace_header()
+	{
+		$response = $this->getJson('/test-locale', ['Accept-Language' => '   ']);
+		$response->assertJson(['locale' => 'en']);
+	}
+
+	public function test_locale_middleware_handles_case_insensitivity()
+	{
+		$response = $this->getJson('/test-locale', ['Accept-Language' => 'EN']);
+		$response->assertJson(['locale' => 'en']);
+	}
+
+	public function test_locale_middleware_handles_regional_variants_en_gb()
+	{
+		$response = $this->getJson('/test-locale', ['Accept-Language' => 'en-GB']);
+		$response->assertJson(['locale' => 'en']);
+	}
+
+	public function test_locale_middleware_handles_regional_variants_es_mx()
+	{
+		$response = $this->getJson('/test-locale', ['Accept-Language' => 'es-MX']);
+		$response->assertJson(['locale' => 'es']);
+	}
+
+	public function test_confirmed_rule_is_translated()
+	{
+		Route::middleware('api')->post('/test-validation-confirmed', function (Request $request) {
+			$request->validate([
+				'password' => 'confirmed',
+			]);
+		});
+
+		// Spanish
+		$response = $this->postJson('/test-validation-confirmed', [
+			'password' => 'secret',
+			'password_confirmation' => 'wrong',
+		], ['Accept-Language' => 'es']);
+
+		$response->assertStatus(422);
+
+		// Retrieve the localized attribute name for 'password'
+		$attribute = trans('validation.attributes.password', [], 'es');
+		if ($attribute === 'validation.attributes.password') {
+			$attribute = 'password';
+		}
+
+		$expectedMessage = trans('validation.confirmed', ['attribute' => $attribute], 'es');
+		$response->assertJsonFragment(['password' => [$expectedMessage]]);
+
+		// Ukrainian
+		$response = $this->postJson('/test-validation-confirmed', [
+			'password' => 'secret',
+			'password_confirmation' => 'wrong',
+		], ['Accept-Language' => 'uk']);
+
+		$response->assertStatus(422);
+
+		$attribute = trans('validation.attributes.password', [], 'uk');
+		if ($attribute === 'validation.attributes.password') {
+			$attribute = 'password';
+		}
+
+		$expectedMessage = trans('validation.confirmed', ['attribute' => $attribute], 'uk');
+		$response->assertJsonFragment(['password' => [$expectedMessage]]);
 	}
 }
