@@ -74,9 +74,9 @@ class ConfigHelperTest extends TestCase
         $invalidMap = [1 => 'value']; // Integer key
         Config::set('test.invalid_key_map', $invalidMap);
 
-        $result = ConfigHelper::getStringMap('test.invalid_key_map', ['default']);
+        $result = ConfigHelper::getStringMap('test.invalid_key_map', ['default_key' => 'default_value']);
 
-        $this->assertSame(['default'], $result);
+        $this->assertSame(['default_key' => 'default_value'], $result);
     }
 
     public function test_get_string_map_returns_default_if_value_not_string()
@@ -84,9 +84,9 @@ class ConfigHelperTest extends TestCase
         $invalidMap = ['key' => 123]; // Integer value
         Config::set('test.invalid_value_map', $invalidMap);
 
-        $result = ConfigHelper::getStringMap('test.invalid_value_map', ['default']);
+        $result = ConfigHelper::getStringMap('test.invalid_value_map', ['default_key' => 'default_value']);
 
-        $this->assertSame(['default'], $result);
+        $this->assertSame(['default_key' => 'default_value'], $result);
     }
 
     /**
@@ -123,10 +123,6 @@ class ConfigHelperTest extends TestCase
 
     public function test_get_string_list_ignores_keys_and_returns_values()
     {
-        // ConfigHelper::getStringList implementation:
-        // foreach ($value as $v) { ... } (keys ignored)
-        // return array_values($value); (keys reset)
-
         $associativeArray = ['key1' => 'value1', 'key2' => 'value2'];
         Config::set('test.assoc_list_key', $associativeArray);
 
