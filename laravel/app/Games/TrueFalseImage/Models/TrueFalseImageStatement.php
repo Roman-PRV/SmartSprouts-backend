@@ -5,6 +5,7 @@ namespace App\Games\TrueFalseImage\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * @property int $id
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TrueFalseImageStatement extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'true_false_image_statements';
 
@@ -29,6 +31,9 @@ class TrueFalseImageStatement extends Model
     protected $casts = [
         'is_true' => 'boolean',
     ];
+
+    /** @var array<int, string> */
+    public $translatable = ['statement', 'explanation'];
 
     public function level(): BelongsTo
     {
