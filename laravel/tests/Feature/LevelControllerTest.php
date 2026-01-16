@@ -50,14 +50,14 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_levels')->insert([
             [
                 'id' => 1,
-                'title' => json_encode(['en' => 'First level']),
+                'title' => json_encode(['en' => 'First level', 'es' => 'Primer nivel', 'uk' => 'Перший рівень']),
                 'image_url' => 'levels/first.png',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 2,
-                'title' => json_encode(['en' => 'Second level']),
+                'title' => json_encode(['en' => 'Second level', 'es' => 'Segundo nivel', 'uk' => 'Другий рівень']),
                 'image_url' => 'levels/second.png',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -92,7 +92,7 @@ class LevelControllerTest extends TestCase
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => json_encode(['en' => 'First level']),
+            'title' => json_encode(['en' => 'First level', 'es' => 'Primer nivel', 'uk' => 'Перший рівень']),
             'image_url' => 'levels/first.png',
             'created_at' => now(),
             'updated_at' => now(),
@@ -102,16 +102,16 @@ class LevelControllerTest extends TestCase
             [
                 'id' => 10,
                 'level_id' => 1,
-                'statement' => json_encode(['en' => 'The sky is blue']),
+                'statement' => json_encode(['en' => 'The sky is blue', 'es' => 'El cielo es azul', 'uk' => 'Небо блакитне']),
                 'is_true' => true,
-                'explanation' => json_encode(['en' => 'Because of Rayleigh scattering']),
+                'explanation' => json_encode(['en' => 'Because of Rayleigh scattering', 'es' => 'Debido a la dispersión de Rayleigh', 'uk' => 'Через розсіювання Релея']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 11,
                 'level_id' => 1,
-                'statement' => json_encode(['en' => 'Cats can fly']),
+                'statement' => json_encode(['en' => 'Cats can fly', 'es' => 'Los gatos pueden volar', 'uk' => 'Коти можуть літати']),
                 'is_true' => false,
                 'explanation' => null,
                 'created_at' => now(),
@@ -197,14 +197,14 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_levels')->insert([
             [
                 'id' => 1,
-                'title' => json_encode(['en' => 'Level 1']),
+                'title' => json_encode(['en' => 'Level 1', 'es' => 'Nivel 1', 'uk' => 'Рівень 1']),
                 'image_url' => 'level1.jpg',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 2,
-                'title' => json_encode(['en' => 'Level 2']),
+                'title' => json_encode(['en' => 'Level 2', 'es' => 'Nivel 2', 'uk' => 'Рівень 2']),
                 'image_url' => 'level2.jpg',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -214,9 +214,9 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_statements')->insert([
             'id' => 20,
             'level_id' => 2,  // Statement belongs to level 2
-            'statement' => json_encode(['en' => 'Statement from level 2']),
+            'statement' => json_encode(['en' => 'Statement from level 2', 'es' => 'Declaración del nivel 2', 'uk' => 'Твердження з рівня 2']),
             'is_true' => true,
-            'explanation' => json_encode(['en' => 'Explanation']),
+            'explanation' => json_encode(['en' => 'Explanation', 'es' => 'Explicación', 'uk' => 'Пояснення']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -243,7 +243,7 @@ class LevelControllerTest extends TestCase
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => json_encode(['en' => 'Test Level']),
+            'title' => json_encode(['en' => 'Test Level', 'es' => 'Nivel de prueba', 'uk' => 'Тестовий рівень']),
             'image_url' => 'test.jpg',
             'created_at' => now(),
             'updated_at' => now(),
@@ -253,18 +253,18 @@ class LevelControllerTest extends TestCase
             [
                 'id' => 10,
                 'level_id' => 1,
-                'statement' => json_encode(['en' => 'Statement 1']),
+                'statement' => json_encode(['en' => 'Statement 1', 'es' => 'Declaración 1', 'uk' => 'Твердження 1']),
                 'is_true' => true,
-                'explanation' => json_encode(['en' => 'Explanation 1']),
+                'explanation' => json_encode(['en' => 'Explanation 1', 'es' => 'Explicación 1', 'uk' => 'Пояснення 1']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 11,
                 'level_id' => 1,
-                'statement' => json_encode(['en' => 'Statement 2']),
+                'statement' => json_encode(['en' => 'Statement 2', 'es' => 'Declaración 2', 'uk' => 'Твердження 2']),
                 'is_true' => false,
-                'explanation' => json_encode(['en' => 'Explanation 2']),
+                'explanation' => json_encode(['en' => 'Explanation 2', 'es' => 'Explicación 2', 'uk' => 'Пояснення 2']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -321,9 +321,9 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_statements')->insert([
             'id' => 10,
             'level_id' => 1,
-            'statement' => json_encode(['en' => 'Statement']),
+            'statement' => json_encode(['en' => 'Statement', 'es' => 'Declaración', 'uk' => 'Твердження']),
             'is_true' => true,
-            'explanation' => json_encode(['en' => 'Explanation']),
+            'explanation' => json_encode(['en' => 'Explanation', 'es' => 'Explicación', 'uk' => 'Пояснення']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -404,5 +404,108 @@ class LevelControllerTest extends TestCase
                     ],
                 ],
             ]);
+    }
+
+    /**
+     * @dataProvider localeProvider
+     */
+    public function test_returns_levels_in_requested_locale(string $locale, string $expectedTitle): void
+    {
+        $game = Game::factory()->create([
+            'table_prefix' => 'true_false_image',
+        ]);
+
+        DB::table('true_false_image_levels')->truncate();
+
+        // Create level with translations for all supported locales
+        DB::table('true_false_image_levels')->insert([
+            'id' => 1,
+            'title' => json_encode([
+                'en' => 'First level',
+                'es' => 'Primer nivel',
+                'uk' => 'Перший рівень',
+            ]),
+            'image_url' => 'levels/first.png',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->withHeaders(['Accept-Language' => $locale])
+            ->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200)
+            ->assertJsonCount(1)
+            ->assertJsonFragment([
+                'title' => $expectedTitle,
+            ]);
+    }
+
+    public static function localeProvider(): array
+    {
+        return [
+            'English locale' => ['en', 'First level'],
+            'Spanish locale' => ['es', 'Primer nivel'],
+            'Ukrainian locale' => ['uk', 'Перший рівень'],
+        ];
+    }
+
+    /**
+     * @dataProvider localeProvider
+     */
+    public function test_show_returns_level_in_requested_locale(string $locale, string $expectedTitle): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('levels/first.png', 'dummy');
+
+        $game = Game::factory()->create([
+            'table_prefix' => 'true_false_image',
+        ]);
+
+        config(['filesystems.default' => 'public']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_statements')->truncate();
+
+        DB::table('true_false_image_levels')->insert([
+            'id' => 1,
+            'title' => json_encode([
+                'en' => 'First level',
+                'es' => 'Primer nivel',
+                'uk' => 'Перший рівень',
+            ]),
+            'image_url' => 'levels/first.png',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('true_false_image_statements')->insert([
+            'id' => 10,
+            'level_id' => 1,
+            'statement' => json_encode([
+                'en' => 'The sky is blue',
+                'es' => 'El cielo es azul',
+                'uk' => 'Небо блакитне',
+            ]),
+            'is_true' => true,
+            'explanation' => json_encode([
+                'en' => 'Because of Rayleigh scattering',
+                'es' => 'Debido a la dispersión de Rayleigh',
+                'uk' => 'Через розсіювання Релея',
+            ]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->withHeaders(['Accept-Language' => $locale])
+            ->getJson("/api/games/{$game->id}/levels/1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'title' => $expectedTitle,
+            ]);
+
+        // Verify statements are also localized
+        $statements = $response->json('statements');
+        $this->assertNotEmpty($statements);
     }
 }
