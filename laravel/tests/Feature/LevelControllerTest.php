@@ -50,14 +50,14 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_levels')->insert([
             [
                 'id' => 1,
-                'title' => 'First level',
+                'title' => json_encode(['en' => 'First level']),
                 'image_url' => 'levels/first.png',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 2,
-                'title' => 'Second level',
+                'title' => json_encode(['en' => 'Second level']),
                 'image_url' => 'levels/second.png',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -92,7 +92,7 @@ class LevelControllerTest extends TestCase
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => 'First level',
+            'title' => json_encode(['en' => 'First level']),
             'image_url' => 'levels/first.png',
             'created_at' => now(),
             'updated_at' => now(),
@@ -102,16 +102,16 @@ class LevelControllerTest extends TestCase
             [
                 'id' => 10,
                 'level_id' => 1,
-                'statement' => 'The sky is blue',
+                'statement' => json_encode(['en' => 'The sky is blue']),
                 'is_true' => true,
-                'explanation' => 'Because of Rayleigh scattering',
+                'explanation' => json_encode(['en' => 'Because of Rayleigh scattering']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 11,
                 'level_id' => 1,
-                'statement' => 'Cats can fly',
+                'statement' => json_encode(['en' => 'Cats can fly']),
                 'is_true' => false,
                 'explanation' => null,
                 'created_at' => now(),
@@ -197,14 +197,14 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_levels')->insert([
             [
                 'id' => 1,
-                'title' => 'Level 1',
+                'title' => json_encode(['en' => 'Level 1']),
                 'image_url' => 'level1.jpg',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 2,
-                'title' => 'Level 2',
+                'title' => json_encode(['en' => 'Level 2']),
                 'image_url' => 'level2.jpg',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -214,9 +214,9 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_statements')->insert([
             'id' => 20,
             'level_id' => 2,  // Statement belongs to level 2
-            'statement' => 'Statement from level 2',
+            'statement' => json_encode(['en' => 'Statement from level 2']),
             'is_true' => true,
-            'explanation' => 'Explanation',
+            'explanation' => json_encode(['en' => 'Explanation']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -243,7 +243,7 @@ class LevelControllerTest extends TestCase
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => 'Test Level',
+            'title' => json_encode(['en' => 'Test Level']),
             'image_url' => 'test.jpg',
             'created_at' => now(),
             'updated_at' => now(),
@@ -253,18 +253,18 @@ class LevelControllerTest extends TestCase
             [
                 'id' => 10,
                 'level_id' => 1,
-                'statement' => 'Statement 1',
+                'statement' => json_encode(['en' => 'Statement 1']),
                 'is_true' => true,
-                'explanation' => 'Explanation 1',
+                'explanation' => json_encode(['en' => 'Explanation 1']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 11,
                 'level_id' => 1,
-                'statement' => 'Statement 2',
+                'statement' => json_encode(['en' => 'Statement 2']),
                 'is_true' => false,
-                'explanation' => 'Explanation 2',
+                'explanation' => json_encode(['en' => 'Explanation 2']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -312,7 +312,7 @@ class LevelControllerTest extends TestCase
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => 'Test Level',
+            'title' => json_encode(['en' => 'Test Level']),
             'image_url' => 'test.jpg',
             'created_at' => now(),
             'updated_at' => now(),
@@ -321,9 +321,9 @@ class LevelControllerTest extends TestCase
         DB::table('true_false_image_statements')->insert([
             'id' => 10,
             'level_id' => 1,
-            'statement' => 'Statement',
+            'statement' => json_encode(['en' => 'Statement']),
             'is_true' => true,
-            'explanation' => 'Explanation',
+            'explanation' => json_encode(['en' => 'Explanation']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -357,7 +357,7 @@ class LevelControllerTest extends TestCase
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => 'Test Level',
+            'title' => json_encode(['en' => 'Test Level']),
             'image_url' => 'test.jpg',
             'created_at' => now(),
             'updated_at' => now(),
@@ -367,18 +367,18 @@ class LevelControllerTest extends TestCase
             [
                 'id' => 10,
                 'level_id' => 1,
-                'statement' => 'Statement 1',
+                'statement' => json_encode(['en' => 'Statement 1']),
                 'is_true' => true,
-                'explanation' => 'Explanation 1',
+                'explanation' => json_encode(['en' => 'Explanation 1']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'id' => 11,
                 'level_id' => 1,
-                'statement' => 'Statement 2',
+                'statement' => json_encode(['en' => 'Statement 2']),
                 'is_true' => false,
-                'explanation' => 'Explanation 2',
+                'explanation' => json_encode(['en' => 'Explanation 2']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
