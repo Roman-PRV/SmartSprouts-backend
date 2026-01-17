@@ -67,12 +67,12 @@ return new class extends Migration
 
             Schema::table('true_false_image_statements', function (Blueprint $table) {
                 $table->json('statement')->change();
-                $table->json('explanation')->change();
+                $table->json('explanation')->nullable()->change();
             });
 
             Schema::table('true_false_text_statements', function (Blueprint $table) {
                 $table->json('statement')->change();
-                $table->json('explanation')->change();
+                $table->json('explanation')->nullable()->change();
             });
         }
     }
@@ -95,12 +95,12 @@ return new class extends Migration
 
             Schema::table('true_false_image_statements', function (Blueprint $table) {
                 $table->text('statement')->change();
-                $table->text('explanation')->change();
+                $table->text('explanation')->nullable()->change();
             });
 
             Schema::table('true_false_text_statements', function (Blueprint $table) {
                 $table->text('statement')->change();
-                $table->text('explanation')->change();
+                $table->text('explanation')->nullable()->change();
             });
         }
 
