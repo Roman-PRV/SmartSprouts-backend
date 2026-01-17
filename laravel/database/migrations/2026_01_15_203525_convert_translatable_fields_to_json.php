@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -54,16 +56,24 @@ return new class extends Migration
 
         // Step 2: Change column types to JSON (only for MySQL, SQLite stores JSON as TEXT)
         if (DB::connection()->getDriverName() !== 'sqlite') {
-            DB::statement('ALTER TABLE true_false_image_levels MODIFY COLUMN title JSON');
+            Schema::table('true_false_image_levels', function (Blueprint $table) {
+                $table->json('title')->change();
+            });
 
-            DB::statement('ALTER TABLE true_false_text_levels MODIFY COLUMN title JSON');
-            DB::statement('ALTER TABLE true_false_text_levels MODIFY COLUMN text JSON');
+            Schema::table('true_false_text_levels', function (Blueprint $table) {
+                $table->json('title')->change();
+                $table->json('text')->change();
+            });
 
-            DB::statement('ALTER TABLE true_false_image_statements MODIFY COLUMN statement JSON');
-            DB::statement('ALTER TABLE true_false_image_statements MODIFY COLUMN explanation JSON');
+            Schema::table('true_false_image_statements', function (Blueprint $table) {
+                $table->json('statement')->change();
+                $table->json('explanation')->change();
+            });
 
-            DB::statement('ALTER TABLE true_false_text_statements MODIFY COLUMN statement JSON');
-            DB::statement('ALTER TABLE true_false_text_statements MODIFY COLUMN explanation JSON');
+            Schema::table('true_false_text_statements', function (Blueprint $table) {
+                $table->json('statement')->change();
+                $table->json('explanation')->change();
+            });
         }
     }
 
@@ -74,16 +84,24 @@ return new class extends Migration
     {
         // Step 1: Change column types back to VARCHAR/TEXT (only for MySQL)
         if (DB::connection()->getDriverName() !== 'sqlite') {
-            DB::statement('ALTER TABLE true_false_image_levels MODIFY COLUMN title VARCHAR(255)');
+            Schema::table('true_false_image_levels', function (Blueprint $table) {
+                $table->string('title')->change();
+            });
 
-            DB::statement('ALTER TABLE true_false_text_levels MODIFY COLUMN title VARCHAR(255)');
-            DB::statement('ALTER TABLE true_false_text_levels MODIFY COLUMN text TEXT');
+            Schema::table('true_false_text_levels', function (Blueprint $table) {
+                $table->string('title')->change();
+                $table->text('text')->change();
+            });
 
-            DB::statement('ALTER TABLE true_false_image_statements MODIFY COLUMN statement TEXT');
-            DB::statement('ALTER TABLE true_false_image_statements MODIFY COLUMN explanation TEXT');
+            Schema::table('true_false_image_statements', function (Blueprint $table) {
+                $table->text('statement')->change();
+                $table->text('explanation')->change();
+            });
 
-            DB::statement('ALTER TABLE true_false_text_statements MODIFY COLUMN statement TEXT');
-            DB::statement('ALTER TABLE true_false_text_statements MODIFY COLUMN explanation TEXT');
+            Schema::table('true_false_text_statements', function (Blueprint $table) {
+                $table->text('statement')->change();
+                $table->text('explanation')->change();
+            });
         }
 
         // Step 2: Extract Spanish text from JSON back to plain text
