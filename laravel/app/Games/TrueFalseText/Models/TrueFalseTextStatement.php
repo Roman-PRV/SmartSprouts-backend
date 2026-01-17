@@ -5,6 +5,7 @@ namespace App\Games\TrueFalseText\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * @property int $id
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TrueFalseTextStatement extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'true_false_text_statements';
 
@@ -29,6 +31,9 @@ class TrueFalseTextStatement extends Model
     protected $casts = [
         'is_true' => 'boolean',
     ];
+
+    /** @var array<int, string> */
+    public $translatable = ['statement', 'explanation'];
 
     public function level(): BelongsTo
     {
