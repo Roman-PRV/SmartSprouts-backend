@@ -82,4 +82,39 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['password']);
     }
+
+    /** @test */
+    public function user_can_retrieve_own_profile(): void
+    {
+        $user = \App\Models\User::factory()->create();
+
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/auth/me');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'user' => [
+                    'id',
+                    'name',
+                    'email',
+                    'email_verified_at',
+                    'created_at',
+                    'updated_at',
+                ],
+            ])
+            ->assertJson([
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+            ]);
+    }
+
+    /** @test */
+    public function unauthenticated_user_cannot_retrieve_profile(): void
+    {
+        $response = $this->getJson('/api/auth/me');
+
+        $response->assertUnauthorized();
+    }
 }
