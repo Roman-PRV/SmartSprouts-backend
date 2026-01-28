@@ -2,13 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\DTO\CheckAnswersDTO;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * @OA\Schema(
  *     schema="CheckAnswersRequest",
  *     type="object",
- *     description="Generic request payload for validating player's answers across all game types",
+ *     title="Check Answers Request",
+ *     description="Request payload for validating player's answers. Includes automatically injected properties from route and authentication.",
  *     required={"answers"},
  *
  *     @OA\Property(
@@ -20,11 +22,42 @@ use Illuminate\Foundation\Http\FormRequest;
  *             type="object",
  *             required={"statement_id", "answer"},
  *
- *             @OA\Property(property="statement_id", type="integer", example=10, description="ID of the statement being answered"),
- *             @OA\Property(property="answer", type="boolean", example=true, description="Player's answer")
+ *             @OA\Property(property="statement_id", type="integer", example=10),
+ *             @OA\Property(property="answer", type="boolean", example=true)
  *         )
- *     )
+ *     ),
+ *     @OA\Property(
+ *         property="user_id",
+ *         type="integer",
+ *         readOnly=true,
+ *         description="ID of the authenticated user (injected after validation)"
+ *     ),
+ *     @OA\Property(
+ *         property="level_id",
+ *         type="integer",
+ *         readOnly=true,
+ *         description="ID of the level from route (injected after validation)"
+ *     ),
+ *     @OA\Property(
+ *         property="game",
+ *         ref="#/components/schemas/Game",
+ *         readOnly=true,
+ *         description="Game model instance (injected after validation)"
+ *     ),
+ *
+ *     example={
+ *         "answers": {
+ *             {"statement_id": 10, "answer": true},
+ *             {"statement_id": 11, "answer": false}
+ *         }
+ *     }
  * )
+ *
+ * @property-read int $user_id
+ * @property-read int $level_id
+ * @property-read \App\Models\Game $game
+ *
+ * @method array validated(null|string $key = null, mixed $default = null)
  */
 class CheckAnswersRequest extends FormRequest
 {
@@ -33,7 +66,7 @@ class CheckAnswersRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     /**
@@ -48,5 +81,24 @@ class CheckAnswersRequest extends FormRequest
             'answers.*.statement_id' => 'required|integer',
             'answers.*.answer' => 'required|boolean',
         ];
+    }
+
+    protected function passedValidation()
+    {
+        $this->merge([
+            'user_id' => auth()->id(),
+            'game' => $this->route('game'),
+            'level_id' => $this->route('levelId'),
+        ]);
+    }
+
+    public function toDTO(): CheckAnswersDTO
+    {
+        return new CheckAnswersDTO(
+            userId: $this->user_id,
+            game: $this->game,
+            levelId: $this->level_id,
+            answers: $this->validated('answers'),
+        );
     }
 }
