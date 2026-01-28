@@ -499,7 +499,8 @@
                 "type": "object"
             },
             "CheckAnswersRequest": {
-                "description": "Generic request payload for validating player's answers across all game types",
+                "title": "Check Answers Request",
+                "description": "Request payload for validating player's answers. Includes automatically injected properties from route and authentication.",
                 "required": [
                     "answers"
                 ],
@@ -514,21 +515,44 @@
                             ],
                             "properties": {
                                 "statement_id": {
-                                    "description": "ID of the statement being answered",
                                     "type": "integer",
                                     "example": 10
                                 },
                                 "answer": {
-                                    "description": "Player's answer",
                                     "type": "boolean",
                                     "example": true
                                 }
                             },
                             "type": "object"
                         }
+                    },
+                    "user_id": {
+                        "description": "ID of the authenticated user (injected after validation)",
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "level_id": {
+                        "description": "ID of the level from route (injected after validation)",
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "game": {
+                        "$ref": "#/components/schemas/Game"
                     }
                 },
-                "type": "object"
+                "type": "object",
+                "example": {
+                    "answers": [
+                        {
+                            "statement_id": 10,
+                            "answer": true
+                        },
+                        {
+                            "statement_id": 11,
+                            "answer": false
+                        }
+                    ]
+                }
             },
             "Game": {
                 "title": "Game",

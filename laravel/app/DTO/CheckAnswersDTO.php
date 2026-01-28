@@ -7,9 +7,9 @@ use App\Models\Game;
 class CheckAnswersDTO
 {
     public function __construct(
-        public int $userId,
-        public Game $game,
-        public int $levelId,
-        public array $answers,
+        public readonly int $userId,
+        public readonly Game $game,
+        public readonly int $levelId,
+        public readonly array $answers,
     ) {}
 }
