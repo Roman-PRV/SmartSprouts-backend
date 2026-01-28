@@ -25,7 +25,8 @@ class LevelController extends Controller
         protected GameServiceFactory $factory,
         protected ResourceResolver $resources,
         protected GameResultService $gameResults,
-    ) {}
+    ) {
+    }
 
     /**
      * List levels for a game
@@ -262,7 +263,7 @@ class LevelController extends Controller
         try {
             $service = $this->factory->for($dto->game);
             $results = $service->check($dto);
-            $this->gameResults->save($dto->game, $dto->levelId, $results);
+            $this->gameResults->save($dto, $results);
         } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
