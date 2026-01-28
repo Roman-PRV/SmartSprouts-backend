@@ -6,6 +6,7 @@ use App\Exceptions\TableMissingException;
 use App\Http\Requests\CheckAnswersRequest;
 use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
+use App\Services\GameResultService;
 use App\Services\GameServiceFactory;
 use App\Services\ResourceResolver;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,8 @@ class LevelController extends Controller
 {
     public function __construct(
         protected GameServiceFactory $factory,
-        protected ResourceResolver $resources
+        protected ResourceResolver $resources,
+        protected GameResultService $gameResults,
     ) {}
 
     /**
@@ -254,11 +256,13 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function check(Game $game, int $levelId, CheckAnswersRequest $request): JsonResponse
+    public function check(CheckAnswersRequest $request, Game $game): JsonResponse
     {
+        $dto = $request->toDTO();
         try {
-            $service = $this->factory->for($game);
-            $results = $service->check($levelId, $request->validated());
+            $service = $this->factory->for($dto->game);
+            $results = $service->check($dto);
+            $this->gameResults->save($dto->game, $dto->levelId, $results);
         } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
