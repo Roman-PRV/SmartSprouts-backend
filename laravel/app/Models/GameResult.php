@@ -14,6 +14,7 @@ class GameResult extends Model
         'user_id',
         'game_id',
         'level_id',
+        'locale',
         'score',
         'total_questions',
         'details',
