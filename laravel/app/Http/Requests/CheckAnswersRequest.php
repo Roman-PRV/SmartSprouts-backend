@@ -23,8 +23,8 @@ use Illuminate\Foundation\Http\FormRequest;
  *             type="object",
  *             required={"statement_id", "answer"},
  *
- *             @OA\Property(property="statement_id", type="integer", example=10),
- *             @OA\Property(property="answer", type="boolean", example=true)
+ *             @OA\Property(property="statement_id", type="integer", example=10, description="ID of the statement being answered"),
+ *             @OA\Property(property="answer", type="boolean", example=true, description="Player's answer")
  *         )
  *     ),
  *     @OA\Property(

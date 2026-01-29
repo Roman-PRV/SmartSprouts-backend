@@ -515,10 +515,12 @@
                             ],
                             "properties": {
                                 "statement_id": {
+                                    "description": "ID of the statement being answered",
                                     "type": "integer",
                                     "example": 10
                                 },
                                 "answer": {
+                                    "description": "Player's answer",
                                     "type": "boolean",
                                     "example": true
                                 }
