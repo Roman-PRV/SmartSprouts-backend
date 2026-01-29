@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Game;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,8 @@ class LevelControllerTest extends TestCase
 
     public function test_missing_game_returns_404(): void
     {
-        $this->json('GET', $this->routeFor(99999))
+        $this->actingAs(User::factory()->create())
+            ->json('GET', $this->routeFor(99999))
             ->assertStatus(404);
     }
 
@@ -31,7 +33,8 @@ class LevelControllerTest extends TestCase
             'table_prefix' => 'no_such_prefix',
         ]);
 
-        $response = $this->json('GET', $this->routeFor($game));
+        $response = $this->actingAs(User::factory()->create())
+            ->json('GET', $this->routeFor($game));
         $expectedMessage = "No game service configured for table prefix: {$game->table_prefix}";
 
         $response->assertStatus(400)
@@ -64,7 +67,8 @@ class LevelControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->getJson("/api/games/{$game->id}/levels");
+        $response = $this->actingAs(User::factory()->create())
+            ->getJson("/api/games/{$game->id}/levels");
 
         $response->assertStatus(200)
             ->assertJsonCount(2)
@@ -119,7 +123,8 @@ class LevelControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->getJson("/api/games/{$game->id}/levels/1");
+        $response = $this->actingAs(User::factory()->create())
+            ->getJson("/api/games/{$game->id}/levels/1");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -155,11 +160,12 @@ class LevelControllerTest extends TestCase
 
     public function test_check_missing_game_returns_404(): void
     {
-        $response = $this->postJson('/api/games/99999/levels/1/check', [
-            'answers' => [
-                ['statement_id' => 1, 'answer' => true],
-            ],
-        ]);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson('/api/games/99999/levels/1/check', [
+                'answers' => [
+                    ['statement_id' => 1, 'answer' => true],
+                ],
+            ]);
 
         $response->assertStatus(404);
     }
@@ -171,16 +177,18 @@ class LevelControllerTest extends TestCase
         ]);
 
         // Missing required fields
-        $response = $this->postJson("/api/games/{$game->id}/levels/1/check", []);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson("/api/games/{$game->id}/levels/1/check", []);
 
         $response->assertStatus(422);
 
         // Invalid answer type
-        $response = $this->postJson("/api/games/{$game->id}/levels/1/check", [
-            'answers' => [
-                ['statement_id' => 1, 'answer' => 'not a boolean'],
-            ],
-        ]);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson("/api/games/{$game->id}/levels/1/check", [
+                'answers' => [
+                    ['statement_id' => 1, 'answer' => 'not a boolean'],
+                ],
+            ]);
 
         $response->assertStatus(422);
     }
@@ -222,11 +230,12 @@ class LevelControllerTest extends TestCase
         ]);
 
         // Try to check level 1 with statement from level 2
-        $response = $this->postJson("/api/games/{$game->id}/levels/1/check", [
-            'answers' => [
-                ['statement_id' => 20, 'answer' => true],
-            ],
-        ]);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson("/api/games/{$game->id}/levels/1/check", [
+                'answers' => [
+                    ['statement_id' => 20, 'answer' => true],
+                ],
+            ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['answers']);
@@ -270,12 +279,13 @@ class LevelControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson("/api/games/{$game->id}/levels/1/check", [
-            'answers' => [
-                ['statement_id' => 10, 'answer' => true],
-                ['statement_id' => 11, 'answer' => false],
-            ],
-        ]);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson("/api/games/{$game->id}/levels/1/check", [
+                'answers' => [
+                    ['statement_id' => 10, 'answer' => true],
+                    ['statement_id' => 11, 'answer' => false],
+                ],
+            ]);
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -328,11 +338,12 @@ class LevelControllerTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->postJson("/api/games/{$game->id}/levels/1/check", [
-            'answers' => [
-                ['statement_id' => 10, 'answer' => false], // Wrong answer
-            ],
-        ]);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson("/api/games/{$game->id}/levels/1/check", [
+                'answers' => [
+                    ['statement_id' => 10, 'answer' => false], // Wrong answer
+                ],
+            ]);
 
         $response->assertStatus(200)
             ->assertJson([
@@ -384,12 +395,13 @@ class LevelControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->postJson("/api/games/{$game->id}/levels/1/check", [
-            'answers' => [
-                ['statement_id' => 10, 'answer' => true],  // Correct
-                ['statement_id' => 11, 'answer' => true],  // Incorrect
-            ],
-        ]);
+        $response = $this->actingAs(User::factory()->create())
+            ->postJson("/api/games/{$game->id}/levels/1/check", [
+                'answers' => [
+                    ['statement_id' => 10, 'answer' => true],  // Correct
+                    ['statement_id' => 11, 'answer' => true],  // Incorrect
+                ],
+            ]);
 
         $response->assertStatus(200)
             ->assertJson([
@@ -430,7 +442,8 @@ class LevelControllerTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->withHeaders(['Accept-Language' => $locale])
+        $response = $this->actingAs(User::factory()->create())
+            ->withHeaders(['Accept-Language' => $locale])
             ->getJson("/api/games/{$game->id}/levels");
 
         $response->assertStatus(200)
@@ -496,7 +509,8 @@ class LevelControllerTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->withHeaders(['Accept-Language' => $locale])
+        $response = $this->actingAs(User::factory()->create())
+            ->withHeaders(['Accept-Language' => $locale])
             ->getJson("/api/games/{$game->id}/levels/1");
 
         $response->assertStatus(200)
@@ -507,5 +521,15 @@ class LevelControllerTest extends TestCase
         // Verify statements are also localized
         $statements = $response->json('statements');
         $this->assertNotEmpty($statements);
+    }
+
+    public function test_unauthenticated_user_cannot_access_game_routes(): void
+    {
+        $game = Game::factory()->create();
+
+        $this->getJson('/api/games')->assertStatus(401);
+        $this->getJson("/api/games/{$game->id}/levels")->assertStatus(401);
+        $this->getJson("/api/games/{$game->id}/levels/1")->assertStatus(401);
+        $this->postJson("/api/games/{$game->id}/levels/1/check", [])->assertStatus(401);
     }
 }

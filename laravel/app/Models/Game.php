@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Helpers\ConfigHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @OA\Schema(
@@ -44,5 +45,10 @@ class Game extends Model
         $cfgDefaultIcon = ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
         return url($disk->url($cfgDefaultIcon));
+    }
+
+    public function gameResults(): HasMany
+    {
+        return $this->hasMany(GameResult::class);
     }
 }

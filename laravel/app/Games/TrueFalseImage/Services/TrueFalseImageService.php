@@ -3,6 +3,7 @@
 namespace App\Games\TrueFalseImage\Services;
 
 use App\Contracts\GameServiceInterface;
+use App\DTO\CheckAnswersDTO;
 use App\Exceptions\TableMissingException;
 use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
@@ -88,7 +89,7 @@ class TrueFalseImageService implements GameServiceInterface
      * @throws NotFoundHttpException
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function check(int $levelId, array $payload): array
+    public function check(CheckAnswersDTO $dto): array
     {
         $table = (new TrueFalseImageStatement)->getTable();
 
@@ -96,29 +97,29 @@ class TrueFalseImageService implements GameServiceInterface
             throw new TableMissingException($table);
         }
 
-        $level = TrueFalseImageLevel::with('statements')->find($levelId);
+        $level = TrueFalseImageLevel::with('statements')->find($dto->levelId);
 
         if (! $level) {
-            throw new NotFoundHttpException("Level {$levelId} not found");
+            throw new NotFoundHttpException("Level {$dto->levelId} not found");
         }
 
         $statements = $level->statements;
 
         // Validate all statement_ids before processing
-        $statementIds = array_column($payload['answers'], 'statement_id');
+        $statementIds = array_column($dto->answers, 'statement_id');
         $existingStatementIds = $statements->pluck('id')->all();
 
         foreach ($statementIds as $statementId) {
             if (! in_array($statementId, $existingStatementIds, true)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'answers' => ["The statement {$statementId} does not belong to level {$levelId}."],
+                    'answers' => ["The statement {$statementId} does not belong to level {$dto->levelId}."],
                 ]);
             }
         }
 
         $results = [];
 
-        foreach ($payload['answers'] as $answer) {
+        foreach ($dto->answers as $answer) {
             $statementId = $answer['statement_id'];
             $playerAnswer = $answer['answer'];
 

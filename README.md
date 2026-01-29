@@ -114,8 +114,23 @@ erDiagram
 		timestamp updated_at  ""  
 	}
 
+	game_results {
+		bigint id PK ""
+		bigint user_id FK ""
+		bigint game_id FK ""
+		unsigned_integer level_id ""
+		varchar locale ""
+		unsigned_integer score ""
+		unsigned_integer total_questions ""
+		json details "NULLABLE"
+		timestamp created_at ""
+		timestamp updated_at ""
+	}
+
 	true_false_image_levels||--o{true_false_image_statements:"has many"
 	true_false_text_levels||--o{true_false_text_statements:"has many"
+	users||--o{game_results:"has many"
+	games||--o{game_results:"has many"
 ```
 
 ## 6. API Documentation

@@ -2,10 +2,13 @@
 
 namespace Tests\Unit\Games\TrueFalseImage\Services;
 
+use App\DTO\CheckAnswersDTO;
 use App\Exceptions\TableMissingException;
 use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Games\TrueFalseImage\Services\TrueFalseImageService;
+use App\Models\Game;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -43,14 +46,15 @@ class TrueFalseImageServiceTest extends TestCase
             'explanation' => 'Explanation 2',
         ]);
 
-        $payload = [
-            'answers' => [
-                ['statement_id' => $statement1->id, 'answer' => true],
-                ['statement_id' => $statement2->id, 'answer' => false],
-            ],
+        $answers = [
+            ['statement_id' => $statement1->id, 'answer' => true],
+            ['statement_id' => $statement2->id, 'answer' => false],
         ];
 
-        $result = $this->service->check($level->id, $payload);
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+        $dto = new CheckAnswersDTO($user->id, $game, $level->id, $answers);
+        $result = $this->service->check($dto);
 
         $this->assertArrayHasKey('results', $result);
         $this->assertCount(2, $result['results']);
@@ -73,13 +77,11 @@ class TrueFalseImageServiceTest extends TestCase
             'explanation' => 'Explanation',
         ]);
 
-        $payload = [
-            'answers' => [
-                ['statement_id' => $statement->id, 'answer' => false],
-            ],
-        ];
-
-        $result = $this->service->check($level->id, $payload);
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+        $answers = [['statement_id' => $statement->id, 'answer' => false]];
+        $dto = new CheckAnswersDTO($user->id, $game, $level->id, $answers);
+        $result = $this->service->check($dto);
 
         $this->assertArrayHasKey('results', $result);
         $this->assertCount(1, $result['results']);
@@ -104,7 +106,17 @@ class TrueFalseImageServiceTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
         $this->expectExceptionMessage('The statement 99999 does not belong to level');
 
-        $this->service->check($level->id, $payload);
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+
+        $dto = new CheckAnswersDTO(
+            userId: $user->id,
+            game: $game,
+            levelId: $level->id,
+            answers: $payload['answers']
+        );
+
+        $this->service->check($dto);
     }
 
     /** @test */
@@ -122,7 +134,17 @@ class TrueFalseImageServiceTest extends TestCase
                 ],
             ];
 
-            $this->service->check(1, $payload);
+            $game = Game::factory()->create();
+            $user = User::factory()->create();
+
+            $dto = new CheckAnswersDTO(
+                userId: $user->id,
+                game: $game,
+                levelId: 1,
+                answers: $payload['answers']
+            );
+
+            $this->service->check($dto);
         } catch (TableMissingException $e) {
             $exceptionThrown = true;
         } finally {
@@ -155,14 +177,14 @@ class TrueFalseImageServiceTest extends TestCase
             'explanation' => 'Explanation 2',
         ]);
 
-        $payload = [
-            'answers' => [
-                ['statement_id' => $statement1->id, 'answer' => true],  // correct
-                ['statement_id' => $statement2->id, 'answer' => true],  // incorrect
-            ],
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+        $answers = [
+            ['statement_id' => $statement1->id, 'answer' => true],
+            ['statement_id' => $statement2->id, 'answer' => true],
         ];
-
-        $result = $this->service->check($level->id, $payload);
+        $dto = new CheckAnswersDTO($user->id, $game, $level->id, $answers);
+        $result = $this->service->check($dto);
 
         $this->assertArrayHasKey('results', $result);
         $this->assertCount(2, $result['results']);
@@ -185,13 +207,11 @@ class TrueFalseImageServiceTest extends TestCase
             'explanation' => 'Explanation text',
         ]);
 
-        $payload = [
-            'answers' => [
-                ['statement_id' => $statement->id, 'answer' => true],
-            ],
-        ];
-
-        $result = $this->service->check($level->id, $payload);
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+        $answers = [['statement_id' => $statement->id, 'answer' => true]];
+        $dto = new CheckAnswersDTO($user->id, $game, $level->id, $answers);
+        $result = $this->service->check($dto);
 
         $this->assertArrayHasKey('results', $result);
         $firstResult = $result['results'][0];
