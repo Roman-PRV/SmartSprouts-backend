@@ -76,7 +76,7 @@ class CheckAnswersRequest extends FormRequest
         ];
     }
 
-    protected function passedValidation()
+    protected function passedValidation(): void
     {
         $game = $this->route('game');
 
