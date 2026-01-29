@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('level_id');
+            $table->index(['game_id', 'level_id']);
             $table->string('locale', 10);
             $table->unsignedInteger('score');
             $table->unsignedInteger('total_questions');
