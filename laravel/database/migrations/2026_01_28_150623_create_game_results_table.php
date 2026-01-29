@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('game_results', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('game_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('game_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('level_id');
             $table->string('locale', 10);
             $table->unsignedInteger('score');
