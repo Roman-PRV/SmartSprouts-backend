@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\DTO\CheckAnswersDTO;
+use App\Models\Game;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -55,7 +56,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *
  * @property-read int $user_id
  * @property-read int $level_id
- * @property-read \App\Models\Game $game
+ * @property-read Game $game
  *
  * @method array validated(null|string $key = null, mixed $default = null)
  */
@@ -85,9 +86,15 @@ class CheckAnswersRequest extends FormRequest
 
     protected function passedValidation()
     {
+        $game = $this->route('game');
+
+        if (! $game instanceof Game) {
+            $game = Game::findOrFail($game);
+        }
+
         $this->merge([
             'user_id' => auth()->id(),
-            'game' => $this->route('game'),
+            'game' => $game,
             'level_id' => $this->route('levelId'),
         ]);
     }

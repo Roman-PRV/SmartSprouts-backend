@@ -257,7 +257,7 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function check(CheckAnswersRequest $request, Game $game): JsonResponse
+    public function check(CheckAnswersRequest $request): JsonResponse
     {
         $dto = $request->toDTO();
         try {
