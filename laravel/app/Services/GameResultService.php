@@ -28,6 +28,9 @@ class GameResultService
                 'details' => $resultsArray,
             ]);
         } catch (\Throwable $e) {
+            // We intentionally catch and log the exception without re-throwing it.
+            // This ensures that a failure in saving the game result does not
+            // prevent the user from seeing their score (graceful degradation).
             \Log::error('Failed to save game result: '.$e->getMessage(), [
                 'game_id' => $dto->game->id,
                 'level_id' => $dto->levelId,

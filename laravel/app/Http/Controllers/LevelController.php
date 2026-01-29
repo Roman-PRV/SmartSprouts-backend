@@ -25,8 +25,7 @@ class LevelController extends Controller
         protected GameServiceFactory $factory,
         protected ResourceResolver $resources,
         protected GameResultService $gameResults,
-    ) {
-    }
+    ) {}
 
     /**
      * List levels for a game
