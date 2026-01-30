@@ -28,4 +28,16 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
             'voice' => env('OPENAI_TTS_VOICE', 'alloy'),
         ],
     ],
+
+    'deepl' => [
+        'translation' => [
+            'request_timeout' => (int) env('DEEPL_REQUEST_TIMEOUT', 30),
+            'connect_timeout' => (int) env('DEEPL_CONNECT_TIMEOUT', 10),
+            'retry_times' => (int) env('DEEPL_RETRY_TIMES', 3),
+            'retry_sleep' => (int) env('DEEPL_RETRY_SLEEP', 1000),
+            'locale_map' => [
+                'en' => 'en-US',
+            ],
+        ],
+    ],
 ];
