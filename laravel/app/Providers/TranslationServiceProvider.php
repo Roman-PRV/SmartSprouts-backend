@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Contracts\TranslationProviderInterface;
 use App\Helpers\ConfigHelper;
 use App\Services\Translation\Providers\DeepLProvider;
 use App\Services\Translation\Providers\OpenAiProvider;
+use App\Services\Translation\TranslationManager;
 use DeepL\DeepLClient;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
@@ -28,7 +30,7 @@ class TranslationServiceProvider extends ServiceProvider
                 ->make();
         });
 
-        $this->app->singleton(DeepLClient::class, function () {
+        $this->app->singleton(DeepLClient::class, function ($app) {
             return new DeepLClient(ConfigHelper::getString('services.deepl.api_key'), [
                 'timeout' => config('ai.deepl.translation.request_timeout'),
                 'connect_timeout' => config('ai.deepl.translation.connect_timeout'),
@@ -55,6 +57,10 @@ class TranslationServiceProvider extends ServiceProvider
                 ConfigHelper::getStringMap('ai.deepl.translation.locale_map')
             );
         });
+
+        $this->app->singleton(TranslationManager::class);
+
+        $this->app->bind(TranslationProviderInterface::class, TranslationManager::class);
     }
 
     /**

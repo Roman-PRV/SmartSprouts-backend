@@ -6,7 +6,7 @@ use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResult;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
-use App\Helpers\ConfigHelper;
+use App\Services\Translation\Traits\HandlesTranslationResults;
 use Illuminate\Support\Facades\Log;
 use OpenAI\Contracts\ClientContract;
 use OpenAI\Exceptions\ErrorException;
@@ -15,8 +15,18 @@ use Throwable;
 
 class OpenAiProvider implements TranslationProviderInterface
 {
+    use HandlesTranslationResults;
+
+    /**
+     * @param  array<int, string>  $locales
+     */
     public function __construct(
-        private readonly ClientContract $client
+        private readonly ClientContract $client,
+        private readonly array $locales,
+        private readonly int $retryTimes,
+        private readonly int $retrySleep,
+        private readonly string $model,
+        private readonly string $template,
     ) {}
 
     /**
@@ -24,22 +34,14 @@ class OpenAiProvider implements TranslationProviderInterface
      */
     public function translate(string $text): TranslationResult
     {
-        $config = [
-            'locales' => ConfigHelper::getStringList('app.supported_locales'),
-            'times' => ConfigHelper::getInt('ai.openai.translation.retry_times', 3),
-            'sleep' => ConfigHelper::getInt('ai.openai.translation.retry_sleep', 1000),
-            'model' => ConfigHelper::getString('ai.openai.translation.model'),
-            'template' => ConfigHelper::getString('ai.openai.translation.system_prompt'),
-        ];
-
         try {
-            $data = retry($config['times'], function () use ($text, $config) {
-                $systemPrompt = $this->buildSystemPrompt($config['locales'], $config['template']);
+            $data = retry($this->retryTimes, function () use ($text) {
+                $systemPrompt = $this->buildSystemPrompt($this->locales, $this->template);
 
-                $responseData = $this->callApi($systemPrompt, $text, $config['model']);
+                $responseData = $this->callApi($systemPrompt, $text, $this->model);
 
-                return $this->parseResponse($responseData, $config['locales']);
-            }, $config['sleep'], $this->getRetryDecider());
+                return $this->sanitizeResults($responseData, $this->locales);
+            }, $this->retrySleep, $this->getRetryDecider());
 
             return new TranslationResult($data);
         } catch (Throwable $e) {
@@ -96,31 +98,6 @@ class OpenAiProvider implements TranslationProviderInterface
     }
 
     /**
-     * Parse and validate the API response.
-     *
-     * @param  array<string, mixed>  $data
-     * @param  array<int, string>  $locales
-     * @return array<string, string>
-     *
-     * @throws TranslationFailedException
-     */
-    private function parseResponse(array $data, array $locales): array
-    {
-        if (json_last_error() !== JSON_ERROR_NONE || empty($data)) {
-            throw new TranslationFailedException(__('exceptions.translation.invalid_json'));
-        }
-
-        foreach ($locales as $locale) {
-            if (! isset($data[$locale]) || ! is_string($data[$locale])) {
-                throw new TranslationFailedException(__('exceptions.translation.missing_locale', ['locale' => $locale]));
-            }
-        }
-
-        /** @var array<string, string> $data */
-        return $data;
-    }
-
-    /**
      * Centralized error handling for OpenAI service.
      *
      * @param  array<string, mixed>  $context  Додаткові дані для логів
@@ -151,7 +128,7 @@ class OpenAiProvider implements TranslationProviderInterface
         ]));
 
         return new TranslationFailedException(
-            $e->getMessage() ?: 'An unknown error occurred during translation.',
+            $e->getMessage() ?: __('exceptions.translation.failed'),
             (int) $e->getCode(),
             $e
         );

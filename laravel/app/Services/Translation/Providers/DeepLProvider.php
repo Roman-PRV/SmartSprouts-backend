@@ -6,7 +6,7 @@ use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResult;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
-use App\Helpers\ConfigHelper;
+use App\Services\Translation\Traits\HandlesTranslationResults;
 use DeepL\DeepLClient;
 use DeepL\DeepLException;
 use Illuminate\Support\Facades\Log;
@@ -14,11 +14,10 @@ use Throwable;
 
 class DeepLProvider implements TranslationProviderInterface
 {
+    use HandlesTranslationResults;
+
     /**
-     * @param  DeepLClient  $client
      * @param  array<int, string>  $locales
-     * @param  int  $retryTimes
-     * @param  int  $retrySleep
      * @param  array<string, string>  $localeMap
      */
     public function __construct(
@@ -27,8 +26,7 @@ class DeepLProvider implements TranslationProviderInterface
         private readonly int $retryTimes,
         private readonly int $retrySleep,
         private readonly array $localeMap,
-    ) {
-    }
+    ) {}
 
     /**
      * Translate the given text into all supported locales.
@@ -61,32 +59,6 @@ class DeepLProvider implements TranslationProviderInterface
         $sanitized = $this->sanitizeResults($translations, $this->locales);
 
         return new TranslationResult($sanitized);
-    }
-
-    /**
-     * Sanitize and validate translation results.
-     *
-     * @param  array<string, mixed>  $results
-     * @param  array<int, string>  $allowedLocales
-     * @return array<string, string>
-     */
-    private function sanitizeResults(array $results, array $allowedLocales): array
-    {
-        $sanitized = array_intersect_key($results, array_flip($allowedLocales));
-
-        foreach ($allowedLocales as $locale) {
-            if (! isset($sanitized[$locale]) || ! is_string($sanitized[$locale]) || trim($sanitized[$locale]) === '') {
-                Log::warning("DeepLProvider: Translation for locale '{$locale}' is missing or invalid.", [
-                    'locale' => $locale,
-                    'available_locales' => array_keys($results),
-                ]);
-
-                $sanitized[$locale] = __('exceptions.translation.not_found', [], $locale);
-            }
-        }
-
-        /** @var array<string, string> $sanitized */
-        return $sanitized;
     }
 
     /**
@@ -138,7 +110,7 @@ class DeepLProvider implements TranslationProviderInterface
         ]));
 
         return new TranslationFailedException(
-            $e->getMessage() ?: 'An unknown error occurred during DeepL translation.',
+            $e->getMessage() ?: __('exceptions.translation.failed'),
             (int) $e->getCode(),
             $e
         );
