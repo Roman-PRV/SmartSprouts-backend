@@ -208,4 +208,28 @@ class OpenAiProviderTest extends TestCase
 
         $this->provider->translate($text);
     }
+
+    public function test_it_does_not_retry_on_auth_error(): void
+    {
+        $text = 'Secret';
+
+        // Create ErrorException for auth error
+        $reflection = new \ReflectionClass(ErrorException::class);
+        $exception = $reflection->newInstanceWithoutConstructor();
+        $contentsProperty = $reflection->getProperty('contents');
+        $contentsProperty->setAccessible(true);
+        $contentsProperty->setValue($exception, [
+            'message' => 'Incorrect API key provided',
+            'type' => 'invalid_request_error',
+            'code' => 'invalid_api_key',
+        ]);
+
+        $this->chat->shouldReceive('create')
+            ->once() // Should not retry
+            ->andThrow($exception);
+
+        $this->expectException(TranslationFailedException::class);
+
+        $this->provider->translate($text);
+    }
 }

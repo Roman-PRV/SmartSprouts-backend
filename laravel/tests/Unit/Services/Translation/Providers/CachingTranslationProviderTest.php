@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Services\Translation;
+namespace Tests\Unit\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResult;
