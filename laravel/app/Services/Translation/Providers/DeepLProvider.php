@@ -75,7 +75,7 @@ class DeepLProvider implements TranslationProviderInterface
     private function getRetryDecider(): callable
     {
         return function (Throwable $e) {
-            if ($e instanceof DeepLException && $this->isQuotaError($e)) {
+            if ($e instanceof DeepLException && ($this->isQuotaError($e) || $this->isAuthError($e))) {
                 return false;
             }
             if ($e instanceof TranslationFailedException) {
@@ -122,6 +122,14 @@ class DeepLProvider implements TranslationProviderInterface
             (int) $e->getCode(),
             $e
         );
+    }
+
+    /**
+     * Determine if the DeepL error is related to authentication.
+     */
+    private function isAuthError(DeepLException $e): bool
+    {
+        return $e->getCode() === 403;
     }
 
     /**

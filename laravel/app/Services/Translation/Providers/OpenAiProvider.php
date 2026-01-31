@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 use OpenAI\Contracts\ClientContract;
 use OpenAI\Exceptions\ErrorException;
 use OpenAI\Exceptions\TransporterException;
-use Throwable;
 
 class OpenAiProvider implements TranslationProviderInterface
 {
@@ -44,7 +43,7 @@ class OpenAiProvider implements TranslationProviderInterface
             }, $this->retrySleep, $this->getRetryDecider());
 
             return new TranslationResult($data);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             throw $this->handleError($e, ['input_text' => $text]);
         }
     }
@@ -59,11 +58,20 @@ class OpenAiProvider implements TranslationProviderInterface
 
     private function getRetryDecider(): callable
     {
-        return function (Throwable $e) {
-            if ($e instanceof ErrorException && $this->isQuotaError($e)) {
+        return function (\Throwable $e) {
+            // Do not retry on quota/billing/auth errors
+            if ($this->isQuotaError($e) || $this->isAuthError($e)) {
                 return false;
             }
+
+            // Do not retry if it's already a wrapped TranslationFailedException
             if ($e instanceof TranslationFailedException) {
+                return false;
+            }
+
+            // Do not retry on structural errors (like the array_map issue in SDK)
+            /** @phpstan-ignore-next-line */
+            if ($e instanceof \Error || $e instanceof \TypeError) {
                 return false;
             }
 
@@ -89,7 +97,10 @@ class OpenAiProvider implements TranslationProviderInterface
     private function callApi(string $systemPrompt, string $text, string $model): array
     {
 
-        $response = $this->client->chat()->create([
+        // We use @ here to suppress the SDK warning "Undefined array key choices"
+        // which happens when the API returns an error response that the SDK fails to parse properly.
+        // The failure will still be caught and handled as a TypeError or ErrorException.
+        $response = @$this->client->chat()->create([
             'model' => $model,
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt],
@@ -97,6 +108,10 @@ class OpenAiProvider implements TranslationProviderInterface
             ],
             'response_format' => ['type' => 'json_object'],
         ]);
+
+        if (empty($response->choices)) {
+            throw new TranslationFailedException(__('exceptions.translation.failed').' (Empty choices)');
+        }
 
         $content = $response->choices[0]->message->content ?? '{}';
 
@@ -110,7 +125,7 @@ class OpenAiProvider implements TranslationProviderInterface
      *
      * @param  array<string, mixed>  $context  Додаткові дані для логів
      */
-    private function handleError(Throwable $e, array $context = []): Throwable
+    private function handleError(\Throwable $e, array $context = []): \Throwable
     {
         if ($e instanceof ErrorException && $this->isQuotaError($e)) {
             return new InsufficientFundsException;
@@ -128,6 +143,23 @@ class OpenAiProvider implements TranslationProviderInterface
             return $e;
         }
 
+        if ($e instanceof \TypeError || $e instanceof \Error) {
+            $message = $e->getMessage();
+            Log::error('OpenAiProvider: SDK internal error (likely corrupt response)', array_merge($context, [
+                'message' => $message,
+            ]));
+
+            // If it's a TypeError from array_map/null, it means 'choices' (or another expected key) is missing
+            $isStructuralError = str_contains($message, 'array_map') && str_contains($message, 'null');
+            $errorInfo = $isStructuralError ? ' (Unexpected response structure - check API Key)' : ' (Internal SDK Error)';
+
+            return new TranslationFailedException(
+                __('exceptions.translation.failed').$errorInfo,
+                0,
+                $e
+            );
+        }
+
         Log::error('OpenAiProvider: Unexpected translation error', array_merge($context, [
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
@@ -143,10 +175,32 @@ class OpenAiProvider implements TranslationProviderInterface
     }
 
     /**
+     * Determine if the API error is related to authentication.
+     */
+    private function isAuthError(\Throwable $e): bool
+    {
+        if ($e instanceof ErrorException) {
+            return $e->getErrorCode() === 'invalid_api_key';
+        }
+
+        // Check message for common auth-related strings if it's not a standard ErrorException
+        $message = $e->getMessage();
+
+        return str_contains($message, 'invalid_api_key') ||
+            str_contains($message, 'Unauthorized') ||
+            str_contains($message, 'Unauthenticated') ||
+            str_contains($message, '401');
+    }
+
+    /**
      * Determine if the API error is related to billing or quota limits.
      */
-    private function isQuotaError(ErrorException $e): bool
+    private function isQuotaError(\Throwable $e): bool
     {
+        if (! $e instanceof ErrorException) {
+            return false;
+        }
+
         $code = $e->getErrorCode();
         $type = $e->getErrorType();
 
