@@ -23,6 +23,38 @@ class ConfigHelper
     }
 
     /**
+     * Get integer from config with validation
+     */
+    public static function getInt(string $key, int $default = 0): int
+    {
+        $value = config($key);
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return $default;
+    }
+
+    /**
+     * Get boolean from config with validation
+     */
+    public static function getBool(string $key, bool $default = false): bool
+    {
+        $value = config($key);
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return $default;
+    }
+
+    /**
      * Get array from config with validation
      *
      * @param  array<string, string>  $default
