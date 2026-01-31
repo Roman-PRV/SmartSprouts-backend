@@ -41,6 +41,20 @@ class ConfigHelper
     }
 
     /**
+     * Get boolean from config with validation
+     */
+    public static function getBool(string $key, bool $default = false): bool
+    {
+        $value = config($key);
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return $default;
+    }
+
+    /**
      * Get array from config with validation
      *
      * @param  array<string, string>  $default
