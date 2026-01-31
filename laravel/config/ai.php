@@ -40,4 +40,12 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
             ],
         ],
     ],
+
+    'translation' => [
+        'cache' => [
+            'enabled' => env('TRANSLATION_CACHE_ENABLED', true),
+            'ttl' => (int) env('TRANSLATION_CACHE_TTL', 86400 * 30), // Default 30 days
+            'prefix' => env('TRANSLATION_CACHE_PREFIX', 'translation'),
+        ],
+    ],
 ];

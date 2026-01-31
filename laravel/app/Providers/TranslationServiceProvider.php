@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\TranslationProviderInterface;
 use App\Helpers\ConfigHelper;
+use App\Services\Translation\Providers\CachingTranslationProvider;
 use App\Services\Translation\Providers\DeepLProvider;
 use App\Services\Translation\Providers\OpenAiProvider;
 use App\Services\Translation\TranslationManager;
@@ -24,16 +25,16 @@ class TranslationServiceProvider extends ServiceProvider
             return OpenAI::factory()
                 ->withApiKey(ConfigHelper::getString('services.openai.api_key'))
                 ->withHttpClient(new Client([
-                    'timeout' => config('ai.openai.translation.request_timeout'),
-                    'connect_timeout' => config('ai.openai.translation.connect_timeout'),
+                    'timeout' => ConfigHelper::getInt('ai.openai.translation.request_timeout', 30),
+                    'connect_timeout' => ConfigHelper::getInt('ai.openai.translation.connect_timeout', 10),
                 ]))
                 ->make();
         });
 
         $this->app->singleton(DeepLClient::class, function ($app) {
             return new DeepLClient(ConfigHelper::getString('services.deepl.api_key'), [
-                'timeout' => config('ai.deepl.translation.request_timeout'),
-                'connect_timeout' => config('ai.deepl.translation.connect_timeout'),
+                'timeout' => ConfigHelper::getInt('ai.deepl.translation.request_timeout', 30),
+                'connect_timeout' => ConfigHelper::getInt('ai.deepl.translation.connect_timeout', 10),
             ]);
         });
 
@@ -58,7 +59,20 @@ class TranslationServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(TranslationManager::class);
+        $this->app->singleton(TranslationManager::class, function ($app) {
+            $deepL = $app->make(DeepLProvider::class);
+            $openAi = $app->make(OpenAiProvider::class);
+
+            if (ConfigHelper::getBool('ai.translation.cache.enabled', true)) {
+                $ttl = ConfigHelper::getInt('ai.translation.cache.ttl', 86400 * 30);
+                $prefix = ConfigHelper::getString('ai.translation.cache.prefix', 'translation');
+
+                $deepL = new CachingTranslationProvider($deepL, $ttl, $prefix);
+                $openAi = new CachingTranslationProvider($openAi, $ttl, $prefix);
+            }
+
+            return new TranslationManager($deepL, $openAi);
+        });
 
         $this->app->bind(TranslationProviderInterface::class, TranslationManager::class);
     }

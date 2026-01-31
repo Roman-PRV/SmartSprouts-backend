@@ -62,6 +62,14 @@ class DeepLProvider implements TranslationProviderInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getName(): string
+    {
+        return 'deepl';
+    }
+
+    /**
      * Determine if we should retry the request.
      */
     private function getRetryDecider(): callable

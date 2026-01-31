@@ -16,4 +16,9 @@ interface TranslationProviderInterface
      * @throws InsufficientFundsException
      */
     public function translate(string $text): TranslationResult;
+
+    /**
+     * Get the name of the provider.
+     */
+    public function getName(): string;
 }

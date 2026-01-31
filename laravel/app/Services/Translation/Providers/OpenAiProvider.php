@@ -49,6 +49,14 @@ class OpenAiProvider implements TranslationProviderInterface
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getName(): string
+    {
+        return 'openai';
+    }
+
     private function getRetryDecider(): callable
     {
         return function (Throwable $e) {

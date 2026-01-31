@@ -4,16 +4,14 @@ namespace App\Services\Translation;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResult;
-use App\Services\Translation\Providers\DeepLProvider;
-use App\Services\Translation\Providers\OpenAiProvider;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class TranslationManager implements TranslationProviderInterface
 {
     public function __construct(
-        private readonly DeepLProvider $deepLProvider,
-        private readonly OpenAiProvider $openAiProvider
+        private readonly TranslationProviderInterface $deepLProvider,
+        private readonly TranslationProviderInterface $openAiProvider
     ) {}
 
     /**
@@ -33,5 +31,13 @@ class TranslationManager implements TranslationProviderInterface
 
             return $this->openAiProvider->translate($text);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getName(): string
+    {
+        return 'manager';
     }
 }
