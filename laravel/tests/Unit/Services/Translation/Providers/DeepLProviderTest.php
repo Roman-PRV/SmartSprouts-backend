@@ -4,20 +4,21 @@ namespace Tests\Unit\Services\Translation\Providers;
 
 use App\DTO\TranslationResult;
 use App\Exceptions\Translation\InsufficientFundsException;
-use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\Providers\DeepLProvider;
 use DeepL\DeepLClient;
 use DeepL\DeepLException;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
-use Throwable;
 
 class DeepLProviderTest extends TestCase
 {
     private $client;
+
     private array $locales = ['en', 'uk', 'es'];
+
     private array $localeMap = ['en' => 'en-US'];
+
     private DeepLProvider $provider;
 
     protected function setUp(): void
