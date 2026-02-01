@@ -157,13 +157,15 @@ class OpenAiProviderTest extends TestCase
         // Create a proper ClientExceptionInterface for TransporterException
         $transporterException = new TransporterException(new FakeClientException('Connection error'));
 
+        // Fail twice with exceptions
         $this->chat->shouldReceive('create')
-            ->times(3)
-            ->andThrowExceptions([
-                $transporterException,
-                $transporterException,
-                $response,
-            ]);
+            ->times(2)
+            ->andThrow($transporterException);
+
+        // Succeed on third attempt
+        $this->chat->shouldReceive('create')
+            ->once()
+            ->andReturn($response);
 
         $result = $this->provider->translate($text);
 

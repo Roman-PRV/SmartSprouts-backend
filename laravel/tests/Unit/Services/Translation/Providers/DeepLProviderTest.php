@@ -103,15 +103,17 @@ class DeepLProviderTest extends TestCase
     {
         $text = 'Retry';
 
-        // Fail twice, succeed once for each locale
+        // Fail twice with exceptions
         $this->client->shouldReceive('translateText')
             ->with($text, null, 'en-US')
-            ->times(3)
-            ->andThrowExceptions([
-                new DeepLException('Network error', 0),
-                new DeepLException('Network error', 0),
-                (object) ['text' => 'Retry'],
-            ]);
+            ->times(2)
+            ->andThrow(new DeepLException('Network error', 0));
+
+        // Succeed on third attempt
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'en-US')
+            ->once()
+            ->andReturn((object) ['text' => 'Retry']);
 
         // Complete the rest
         $this->client->shouldReceive('translateText')->with($text, null, 'uk')->andReturn((object) ['text' => 'Повтор']);
