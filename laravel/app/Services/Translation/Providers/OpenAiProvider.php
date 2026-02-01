@@ -44,7 +44,10 @@ class OpenAiProvider implements TranslationProviderInterface
 
             return new TranslationResult($data);
         } catch (\Throwable $e) {
-            throw $this->handleError($e, ['input_text' => $text]);
+            throw $this->handleError($e, [
+                'text_hash' => hash('sha256', $text),
+                'text_length' => mb_strlen($text),
+            ]);
         }
     }
 

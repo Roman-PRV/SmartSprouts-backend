@@ -26,7 +26,8 @@ class TranslationManager implements TranslationProviderInterface
         } catch (Throwable $e) {
             Log::warning('TranslationManager: DeepL failed, switching to OpenAI.', [
                 'error' => $e->getMessage(),
-                'text_preview' => mb_substr($text, 0, 50).'...',
+                'text_hash' => hash('sha256', $text),
+                'text_length' => mb_strlen($text),
             ]);
 
             return $this->openAiProvider->translate($text);

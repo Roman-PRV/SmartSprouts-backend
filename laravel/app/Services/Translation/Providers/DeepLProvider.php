@@ -49,7 +49,8 @@ class DeepLProvider implements TranslationProviderInterface
                 );
             } catch (Throwable $e) {
                 throw $this->handleError($e, [
-                    'input_text' => $text,
+                    'text_hash' => hash('sha256', $text),
+                    'text_length' => mb_strlen($text),
                     'target_locale' => $locale,
                     'target_lang' => $targetLang,
                 ]);
