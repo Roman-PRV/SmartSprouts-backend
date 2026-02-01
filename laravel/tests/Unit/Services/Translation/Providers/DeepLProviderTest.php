@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Services\Translation\Providers;
 
-use App\DTO\TranslationResult;
-use App\Exceptions\Translation\InsufficientFundsException;
+use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationStatusEnum;
 use App\Services\Translation\Providers\DeepLProvider;
 use DeepL\DeepLClient;
 use DeepL\DeepLException;
@@ -52,12 +52,17 @@ class DeepLProviderTest extends TestCase
 
         $result = $this->provider->translate($text);
 
-        $this->assertInstanceOf(TranslationResult::class, $result);
-        $this->assertEquals([
-            'en' => 'Apple',
-            'uk' => 'Яблуко',
-            'es' => 'Manzana',
-        ], $result->translations);
+        $this->assertInstanceOf(TranslationResultDTO::class, $result);
+        $this->assertIsString($result->requestId);
+
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['en']->status);
+        $this->assertEquals('Apple', $result->translations['en']->text);
+
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['uk']->status);
+        $this->assertEquals('Яблуко', $result->translations['uk']->text);
+
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['es']->status);
+        $this->assertEquals('Manzana', $result->translations['es']->text);
     }
 
     public function test_it_maps_locales_correctly(): void
@@ -82,7 +87,8 @@ class DeepLProviderTest extends TestCase
 
         $result = $this->provider->translate($text);
 
-        $this->assertEquals('Morning', $result->translations['en']);
+        $this->assertEquals('Morning', $result->translations['en']->text);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['en']->status);
     }
 
     public function test_it_throws_insufficient_funds_exception_on_456_error(): void
@@ -91,12 +97,14 @@ class DeepLProviderTest extends TestCase
 
         $exception = new DeepLException('Quota exceeded', 456);
 
-        $this->client->shouldReceive('translateText')
-            ->andThrow($exception);
+        $result = $this->provider->translate($text);
 
-        $this->expectException(InsufficientFundsException::class);
-
-        $this->provider->translate($text);
+        $this->assertInstanceOf(TranslationResultDTO::class, $result);
+        $this->assertCount(3, $result->translations);
+        foreach ($result->translations as $item) {
+            $this->assertEquals(TranslationStatusEnum::Error, $item->status);
+            $this->assertEquals($text, $item->fallback);
+        }
     }
 
     public function test_it_retries_on_transient_errors_and_eventually_succeeds(): void
@@ -121,7 +129,8 @@ class DeepLProviderTest extends TestCase
 
         $result = $this->provider->translate($text);
 
-        $this->assertEquals('Retry', $result->translations['en']);
+        $this->assertEquals('Retry', $result->translations['en']->text);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['en']->status);
     }
 
     public function test_it_stops_retrying_on_quota_error(): void
@@ -130,14 +139,15 @@ class DeepLProviderTest extends TestCase
 
         $exception = new DeepLException('Quota exceeded', 456);
 
-        // Should be called only once because decider returns false for quota error
+        // Should be called 3 times (once per locale) because retry stops, but foreach continues
         $this->client->shouldReceive('translateText')
-            ->once()
+            ->times(3)
             ->andThrow($exception);
 
-        $this->expectException(InsufficientFundsException::class);
+        $result = $this->provider->translate($text);
 
-        $this->provider->translate($text);
+        $this->assertEquals(TranslationStatusEnum::Error, $result->translations['en']->status);
+        $this->assertEquals($text, $result->translations['en']->fallback);
     }
 
     public function test_it_sanitizes_missing_results(): void
@@ -156,7 +166,7 @@ class DeepLProviderTest extends TestCase
             ->andReturn((object) ['text' => 'Sanitizar']);
 
         // For 'uk', simulate a failure that doesn't throw but returns empty/null
-        // (Though in reality SDK throws, but we test our sanitizeResults trait resilience)
+        // (Though in reality SDK throws, but we test our per-locale resilience)
         $this->client->shouldReceive('translateText')
             ->with($text, null, 'uk')
             ->once()
@@ -164,13 +174,18 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('warning')
             ->once()
-            ->withArgs(fn ($msg) => str_contains($msg, "Translation for locale 'uk' is missing"));
+            ->withArgs(fn ($msg) => str_contains($msg, "DeepLProvider: Translation for locale 'uk' is missing or invalid."));
 
         $result = $this->provider->translate($text);
 
-        $this->assertEquals('Sanitize', $result->translations['en']);
-        $this->assertEquals('Sanitizar', $result->translations['es']);
-        // Should contain localized fallback message
-        $this->assertEquals(__('exceptions.translation.not_found', [], 'uk'), $result->translations['uk']);
+        $this->assertEquals('Sanitize', $result->translations['en']->text);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['en']->status);
+
+        $this->assertEquals('Sanitizar', $result->translations['es']->text);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['es']->status);
+
+        // Should contain Error status and fallback
+        $this->assertEquals(TranslationStatusEnum::Error, $result->translations['uk']->status);
+        $this->assertEquals($text, $result->translations['uk']->fallback);
     }
 }

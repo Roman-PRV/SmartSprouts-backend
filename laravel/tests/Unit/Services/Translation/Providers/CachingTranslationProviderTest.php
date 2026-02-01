@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
-use App\DTO\TranslationResult;
+use App\DTO\TranslationResultDTO;
 use App\Services\Translation\Providers\CachingTranslationProvider;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -34,7 +34,7 @@ class CachingTranslationProviderTest extends TestCase
     public function test_it_caches_translation_results(): void
     {
         $text = 'Hello world';
-        $result = new TranslationResult(['en' => 'Hello world', 'uk' => 'Привіт світ']);
+        $result = new TranslationResultDTO(['en' => 'Hello world', 'uk' => 'Привіт світ'], 'test-request-id');
 
         $this->mockProvider->expects($this->once())
             ->method('translate')
@@ -50,6 +50,7 @@ class CachingTranslationProviderTest extends TestCase
         // Second call: should NOT call the real provider (expects once was set)
         $secondResult = $this->cachingProvider->translate($text);
         $this->assertEquals($result->translations, $secondResult->translations);
+        $this->assertEquals($result->requestId, $secondResult->requestId);
 
         // Verify cache key exists
         $hash = md5($text);
@@ -60,7 +61,7 @@ class CachingTranslationProviderTest extends TestCase
     public function test_it_uses_different_keys_for_different_providers(): void
     {
         $text = 'Hello';
-        $result = new TranslationResult(['en' => 'Hello']);
+        $result = new TranslationResultDTO(['en' => 'Hello'], 'request-1');
 
         $this->mockProvider->method('translate')->willReturn($result);
         $this->mockProvider->method('getName')->willReturn('provider1');

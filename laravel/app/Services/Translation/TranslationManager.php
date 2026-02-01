@@ -3,7 +3,7 @@
 namespace App\Services\Translation;
 
 use App\Contracts\TranslationProviderInterface;
-use App\DTO\TranslationResult;
+use App\DTO\TranslationResultDTO;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -19,7 +19,7 @@ class TranslationManager implements TranslationProviderInterface
      *
      * @throws Throwable
      */
-    public function translate(string $text): TranslationResult
+    public function translate(string $text): TranslationResultDTO
     {
         try {
             return $this->deepLProvider->translate($text);

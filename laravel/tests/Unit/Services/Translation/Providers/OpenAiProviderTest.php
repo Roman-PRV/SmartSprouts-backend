@@ -2,7 +2,9 @@
 
 namespace Tests\Unit\Services\Translation\Providers;
 
-use App\DTO\TranslationResult;
+use App\DTO\TranslationItemDTO;
+use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationStatusEnum;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\Providers\OpenAiProvider;
@@ -102,12 +104,21 @@ class OpenAiProviderTest extends TestCase
 
         $result = $this->provider->translate($text);
 
-        $this->assertInstanceOf(TranslationResult::class, $result);
-        $this->assertEquals([
-            'en' => 'Apple',
-            'uk' => 'Яблуко',
-            'es' => 'Manzana',
-        ], $result->translations);
+        $this->assertInstanceOf(TranslationResultDTO::class, $result);
+        $this->assertIsString($result->requestId);
+        $this->assertCount(3, $result->translations);
+
+        $this->assertInstanceOf(TranslationItemDTO::class, $result->translations['en']);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['en']->status);
+        $this->assertEquals('Apple', $result->translations['en']->text);
+
+        $this->assertInstanceOf(TranslationItemDTO::class, $result->translations['uk']);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['uk']->status);
+        $this->assertEquals('Яблуко', $result->translations['uk']->text);
+
+        $this->assertInstanceOf(TranslationItemDTO::class, $result->translations['es']);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['es']->status);
+        $this->assertEquals('Manzana', $result->translations['es']->text);
     }
 
     public function test_it_throws_insufficient_funds_exception_on_quota_error(): void
@@ -169,10 +180,11 @@ class OpenAiProviderTest extends TestCase
 
         $result = $this->provider->translate($text);
 
-        $this->assertEquals('Повтор', $result->translations['uk']);
+        $this->assertEquals('Повтор', $result->translations['uk']->text);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['uk']->status);
     }
 
-    public function test_it_handles_invalid_json_by_sanitizing_results(): void
+    public function test_it_sanitizes_missing_locales_in_response(): void
     {
         $text = 'Invalid';
         $jsonResponse = json_encode(['en' => 'Invalid']);
@@ -192,7 +204,41 @@ class OpenAiProviderTest extends TestCase
 
         $result = $this->provider->translate($text);
 
-        $this->assertEquals('Invalid', $result->translations['en']);
+        $this->assertEquals('Invalid', $result->translations['en']->text);
+        $this->assertEquals(TranslationStatusEnum::Success, $result->translations['en']->status);
+
+        // Missing locales should be filled with Error status and fallback
+        $this->assertArrayHasKey('uk', $result->translations);
+        $this->assertEquals(TranslationStatusEnum::Error, $result->translations['uk']->status);
+        $this->assertEquals($text, $result->translations['uk']->fallback);
+
+        $this->assertArrayHasKey('es', $result->translations);
+        $this->assertEquals(TranslationStatusEnum::Error, $result->translations['es']->status);
+        $this->assertEquals($text, $result->translations['es']->fallback);
+    }
+
+    public function test_it_throws_exception_on_malformed_json(): void
+    {
+        $text = 'Test';
+        $malformedJson = '{invalid json content}';
+
+        $response = CreateResponse::from([
+            'id' => 'chatcmpl-malformed',
+            'object' => 'chat.completion',
+            'created' => time(),
+            'model' => $this->model,
+            'choices' => [['index' => 0, 'message' => ['role' => 'assistant', 'content' => $malformedJson], 'finish_reason' => 'stop']],
+            'usage' => ['prompt_tokens' => 5, 'completion_tokens' => 5, 'total_tokens' => 10],
+        ], MetaInformation::from([]));
+
+        $this->chat->shouldReceive('create')
+            ->once()
+            ->andReturn($response);
+
+        $this->expectException(TranslationFailedException::class);
+        $this->expectExceptionMessage('AI provider returned an invalid JSON response');
+
+        $this->provider->translate($text);
     }
 
     public function test_it_throws_translation_failed_after_max_retries(): void

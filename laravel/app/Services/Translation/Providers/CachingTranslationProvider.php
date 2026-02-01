@@ -3,7 +3,7 @@
 namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
-use App\DTO\TranslationResult;
+use App\DTO\TranslationResultDTO;
 use Illuminate\Support\Facades\Cache;
 
 class CachingTranslationProvider implements TranslationProviderInterface
@@ -22,7 +22,7 @@ class CachingTranslationProvider implements TranslationProviderInterface
     /**
      * {@inheritDoc}
      */
-    public function translate(string $text): TranslationResult
+    public function translate(string $text): TranslationResultDTO
     {
         $key = $this->generateCacheKey($text);
 
@@ -30,9 +30,11 @@ class CachingTranslationProvider implements TranslationProviderInterface
             return $this->provider->translate($text);
         });
 
-        if (! $result instanceof TranslationResult) {
+        if (! $result instanceof TranslationResultDTO) {
             // This case should ideally not happen if cache is clean and types are correct,
             // but we add it to satisfy PHPStan and handle potential corrupted cache.
+            Cache::forget($key);
+
             return $this->provider->translate($text);
         }
 

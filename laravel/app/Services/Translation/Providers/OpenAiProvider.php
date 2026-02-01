@@ -3,11 +3,13 @@
 namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
-use App\DTO\TranslationResult;
+use App\DTO\TranslationResultDTO;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\Traits\HandlesTranslationResults;
+use App\Services\Translation\Traits\TranslationSanitizationParameters;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use OpenAI\Contracts\ClientContract;
 use OpenAI\Exceptions\ErrorException;
 use OpenAI\Exceptions\TransporterException;
@@ -31,20 +33,28 @@ class OpenAiProvider implements TranslationProviderInterface
     /**
      * {@inheritDoc}
      */
-    public function translate(string $text): TranslationResult
+    public function translate(string $text): TranslationResultDTO
     {
+        $requestId = (string) Str::uuid();
+
         try {
-            $data = retry($this->retryTimes, function () use ($text) {
+            $data = retry($this->retryTimes, function () use ($text, $requestId) {
                 $systemPrompt = $this->buildSystemPrompt($this->locales, $this->template);
 
                 $responseData = $this->callApi($systemPrompt, $text, $this->model);
 
-                return $this->sanitizeResults($responseData, $this->locales);
+                return $this->sanitizeResults(new TranslationSanitizationParameters(
+                    results: $responseData,
+                    allowedLocales: $this->locales,
+                    originalText: $text,
+                    context: ['request_id' => $requestId]
+                ));
             }, $this->retrySleep, $this->getRetryDecider());
 
-            return new TranslationResult($data);
+            return new TranslationResultDTO($data, $requestId);
         } catch (\Throwable $e) {
             throw $this->handleError($e, [
+                'request_id' => $requestId,
                 'text_hash' => hash('sha256', $text),
                 'text_length' => mb_strlen($text),
             ]);
@@ -118,7 +128,15 @@ class OpenAiProvider implements TranslationProviderInterface
 
         $content = $response->choices[0]->message->content ?? '{}';
 
-        $data = json_decode($content, true);
+        try {
+            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new TranslationFailedException(
+                __('exceptions.translation.invalid_json').' (JSON decode error)',
+                0,
+                $e
+            );
+        }
 
         return is_array($data) ? $data : [];
     }

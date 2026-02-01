@@ -2,6 +2,8 @@
 
 namespace App\Services\Translation\Traits;
 
+use App\DTO\TranslationItemDTO;
+use App\Enums\TranslationStatusEnum;
 use Illuminate\Support\Facades\Log;
 
 trait HandlesTranslationResults
@@ -9,27 +11,35 @@ trait HandlesTranslationResults
     /**
      * Sanitize and validate translation results.
      *
-     * @param  array<string, mixed>  $results
-     * @param  array<int, string>  $allowedLocales
-     * @return array<string, string>
+     *
+     * @return array<string, TranslationItemDTO>
      */
-    protected function sanitizeResults(array $results, array $allowedLocales): array
+    protected function sanitizeResults(TranslationSanitizationParameters $params): array
     {
-        $sanitized = array_intersect_key($results, array_flip($allowedLocales));
+        $sanitized = [];
         $providerName = class_basename($this);
 
-        foreach ($allowedLocales as $locale) {
-            if (! isset($sanitized[$locale]) || ! is_string($sanitized[$locale]) || trim($sanitized[$locale]) === '') {
-                Log::warning("{$providerName}: Translation for locale '{$locale}' is missing or invalid.", [
-                    'locale' => $locale,
-                    'available_locales' => array_keys($results),
-                ]);
+        foreach ($params->allowedLocales as $locale) {
+            $value = $params->results[$locale] ?? null;
 
-                $sanitized[$locale] = __('exceptions.translation.not_found', [], $locale);
+            if (\is_string($value) && trim($value) !== '') {
+                $sanitized[$locale] = new TranslationItemDTO(
+                    status: TranslationStatusEnum::Success,
+                    text: $value
+                );
+            } else {
+                Log::warning("{$providerName}: Translation for locale '{$locale}' is missing or invalid.", array_merge($params->context, [
+                    'locale' => $locale,
+                    'available_locales' => array_keys($params->results),
+                ]));
+
+                $sanitized[$locale] = new TranslationItemDTO(
+                    status: TranslationStatusEnum::Error,
+                    fallback: $params->originalText
+                );
             }
         }
 
-        /** @var array<string, string> $sanitized */
         return $sanitized;
     }
 }

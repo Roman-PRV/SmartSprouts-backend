@@ -3,13 +3,14 @@
 namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
-use App\DTO\TranslationResult;
-use App\Exceptions\Translation\InsufficientFundsException;
+use App\DTO\TranslationResultDTO;
 use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\Traits\HandlesTranslationResults;
+use App\Services\Translation\Traits\TranslationSanitizationParameters;
 use DeepL\DeepLClient;
 use DeepL\DeepLException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class DeepLProvider implements TranslationProviderInterface
@@ -33,8 +34,9 @@ class DeepLProvider implements TranslationProviderInterface
      *
      * @throws Throwable
      */
-    public function translate(string $text): TranslationResult
+    public function translate(string $text): TranslationResultDTO
     {
+        $requestId = (string) Str::uuid();
         $translations = [];
 
         foreach ($this->locales as $locale) {
@@ -48,18 +50,24 @@ class DeepLProvider implements TranslationProviderInterface
                     $this->getRetryDecider()
                 );
             } catch (Throwable $e) {
-                throw $this->handleError($e, [
-                    'text_hash' => hash('sha256', $text),
-                    'text_length' => mb_strlen($text),
-                    'target_locale' => $locale,
-                    'target_lang' => $targetLang,
+                Log::warning("DeepLProvider: Translation for locale '{$locale}' failed.", [
+                    'request_id' => $requestId,
+                    'locale' => $locale,
+                    'error' => $e->getMessage(),
                 ]);
+
+                $translations[$locale] = null;
             }
         }
 
-        $sanitized = $this->sanitizeResults($translations, $this->locales);
+        $sanitized = $this->sanitizeResults(new TranslationSanitizationParameters(
+            results: $translations,
+            allowedLocales: $this->locales,
+            originalText: $text,
+            context: ['request_id' => $requestId]
+        ));
 
-        return new TranslationResult($sanitized);
+        return new TranslationResultDTO($sanitized, $requestId);
     }
 
     /**
@@ -95,34 +103,6 @@ class DeepLProvider implements TranslationProviderInterface
     private function translateSingle(string $text, string $targetLang): string
     {
         return $this->client->translateText($text, null, $targetLang)->text;
-    }
-
-    /**
-     * Centralized error handling for DeepL service.
-     *
-     * @param  array<string, mixed>  $context
-     */
-    private function handleError(Throwable $e, array $context = []): Throwable
-    {
-        if ($e instanceof DeepLException && $this->isQuotaError($e)) {
-            return new InsufficientFundsException;
-        }
-
-        if ($e instanceof TranslationFailedException) {
-            return $e;
-        }
-
-        Log::error('DeepLProvider: Unexpected translation error', array_merge($context, [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-        ]));
-
-        return new TranslationFailedException(
-            $e->getMessage() ?: __('exceptions.translation.failed'),
-            (int) $e->getCode(),
-            $e
-        );
     }
 
     /**

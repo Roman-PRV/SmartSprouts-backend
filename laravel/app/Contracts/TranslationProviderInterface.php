@@ -2,7 +2,7 @@
 
 namespace App\Contracts;
 
-use App\DTO\TranslationResult;
+use App\DTO\TranslationResultDTO;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
 
@@ -15,7 +15,7 @@ interface TranslationProviderInterface
      * @throws TranslationFailedException
      * @throws InsufficientFundsException
      */
-    public function translate(string $text): TranslationResult;
+    public function translate(string $text): TranslationResultDTO;
 
     /**
      * Get the name of the provider.
