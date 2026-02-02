@@ -9,14 +9,61 @@ class ConfigHelper
      */
     public static function getString(string $key, string $default = ''): string
     {
-        $value = config($key);
+        $value = \config($key);
 
-        if (is_null($value)) {
+        if (\is_null($value)) {
             return $default;
         }
 
-        if (is_string($value)) {
+        if (\is_string($value)) {
             return $value;
+        }
+
+        return $default;
+    }
+
+    /**
+     * Get integer from config with validation
+     */
+    public static function getInt(string $key, int $default = 0): int
+    {
+        $value = \config($key);
+
+        if (\is_int($value)) {
+            return $value;
+        }
+
+        if ($value !== null) {
+            $validated = \filter_var($value, FILTER_VALIDATE_INT);
+            if ($validated !== false) {
+                return $validated;
+            }
+
+            \Log::warning('Invalid integer value in config', [
+                'key' => $key,
+                'value' => $value,
+            ]);
+        }
+
+        return $default;
+    }
+
+    /**
+     * Get boolean from config with validation
+     */
+    public static function getBool(string $key, bool $default = false): bool
+    {
+        $value = \config($key);
+
+        if (\is_bool($value)) {
+            return $value;
+        }
+
+        if (\is_string($value) || \is_int($value) || \is_float($value)) {
+            $boolValue = \filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($boolValue !== null) {
+                return $boolValue;
+            }
         }
 
         return $default;
@@ -30,15 +77,14 @@ class ConfigHelper
      */
     public static function getStringMap(string $key, array $default = []): array
     {
-        $value = config($key);
+        $value = \config($key);
 
-        if (! is_array($value)) {
+        if (! \is_array($value)) {
             return $default;
         }
 
-        // Validate that all keys and values are strings
         foreach ($value as $k => $v) {
-            if (! is_string($k) || ! is_string($v)) {
+            if (! \is_string($k) || ! \is_string($v)) {
                 return $default;
             }
         }
@@ -54,19 +100,18 @@ class ConfigHelper
      */
     public static function getStringList(string $key, array $default = []): array
     {
-        $value = config($key);
+        $value = \config($key);
 
-        if (! is_array($value)) {
+        if (! \is_array($value)) {
             return $default;
         }
 
-        // Validate that all values are strings (keys don't matter/can be integers)
         foreach ($value as $v) {
-            if (! is_string($v)) {
+            if (! \is_string($v)) {
                 return $default;
             }
         }
 
-        return array_values($value);
+        return \array_values($value);
     }
 }

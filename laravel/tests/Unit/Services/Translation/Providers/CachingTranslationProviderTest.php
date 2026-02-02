@@ -1,0 +1,138 @@
+<?php
+
+namespace Tests\Unit\Services\Translation\Providers;
+
+use App\Contracts\TranslationProviderInterface;
+use App\DTO\TranslationItemDTO;
+use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationStatusEnum;
+use App\Services\Translation\Providers\CachingTranslationProvider;
+use Illuminate\Support\Facades\Cache;
+use Tests\TestCase;
+
+class CachingTranslationProviderTest extends TestCase
+{
+    private TranslationProviderInterface $mockProvider;
+
+    private CachingTranslationProvider $cachingProvider;
+
+    private int $ttl = 3600;
+
+    private string $prefix = 'test_translation';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->mockProvider = $this->createMock(TranslationProviderInterface::class);
+        $this->cachingProvider = new CachingTranslationProvider(
+            $this->mockProvider,
+            $this->ttl,
+            $this->prefix
+        );
+
+        Cache::flush();
+    }
+
+    public function test_it_caches_translation_results(): void
+    {
+        $text = 'Hello world';
+        $result = new TranslationResultDTO([
+            'en' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hello world'),
+            'uk' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Привіт світ'),
+        ], 'test-request-id');
+
+        $this->mockProvider->expects($this->once())
+            ->method('translate')
+            ->with($text)
+            ->willReturn($result);
+
+        $this->mockProvider->method('getName')->willReturn('mock');
+
+        // First call: should call the real provider
+        $firstResult = $this->cachingProvider->translate($text);
+        $this->assertEquals($result->translations['en']->text, $firstResult->translations['en']->text);
+        $this->assertEquals($result->translations['uk']->text, $firstResult->translations['uk']->text);
+
+        // Second call: should NOT call the real provider (expects once was set)
+        $secondResult = $this->cachingProvider->translate($text);
+        $this->assertEquals($result->translations['en']->text, $secondResult->translations['en']->text);
+        $this->assertEquals($result->translations['uk']->text, $secondResult->translations['uk']->text);
+        $this->assertEquals($result->requestId, $secondResult->requestId);
+
+        // Verify cache key exists
+        $hash = hash('sha256', $text);
+        $expectedKey = "{$this->prefix}:mock:{$hash}";
+        $this->assertTrue(Cache::has($expectedKey));
+    }
+
+    public function test_it_uses_different_keys_for_different_providers(): void
+    {
+        $text = 'Hello';
+        $result = new TranslationResultDTO([
+            'en' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hello'),
+        ], 'request-1');
+
+        $this->mockProvider->method('translate')->willReturn($result);
+        $this->mockProvider->method('getName')->willReturn('provider1');
+
+        $this->cachingProvider->translate($text);
+        $hash = hash('sha256', $text);
+        $this->assertTrue(Cache::has("{$this->prefix}:provider1:{$hash}"));
+
+        $mockProvider2 = $this->createMock(TranslationProviderInterface::class);
+        $mockProvider2->method('translate')->willReturn($result);
+        $mockProvider2->method('getName')->willReturn('provider2');
+
+        $cachingProvider2 = new CachingTranslationProvider($mockProvider2, $this->ttl, $this->prefix);
+        $cachingProvider2->translate($text);
+
+        $this->assertTrue(Cache::has("{$this->prefix}:provider2:{$hash}"));
+        $this->assertNotEquals("{$this->prefix}:provider1:{$hash}", "{$this->prefix}:provider2:{$hash}");
+    }
+
+    public function test_it_returns_provider_name(): void
+    {
+        $this->mockProvider->method('getName')->willReturn('mock_name');
+        $this->assertEquals('mock_name', $this->cachingProvider->getName());
+    }
+
+    public function test_it_does_not_cache_results_with_errors(): void
+    {
+        $text = 'Hello world';
+        $errorResult = new TranslationResultDTO([
+            'en' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hello world'),
+            'uk' => new TranslationItemDTO(TranslationStatusEnum::Error, ''),
+        ], 'error-request-id');
+
+        $successResult = new TranslationResultDTO([
+            'en' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hello world'),
+            'uk' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Привіт світ'),
+        ], 'success-request-id');
+
+        // First call returns error - should NOT be cached
+        // Second call returns success - should be cached
+        $this->mockProvider->expects($this->exactly(2))
+            ->method('translate')
+            ->with($text)
+            ->willReturnOnConsecutiveCalls($errorResult, $successResult);
+
+        $this->mockProvider->method('getName')->willReturn('mock');
+
+        // First call: error result should not be cached
+        $firstResult = $this->cachingProvider->translate($text);
+        $this->assertEquals(TranslationStatusEnum::Error, $firstResult->translations['uk']->status);
+
+        // Verify cache is empty after error
+        $hash = hash('sha256', $text);
+        $expectedKey = "{$this->prefix}:mock:{$hash}";
+        $this->assertFalse(Cache::has($expectedKey));
+
+        // Second call: success result should be cached
+        $secondResult = $this->cachingProvider->translate($text);
+        $this->assertEquals(TranslationStatusEnum::Success, $secondResult->translations['uk']->status);
+        $this->assertEquals('Привіт світ', $secondResult->translations['uk']->text);
+
+        // Verify cache now contains the success result
+        $this->assertTrue(Cache::has($expectedKey));
+    }
+}

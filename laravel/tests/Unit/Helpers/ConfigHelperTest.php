@@ -4,6 +4,7 @@ namespace Tests\Unit\Helpers;
 
 use App\Helpers\ConfigHelper;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class ConfigHelperTest extends TestCase
@@ -38,6 +39,166 @@ class ConfigHelperTest extends TestCase
         $this->assertEquals('default', ConfigHelper::getString('test.array_key', 'default'));
         $this->assertEquals('default', ConfigHelper::getString('test.int_key', 'default'));
         $this->assertEquals('default', ConfigHelper::getString('test.bool_key', 'default'));
+    }
+
+    /**
+     * Test getInt method.
+     */
+    public function test_get_int_returns_value_if_int()
+    {
+        Config::set('test.int_key', 123);
+
+        $result = ConfigHelper::getInt('test.int_key');
+
+        $this->assertEquals(123, $result);
+    }
+
+    public function test_get_int_returns_value_if_numeric_string()
+    {
+        Config::set('test.numeric_string_key', '456');
+
+        $result = ConfigHelper::getInt('test.numeric_string_key');
+
+        $this->assertEquals(456, $result);
+    }
+
+    public function test_get_int_returns_default_if_not_numeric()
+    {
+        Config::set('test.string_key', 'not numeric');
+        Config::set('test.array_key', []);
+
+        $this->assertEquals(789, ConfigHelper::getInt('test.string_key', 789));
+        $this->assertEquals(789, ConfigHelper::getInt('test.array_key', 789));
+    }
+
+    public function test_get_int_accepts_negative_integer_string()
+    {
+        Config::set('test.negative_int', '-456');
+
+        $result = ConfigHelper::getInt('test.negative_int');
+
+        $this->assertSame(-456, $result);
+    }
+
+    public function test_get_int_rejects_float_string_and_logs_warning()
+    {
+        Config::set('test.float_string', '12.5');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.float_string'
+                    && $context['value'] === '12.5';
+            });
+
+        $result = ConfigHelper::getInt('test.float_string', 99);
+
+        $this->assertSame(99, $result);
+    }
+
+    public function test_get_int_rejects_scientific_notation_and_logs_warning()
+    {
+        Config::set('test.scientific', '1e3');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.scientific'
+                    && $context['value'] === '1e3';
+            });
+
+        $result = ConfigHelper::getInt('test.scientific', 0);
+
+        $this->assertSame(0, $result);
+    }
+
+    public function test_get_int_rejects_hex_notation_and_logs_warning()
+    {
+        Config::set('test.hex', '0xFF');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.hex'
+                    && $context['value'] === '0xFF';
+            });
+
+        $result = ConfigHelper::getInt('test.hex', 10);
+
+        $this->assertSame(10, $result);
+    }
+
+    public function test_get_int_rejects_float_value_and_logs_warning()
+    {
+        Config::set('test.float_value', 12.5);
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.float_value'
+                    && $context['value'] === 12.5;
+            });
+
+        $result = ConfigHelper::getInt('test.float_value', 0);
+
+        $this->assertSame(0, $result);
+    }
+
+    public function test_get_int_returns_default_for_null_without_logging()
+    {
+        Config::set('test.null_int', null);
+
+        Log::shouldReceive('warning')->never();
+
+        $result = ConfigHelper::getInt('test.null_int', 100);
+
+        $this->assertSame(100, $result);
+    }
+
+    /**
+     * Test getBool method.
+     */
+    public function test_get_bool_returns_value_if_bool()
+    {
+        Config::set('test.bool_true', true);
+        Config::set('test.bool_false', false);
+
+        $this->assertTrue(ConfigHelper::getBool('test.bool_true'));
+        $this->assertFalse(ConfigHelper::getBool('test.bool_false'));
+    }
+
+    public function test_get_bool_handles_string_representations()
+    {
+        Config::set('test.string_true', 'true');
+        Config::set('test.string_false', 'false');
+        Config::set('test.string_1', '1');
+        Config::set('test.string_0', '0');
+        Config::set('test.string_yes', 'yes');
+        Config::set('test.string_no', 'no');
+        Config::set('test.string_on', 'on');
+        Config::set('test.string_off', 'off');
+
+        $this->assertTrue(ConfigHelper::getBool('test.string_true'));
+        $this->assertFalse(ConfigHelper::getBool('test.string_false'));
+        $this->assertTrue(ConfigHelper::getBool('test.string_1'));
+        $this->assertFalse(ConfigHelper::getBool('test.string_0'));
+        $this->assertTrue(ConfigHelper::getBool('test.string_yes'));
+        $this->assertFalse(ConfigHelper::getBool('test.string_no'));
+        $this->assertTrue(ConfigHelper::getBool('test.string_on'));
+        $this->assertFalse(ConfigHelper::getBool('test.string_off'));
+    }
+
+    public function test_get_bool_returns_default_if_not_boolean_representation()
+    {
+        Config::set('test.not_bool', 'maybe');
+        Config::set('test.array', []);
+
+        $this->assertTrue(ConfigHelper::getBool('test.not_bool', true));
+        $this->assertFalse(ConfigHelper::getBool('test.array', false));
     }
 
     /**
