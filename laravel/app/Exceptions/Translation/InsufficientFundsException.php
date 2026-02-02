@@ -6,9 +6,14 @@ use Exception;
 
 class InsufficientFundsException extends Exception
 {
-    public function __construct()
+    /**
+     * @param  string|null  $message  Custom error message (defaults to localized message)
+     * @param  int  $code  HTTP status code (defaults to 402 Payment Required)
+     * @param  \Throwable|null  $previous  Original SDK exception for debugging
+     */
+    public function __construct(?string $message = null, int $code = 402, ?\Throwable $previous = null)
     {
-        $message = __('exceptions.translation.insufficient_funds');
-        parent::__construct($message, 402);
+        $message = $message ?? __('exceptions.translation.insufficient_funds');
+        parent::__construct($message, $code, $previous);
     }
 }

@@ -149,7 +149,11 @@ class OpenAiProvider implements TranslationProviderInterface
     private function handleError(\Throwable $e, array $context = []): \Throwable
     {
         if ($e instanceof ErrorException && $this->isQuotaError($e)) {
-            return new InsufficientFundsException;
+            return new InsufficientFundsException(
+                __('exceptions.translation.insufficient_funds').' (OpenAI quota exceeded)',
+                402,
+                $e
+            );
         }
 
         if ($e instanceof TransporterException) {
@@ -188,8 +192,8 @@ class OpenAiProvider implements TranslationProviderInterface
         ]));
 
         return new TranslationFailedException(
-            $e->getMessage() ?: __('exceptions.translation.failed'),
-            (int) $e->getCode(),
+            __('exceptions.translation.failed'),
+            0,
             $e
         );
     }
