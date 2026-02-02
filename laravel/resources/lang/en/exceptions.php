@@ -10,5 +10,6 @@ return [
         'not_found' => 'Translation not found.',
         'provider_failed' => 'Translation provider failed.',
         'deepl_provider_failed' => 'DeepL translation service is unavailable.',
+        'unexpected_exception' => 'Translation provider threw an unexpected exception.',
     ],
 ];

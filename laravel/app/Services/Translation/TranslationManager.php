@@ -19,7 +19,8 @@ class TranslationManager implements TranslationProviderInterface
     /**
      * Translate text using Failover logic: DeepL -> OpenAI.
      *
-     * @throws Throwable
+     * @throws TranslationFailedException
+     * @throws InsufficientFundsException
      */
     public function translate(string $text): TranslationResultDTO
     {
@@ -34,6 +35,12 @@ class TranslationManager implements TranslationProviderInterface
             ]);
 
             return $this->openAiProvider->translate($text);
+        } catch (Throwable $e) {
+            // Wrap unexpected exceptions to maintain interface contract
+            throw new TranslationFailedException(
+                message: __('exceptions.translation.unexpected_exception'),
+                previous: $e
+            );
         }
     }
 

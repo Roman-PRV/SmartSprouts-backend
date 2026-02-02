@@ -41,7 +41,7 @@ class TranslationManagerTest extends TestCase
         $expectedResult = new TranslationResultDTO(
             translations: [
                 'uk' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Привіт світ'),
-                'pl' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Witaj świecie'),
+                'es' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hola mundo'),
             ],
             requestId: 'test-request-id'
         );
@@ -147,27 +147,30 @@ class TranslationManagerTest extends TestCase
         $this->assertSame($fallbackResult, $result);
     }
 
-    public function test_it_propagates_non_whitelisted_exceptions_without_failover(): void
+    public function test_it_wraps_non_whitelisted_exceptions_in_translation_failed_exception(): void
     {
         // Arrange
         $text = 'Test';
-        $exception = new \InvalidArgumentException('Invalid input data');
+        $originalException = new \InvalidArgumentException('Invalid input data');
 
         $this->deepLProvider
             ->shouldReceive('translate')
             ->once()
             ->with($text)
-            ->andThrow($exception);
+            ->andThrow($originalException);
 
         $this->openAiProvider
             ->shouldNotReceive('translate');
 
-        // Assert
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid input data');
-
-        // Act
-        $this->manager->translate($text);
+        // Act & Assert
+        try {
+            $this->manager->translate($text);
+            $this->fail('Expected TranslationFailedException to be thrown');
+        } catch (TranslationFailedException $e) {
+            $this->assertEquals(__('exceptions.translation.unexpected_exception'), $e->getMessage());
+            $this->assertSame($originalException, $e->getPrevious());
+            $this->assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+        }
     }
 
     public function test_it_propagates_openai_exception_when_both_providers_fail(): void

@@ -10,5 +10,6 @@ return [
         'not_found' => 'Traducción no encontrada.',
         'provider_failed' => 'El proveedor de traducción no está disponible.',
         'deepl_provider_failed' => 'El servicio de traducción DeepL no está disponible.',
+        'unexpected_exception' => 'El proveedor de traducción lanzó una excepción inesperada.',
     ],
 ];
