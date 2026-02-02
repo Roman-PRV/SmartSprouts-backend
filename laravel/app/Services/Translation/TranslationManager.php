@@ -4,6 +4,8 @@ namespace App\Services\Translation;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
+use App\Exceptions\Translation\InsufficientFundsException;
+use App\Exceptions\Translation\TranslationFailedException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -23,9 +25,10 @@ class TranslationManager implements TranslationProviderInterface
     {
         try {
             return $this->deepLProvider->translate($text);
-        } catch (Throwable $e) {
+        } catch (InsufficientFundsException|TranslationFailedException $e) {
             Log::warning('TranslationManager: DeepL failed, switching to OpenAI.', [
                 'error' => $e->getMessage(),
+                'exception_type' => get_class($e),
                 'text_hash' => hash('sha256', $text),
                 'text_length' => mb_strlen($text),
             ]);
