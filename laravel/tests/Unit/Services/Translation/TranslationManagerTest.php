@@ -206,6 +206,32 @@ class TranslationManagerTest extends TestCase
         $this->manager->translate($text);
     }
 
+    public function test_it_does_not_fall_back_on_non_recoverable_exception(): void
+    {
+        // Arrange
+        $text = 'Test';
+        $exception = new TranslationFailedException(
+            message: 'Provider misconfigured',
+            shouldFailover: false
+        );
+
+        $this->deepLProvider
+            ->shouldReceive('translate')
+            ->once()
+            ->with($text)
+            ->andThrow($exception);
+
+        $this->openAiProvider
+            ->shouldNotReceive('translate');
+
+        // Assert
+        $this->expectException(TranslationFailedException::class);
+        $this->expectExceptionMessage('Provider misconfigured');
+
+        // Act
+        $this->manager->translate($text);
+    }
+
     public function test_it_logs_text_hash_and_length_during_failover(): void
     {
         // Arrange

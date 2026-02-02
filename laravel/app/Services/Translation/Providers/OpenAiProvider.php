@@ -167,7 +167,11 @@ class OpenAiProvider implements TranslationProviderInterface
                 'error' => $e->getMessage(),
             ]));
 
-            return new TranslationFailedException(__('exceptions.translation.timeout'), 0, $e);
+            return new TranslationFailedException(
+                message: __('exceptions.translation.timeout'),
+                previous: $e,
+                shouldFailover: true
+            );
         }
 
         if ($e instanceof TranslationFailedException) {
@@ -201,9 +205,9 @@ class OpenAiProvider implements TranslationProviderInterface
         ]));
 
         return new TranslationFailedException(
-            __('exceptions.translation.failed'),
-            0,
-            $e
+            message: __('exceptions.translation.failed'),
+            previous: $e,
+            shouldFailover: ! $this->isAuthError($e)
         );
     }
 

@@ -26,7 +26,11 @@ class TranslationManager implements TranslationProviderInterface
     {
         try {
             return $this->deepLProvider->translate($text);
-        } catch (InsufficientFundsException|TranslationFailedException $e) {
+        } catch (TranslationFailedException $e) {
+            if (! $e->shouldFailover()) {
+                throw $e;
+            }
+
             Log::warning('TranslationManager: DeepL failed, switching to OpenAI.', [
                 'error' => $e->getMessage(),
                 'exception_type' => get_class($e),

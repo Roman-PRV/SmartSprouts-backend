@@ -76,8 +76,9 @@ class DeepLProvider implements TranslationProviderInterface
                     }
 
                     throw new TranslationFailedException(
-                        __('exceptions.translation.deepl_provider_failed'),
-                        previous: $e
+                        message: __('exceptions.translation.deepl_provider_failed'),
+                        previous: $e,
+                        shouldFailover: ! ($e instanceof DeepLException && $this->isAuthError($e))
                     );
                 }
 
