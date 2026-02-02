@@ -185,7 +185,6 @@ class OpenAiProvider implements TranslationProviderInterface
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
         ]));
 
         return new TranslationFailedException(
