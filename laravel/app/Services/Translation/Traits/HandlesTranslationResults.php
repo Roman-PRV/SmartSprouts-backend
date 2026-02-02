@@ -3,6 +3,7 @@
 namespace App\Services\Translation\Traits;
 
 use App\DTO\TranslationItemDTO;
+use App\Enums\TranslationLogEventEnum;
 use App\Enums\TranslationStatusEnum;
 use App\Services\Translation\DTO\SanitizationParametersDTO;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +30,8 @@ trait HandlesTranslationResults
                     text: $value
                 );
             } else {
-                Log::warning("{$providerName}: Translation for locale '{$locale}' is missing or invalid.", array_merge($params->context, [
+                Log::warning(TranslationLogEventEnum::LOCALE_MISSING->value, array_merge($params->context, [
+                    'provider' => class_basename($this),
                     'locale' => $locale,
                     'available_locales' => array_keys($params->results),
                 ]));

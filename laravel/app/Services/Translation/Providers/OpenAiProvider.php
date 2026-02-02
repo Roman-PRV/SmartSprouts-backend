@@ -4,6 +4,7 @@ namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationLogEventEnum;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\DTO\SanitizationParametersDTO;
@@ -149,6 +150,10 @@ class OpenAiProvider implements TranslationProviderInterface
     private function handleError(\Throwable $e, array $context = []): \Throwable
     {
         if ($e instanceof ErrorException && $this->isQuotaError($e)) {
+            Log::error(TranslationLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, array_merge($context, [
+                'provider' => 'openai',
+            ]));
+
             return new InsufficientFundsException(
                 __('exceptions.translation.insufficient_funds').' ('.__('exceptions.translation.details.openai_quota_exceeded').')',
                 402,
@@ -157,7 +162,8 @@ class OpenAiProvider implements TranslationProviderInterface
         }
 
         if ($e instanceof TransporterException) {
-            Log::warning('OpenAiProvider: Network issues detected', array_merge($context, [
+            Log::warning(TranslationLogEventEnum::NETWORK_TIMEOUT->value, array_merge($context, [
+                'provider' => 'openai',
                 'error' => $e->getMessage(),
             ]));
 
@@ -170,7 +176,8 @@ class OpenAiProvider implements TranslationProviderInterface
 
         if ($e instanceof \TypeError || $e instanceof \Error) {
             $message = $e->getMessage();
-            Log::error('OpenAiProvider: SDK internal error (likely corrupt response)', array_merge($context, [
+            Log::error(TranslationLogEventEnum::SDK_ERROR->value, array_merge($context, [
+                'provider' => 'openai',
                 'message' => $message,
             ]));
 
@@ -186,7 +193,8 @@ class OpenAiProvider implements TranslationProviderInterface
             );
         }
 
-        Log::error('OpenAiProvider: Unexpected translation error', array_merge($context, [
+        Log::error(TranslationLogEventEnum::PROVIDER_FAILED->value, array_merge($context, [
+            'provider' => 'openai',
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),

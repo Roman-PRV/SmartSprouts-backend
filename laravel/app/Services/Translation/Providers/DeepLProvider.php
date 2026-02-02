@@ -4,6 +4,7 @@ namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationLogEventEnum;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\DTO\SanitizationParametersDTO;
@@ -53,13 +54,20 @@ class DeepLProvider implements TranslationProviderInterface
                 );
             } catch (Throwable $e) {
                 if ($this->isProviderLevelError($e)) {
-                    Log::error('DeepLProvider: Critical provider-level error detected.', [
+                    Log::error(TranslationLogEventEnum::PROVIDER_FAILED->value, [
+                        'provider' => 'deepl',
                         'request_id' => $requestId,
                         'locale' => $locale,
                         'error' => $e->getMessage(),
                     ]);
 
                     if ($e instanceof DeepLException && $this->isQuotaError($e)) {
+                        Log::error(TranslationLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
+                            'provider' => 'deepl',
+                            'request_id' => $requestId,
+                            'locale' => $locale,
+                        ]);
+
                         throw new InsufficientFundsException(
                             __('exceptions.translation.insufficient_funds').' ('.__('exceptions.translation.details.deepl_quota_exceeded').')',
                             402,
@@ -73,7 +81,8 @@ class DeepLProvider implements TranslationProviderInterface
                     );
                 }
 
-                Log::warning("DeepLProvider: Translation for locale '{$locale}' failed.", [
+                Log::info(TranslationLogEventEnum::LOCALE_FAILED->value, [
+                    'provider' => 'deepl',
                     'request_id' => $requestId,
                     'locale' => $locale,
                     'error' => $e->getMessage(),
@@ -86,7 +95,8 @@ class DeepLProvider implements TranslationProviderInterface
         // If all locales failed, throw exception to enable fallback to OpenAI
         $failedCount = count(array_filter($translations, fn ($v) => $v === null));
         if ($failedCount === count($this->locales)) {
-            Log::error('DeepLProvider: All locales failed, triggering fallback.', [
+            Log::error(TranslationLogEventEnum::PROVIDER_ALL_LOCALES_FAILED->value, [
+                'provider' => 'deepl',
                 'request_id' => $requestId,
                 'total_locales' => count($this->locales),
             ]);

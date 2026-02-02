@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services\Translation\Providers;
 
 use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationLogEventEnum;
 use App\Enums\TranslationStatusEnum;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
@@ -106,12 +107,13 @@ class DeepLProviderTest extends TestCase
             ->andThrow($exception);
 
         Log::shouldReceive('error')
-            ->once()
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, 'Critical provider-level error detected')
+            ->twice() // PROVIDER_FAILED + PROVIDER_QUOTA_EXCEEDED
+            ->withArgs(function ($event, $context = []) {
+                return ($event === TranslationLogEventEnum::PROVIDER_FAILED->value ||
+                    $event === TranslationLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value)
                     && ! empty($context['request_id'])
-                    && $context['locale'] === 'en'
-                    && str_contains($context['error'], 'Quota exceeded');
+                    && $context['provider'] === 'deepl'
+                    && $context['locale'] === 'en';
             });
 
         $this->expectException(InsufficientFundsException::class);
@@ -157,12 +159,13 @@ class DeepLProviderTest extends TestCase
             ->andThrow($exception);
 
         Log::shouldReceive('error')
-            ->once()
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, 'Critical provider-level error detected')
+            ->twice() // PROVIDER_FAILED + PROVIDER_QUOTA_EXCEEDED
+            ->withArgs(function ($event, $context = []) {
+                return ($event === TranslationLogEventEnum::PROVIDER_FAILED->value ||
+                    $event === TranslationLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value)
                     && ! empty($context['request_id'])
-                    && $context['locale'] === 'en'
-                    && str_contains($context['error'], 'Quota exceeded');
+                    && $context['provider'] === 'deepl'
+                    && $context['locale'] === 'en';
             });
 
         $this->expectException(InsufficientFundsException::class);
@@ -191,12 +194,13 @@ class DeepLProviderTest extends TestCase
             ->with($text, null, 'es');
 
         Log::shouldReceive('error')
-            ->once()
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, 'Critical provider-level error detected')
+            ->twice() // PROVIDER_FAILED + PROVIDER_QUOTA_EXCEEDED
+            ->withArgs(function ($event, $context = []) {
+                return ($event === TranslationLogEventEnum::PROVIDER_FAILED->value ||
+                    $event === TranslationLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value)
                     && ! empty($context['request_id'])
-                    && $context['locale'] === 'uk'
-                    && str_contains($context['error'], 'Quota exceeded');
+                    && $context['provider'] === 'deepl'
+                    && $context['locale'] === 'uk';
             });
 
         $this->expectException(InsufficientFundsException::class);
@@ -227,9 +231,10 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('warning')
             ->once()
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, "DeepLProvider: Translation for locale 'uk' is missing or invalid.")
+            ->withArgs(function ($event, $context = []) {
+                return $event === TranslationLogEventEnum::LOCALE_MISSING->value
                     && ! empty($context['request_id'])
+                    && $context['provider'] === 'DeepLProvider'
                     && $context['locale'] === 'uk'
                     && isset($context['available_locales']);
             });
@@ -260,9 +265,10 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('error')
             ->once()
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, 'Critical provider-level error detected')
+            ->withArgs(function ($event, $context = []) {
+                return $event === TranslationLogEventEnum::PROVIDER_FAILED->value
                     && ! empty($context['request_id'])
+                    && $context['provider'] === 'deepl'
                     && $context['locale'] === 'en'
                     && str_contains($context['error'], 'Unauthorized');
             });
@@ -294,23 +300,24 @@ class DeepLProviderTest extends TestCase
             ->times(3) // retry 3 times
             ->andThrow($networkException);
 
-        // Expect warning logs for each locale
-        Log::shouldReceive('warning')
+        // Expect info logs for each locale (LOCALE_FAILED)
+        Log::shouldReceive('info')
             ->times(3)
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, 'Translation for locale')
-                    && str_contains($msg, 'failed')
+            ->withArgs(function ($event, $context = []) {
+                return $event === TranslationLogEventEnum::LOCALE_FAILED->value
                     && ! empty($context['request_id'])
+                    && $context['provider'] === 'deepl'
                     && in_array($context['locale'], ['en', 'uk', 'es'])
                     && str_contains($context['error'], 'Connection timeout');
             });
 
-        // Expect error log when all locales fail
+        // Expect error log when all locales fail (PROVIDER_ALL_LOCALES_FAILED)
         Log::shouldReceive('error')
             ->once()
-            ->withArgs(function ($msg, $context = []) {
-                return str_contains($msg, 'All locales failed, triggering fallback')
+            ->withArgs(function ($event, $context = []) {
+                return $event === TranslationLogEventEnum::PROVIDER_ALL_LOCALES_FAILED->value
                     && ! empty($context['request_id'])
+                    && $context['provider'] === 'deepl'
                     && $context['total_locales'] === 3;
             });
 
