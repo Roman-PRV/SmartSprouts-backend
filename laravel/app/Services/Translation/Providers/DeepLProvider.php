@@ -79,6 +79,19 @@ class DeepLProvider implements TranslationProviderInterface
             }
         }
 
+        // If all locales failed, throw exception to enable fallback to OpenAI
+        $failedCount = count(array_filter($translations, fn ($v) => $v === null));
+        if ($failedCount === count($this->locales)) {
+            Log::error('DeepLProvider: All locales failed, triggering fallback.', [
+                'request_id' => $requestId,
+                'total_locales' => count($this->locales),
+            ]);
+
+            throw new TranslationFailedException(
+                __('exceptions.translation.deepl_provider_failed')
+            );
+        }
+
         $sanitized = $this->sanitizeResults(new SanitizationParametersDTO(
             results: $translations,
             allowedLocales: $this->locales,

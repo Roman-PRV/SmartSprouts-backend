@@ -271,4 +271,51 @@ class DeepLProviderTest extends TestCase
         $this->expectExceptionMessage(__('exceptions.translation.deepl_provider_failed'));
         $this->provider->translate($text);
     }
+
+    public function test_it_throws_exception_when_all_locales_fail(): void
+    {
+        $text = 'AllFail';
+
+        // All locales fail with network errors (non-provider-level)
+        $networkException = new DeepLException('Connection timeout', 0);
+
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'en-US')
+            ->times(3) // retry 3 times
+            ->andThrow($networkException);
+
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'uk')
+            ->times(3) // retry 3 times
+            ->andThrow($networkException);
+
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'es')
+            ->times(3) // retry 3 times
+            ->andThrow($networkException);
+
+        // Expect warning logs for each locale
+        Log::shouldReceive('warning')
+            ->times(3)
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, 'Translation for locale')
+                    && str_contains($msg, 'failed')
+                    && ! empty($context['request_id'])
+                    && in_array($context['locale'], ['en', 'uk', 'es'])
+                    && str_contains($context['error'], 'Connection timeout');
+            });
+
+        // Expect error log when all locales fail
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, 'All locales failed, triggering fallback')
+                    && ! empty($context['request_id'])
+                    && $context['total_locales'] === 3;
+            });
+
+        $this->expectException(TranslationFailedException::class);
+        $this->expectExceptionMessage(__('exceptions.translation.deepl_provider_failed'));
+        $this->provider->translate($text);
+    }
 }
