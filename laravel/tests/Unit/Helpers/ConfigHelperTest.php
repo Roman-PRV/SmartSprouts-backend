@@ -4,6 +4,7 @@ namespace Tests\Unit\Helpers;
 
 use App\Helpers\ConfigHelper;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class ConfigHelperTest extends TestCase
@@ -68,6 +69,94 @@ class ConfigHelperTest extends TestCase
 
         $this->assertEquals(789, ConfigHelper::getInt('test.string_key', 789));
         $this->assertEquals(789, ConfigHelper::getInt('test.array_key', 789));
+    }
+
+    public function test_get_int_accepts_negative_integer_string()
+    {
+        Config::set('test.negative_int', '-456');
+
+        $result = ConfigHelper::getInt('test.negative_int');
+
+        $this->assertSame(-456, $result);
+    }
+
+    public function test_get_int_rejects_float_string_and_logs_warning()
+    {
+        Config::set('test.float_string', '12.5');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.float_string'
+                    && $context['value'] === '12.5';
+            });
+
+        $result = ConfigHelper::getInt('test.float_string', 99);
+
+        $this->assertSame(99, $result);
+    }
+
+    public function test_get_int_rejects_scientific_notation_and_logs_warning()
+    {
+        Config::set('test.scientific', '1e3');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.scientific'
+                    && $context['value'] === '1e3';
+            });
+
+        $result = ConfigHelper::getInt('test.scientific', 0);
+
+        $this->assertSame(0, $result);
+    }
+
+    public function test_get_int_rejects_hex_notation_and_logs_warning()
+    {
+        Config::set('test.hex', '0xFF');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.hex'
+                    && $context['value'] === '0xFF';
+            });
+
+        $result = ConfigHelper::getInt('test.hex', 10);
+
+        $this->assertSame(10, $result);
+    }
+
+    public function test_get_int_rejects_float_value_and_logs_warning()
+    {
+        Config::set('test.float_value', 12.5);
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return str_contains($message, 'Invalid integer value in config')
+                    && $context['key'] === 'test.float_value'
+                    && $context['value'] === 12.5;
+            });
+
+        $result = ConfigHelper::getInt('test.float_value', 0);
+
+        $this->assertSame(0, $result);
+    }
+
+    public function test_get_int_returns_default_for_null_without_logging()
+    {
+        Config::set('test.null_int', null);
+
+        Log::shouldReceive('warning')->never();
+
+        $result = ConfigHelper::getInt('test.null_int', 100);
+
+        $this->assertSame(100, $result);
     }
 
     /**

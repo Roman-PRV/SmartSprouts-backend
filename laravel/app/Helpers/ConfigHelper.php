@@ -33,8 +33,16 @@ class ConfigHelper
             return $value;
         }
 
-        if (\is_numeric($value)) {
-            return (int) $value;
+        if ($value !== null) {
+            $validated = \filter_var($value, FILTER_VALIDATE_INT);
+            if ($validated !== false) {
+                return $validated;
+            }
+
+            \Log::warning('Invalid integer value in config', [
+                'key' => $key,
+                'value' => $value,
+            ]);
         }
 
         return $default;
@@ -75,7 +83,6 @@ class ConfigHelper
             return $default;
         }
 
-        // Validate that all keys and values are strings
         foreach ($value as $k => $v) {
             if (! \is_string($k) || ! \is_string($v)) {
                 return $default;
@@ -99,7 +106,6 @@ class ConfigHelper
             return $default;
         }
 
-        // Validate that all values are strings (keys don't matter/can be integers)
         foreach ($value as $v) {
             if (! \is_string($v)) {
                 return $default;
