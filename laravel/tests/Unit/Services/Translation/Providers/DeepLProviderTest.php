@@ -4,6 +4,8 @@ namespace Tests\Unit\Services\Translation\Providers;
 
 use App\DTO\TranslationResultDTO;
 use App\Enums\TranslationStatusEnum;
+use App\Exceptions\Translation\InsufficientFundsException;
+use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\Providers\DeepLProvider;
 use DeepL\DeepLClient;
 use DeepL\DeepLException;
@@ -97,14 +99,18 @@ class DeepLProviderTest extends TestCase
 
         $exception = new DeepLException('Quota exceeded', 456);
 
-        $result = $this->provider->translate($text);
+        // Should throw on first locale (en)
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'en-US')
+            ->once()
+            ->andThrow($exception);
 
-        $this->assertInstanceOf(TranslationResultDTO::class, $result);
-        $this->assertCount(3, $result->translations);
-        foreach ($result->translations as $item) {
-            $this->assertEquals(TranslationStatusEnum::Error, $item->status);
-            $this->assertEquals($text, $item->fallback);
-        }
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+
+        $this->expectException(InsufficientFundsException::class);
+        $this->provider->translate($text);
     }
 
     public function test_it_retries_on_transient_errors_and_eventually_succeeds(): void
@@ -139,15 +145,47 @@ class DeepLProviderTest extends TestCase
 
         $exception = new DeepLException('Quota exceeded', 456);
 
-        // Should be called 3 times (once per locale) because retry stops, but foreach continues
+        // Should be called only once (retry decider returns false for quota errors)
         $this->client->shouldReceive('translateText')
-            ->times(3)
+            ->with($text, null, 'en-US')
+            ->once()
             ->andThrow($exception);
 
-        $result = $this->provider->translate($text);
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
 
-        $this->assertEquals(TranslationStatusEnum::Error, $result->translations['en']->status);
-        $this->assertEquals($text, $result->translations['en']->fallback);
+        $this->expectException(InsufficientFundsException::class);
+        $this->provider->translate($text);
+    }
+
+    public function test_it_stops_processing_locales_after_quota_error(): void
+    {
+        $text = 'ShortCircuit';
+
+        $exception = new DeepLException('Quota exceeded', 456);
+
+        // Should be called only for 'uk' (second locale), not for 'es' (third)
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'en-US')
+            ->once()
+            ->andReturn((object) ['text' => 'ShortCircuit']);
+
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'uk')
+            ->once()
+            ->andThrow($exception);
+
+        // 'es' should NOT be called (short-circuit)
+        $this->client->shouldNotReceive('translateText')
+            ->with($text, null, 'es');
+
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+
+        $this->expectException(InsufficientFundsException::class);
+        $this->provider->translate($text);
     }
 
     public function test_it_sanitizes_missing_results(): void
@@ -187,5 +225,25 @@ class DeepLProviderTest extends TestCase
         // Should contain Error status and fallback
         $this->assertEquals(TranslationStatusEnum::Error, $result->translations['uk']->status);
         $this->assertEquals($text, $result->translations['uk']->fallback);
+    }
+
+    public function test_it_throws_translation_failed_exception_on_auth_error(): void
+    {
+        $text = 'AuthFail';
+
+        $exception = new DeepLException('Unauthorized', 403);
+
+        $this->client->shouldReceive('translateText')
+            ->with($text, null, 'en-US')
+            ->once()
+            ->andThrow($exception);
+
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+
+        $this->expectException(TranslationFailedException::class);
+        $this->expectExceptionMessage('DeepL provider failed');
+        $this->provider->translate($text);
     }
 }

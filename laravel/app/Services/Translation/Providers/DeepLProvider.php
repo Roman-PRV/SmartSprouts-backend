@@ -4,6 +4,7 @@ namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
+use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
 use App\Services\Translation\Traits\HandlesTranslationResults;
 use App\Services\Translation\Traits\TranslationSanitizationParameters;
@@ -27,12 +28,14 @@ class DeepLProvider implements TranslationProviderInterface
         private readonly int $retryTimes,
         private readonly int $retrySleep,
         private readonly array $localeMap,
-    ) {}
+    ) {
+    }
 
     /**
      * Translate the given text into all supported locales.
      *
-     * @throws Throwable
+     * @throws InsufficientFundsException When DeepL quota is exceeded
+     * @throws TranslationFailedException When provider-level error occurs
      */
     public function translate(string $text): TranslationResultDTO
     {
@@ -50,6 +53,23 @@ class DeepLProvider implements TranslationProviderInterface
                     $this->getRetryDecider()
                 );
             } catch (Throwable $e) {
+                if ($this->isProviderLevelError($e)) {
+                    Log::error("DeepLProvider: Critical provider-level error detected.", [
+                        'request_id' => $requestId,
+                        'locale' => $locale,
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    if ($e instanceof DeepLException && $this->isQuotaError($e)) {
+                        throw new InsufficientFundsException();
+                    }
+
+                    throw new TranslationFailedException(
+                        "DeepL provider failed: {$e->getMessage()}",
+                        previous: $e
+                    );
+                }
+
                 Log::warning("DeepLProvider: Translation for locale '{$locale}' failed.", [
                     'request_id' => $requestId,
                     'locale' => $locale,
@@ -126,5 +146,24 @@ class DeepLProvider implements TranslationProviderInterface
         $message = $e->getMessage();
 
         return str_contains($message, 'Quota exceeded');
+    }
+
+    /**
+     * Determine if the error is provider-level (should stop all translations).
+     *
+     * Provider-level errors include quota exceeded, authentication failures,
+     * and SDK crashes. These errors should trigger failover to backup provider.
+     */
+    private function isProviderLevelError(Throwable $e): bool
+    {
+        if ($e instanceof DeepLException) {
+            return $this->isQuotaError($e) || $this->isAuthError($e);
+        }
+
+        if ($e instanceof TranslationFailedException) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -28,7 +28,8 @@ class OpenAiProvider implements TranslationProviderInterface
         private readonly int $retrySleep,
         private readonly string $model,
         private readonly string $template,
-    ) {}
+    ) {
+    }
 
     /**
      * {@inheritDoc}
@@ -144,7 +145,7 @@ class OpenAiProvider implements TranslationProviderInterface
     /**
      * Centralized error handling for OpenAI service.
      *
-     * @param  array<string, mixed>  $context  Додаткові дані для логів
+     * @param  array<string, mixed>  $context Additional data for logs
      */
     private function handleError(\Throwable $e, array $context = []): \Throwable
     {
