@@ -27,24 +27,16 @@ class CachingTranslationProvider implements TranslationProviderInterface
     {
         $key = $this->generateCacheKey($text);
 
-        $result = Cache::remember($key, $this->ttl, function () use ($text) {
-            return $this->provider->translate($text);
-        });
+        $cached = Cache::get($key);
 
-        if (! $result instanceof TranslationResultDTO) {
-            // This case should ideally not happen if cache is clean and types are correct,
-            // but we add it to satisfy PHPStan and handle potential corrupted cache.
-            Cache::forget($key);
-
-            return $this->provider->translate($text);
+        if ($cached instanceof TranslationResultDTO && ! $this->hasErrors($cached)) {
+            return $cached;
         }
 
-        // Do not cache results with errors to allow failover logic to work.
-        // Transient failures (network issues, rate limiting) should not be cached long-term.
-        if ($this->hasErrors($result)) {
-            Cache::forget($key);
+        $result = $this->provider->translate($text);
 
-            return $this->provider->translate($text);
+        if ($result instanceof TranslationResultDTO && ! $this->hasErrors($result)) {
+            Cache::put($key, $result, $this->ttl);
         }
 
         return $result;

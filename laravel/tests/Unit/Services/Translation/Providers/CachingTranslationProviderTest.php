@@ -95,4 +95,44 @@ class CachingTranslationProviderTest extends TestCase
         $this->mockProvider->method('getName')->willReturn('mock_name');
         $this->assertEquals('mock_name', $this->cachingProvider->getName());
     }
+
+    public function test_it_does_not_cache_results_with_errors(): void
+    {
+        $text = 'Hello world';
+        $errorResult = new TranslationResultDTO([
+            'en' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hello world'),
+            'uk' => new TranslationItemDTO(TranslationStatusEnum::Error, ''),
+        ], 'error-request-id');
+
+        $successResult = new TranslationResultDTO([
+            'en' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Hello world'),
+            'uk' => new TranslationItemDTO(TranslationStatusEnum::Success, 'Привіт світ'),
+        ], 'success-request-id');
+
+        // First call returns error - should NOT be cached
+        // Second call returns success - should be cached
+        $this->mockProvider->expects($this->exactly(2))
+            ->method('translate')
+            ->with($text)
+            ->willReturnOnConsecutiveCalls($errorResult, $successResult);
+
+        $this->mockProvider->method('getName')->willReturn('mock');
+
+        // First call: error result should not be cached
+        $firstResult = $this->cachingProvider->translate($text);
+        $this->assertEquals(TranslationStatusEnum::Error, $firstResult->translations['uk']->status);
+
+        // Verify cache is empty after error
+        $hash = hash('sha256', $text);
+        $expectedKey = "{$this->prefix}:mock:{$hash}";
+        $this->assertFalse(Cache::has($expectedKey));
+
+        // Second call: success result should be cached
+        $secondResult = $this->cachingProvider->translate($text);
+        $this->assertEquals(TranslationStatusEnum::Success, $secondResult->translations['uk']->status);
+        $this->assertEquals('Привіт світ', $secondResult->translations['uk']->text);
+
+        // Verify cache now contains the success result
+        $this->assertTrue(Cache::has($expectedKey));
+    }
 }
