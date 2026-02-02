@@ -11,5 +11,13 @@ return [
         'provider_failed' => 'El proveedor de traducción no está disponible.',
         'deepl_provider_failed' => 'El servicio de traducción DeepL no está disponible.',
         'unexpected_exception' => 'El proveedor de traducción lanzó una excepción inesperada.',
+        'details' => [
+            'deepl_quota_exceeded' => 'Cuota de DeepL excedida',
+            'openai_quota_exceeded' => 'Cuota de OpenAI excedida',
+            'empty_choices' => 'Opciones vacías',
+            'json_decode_error' => 'Error de decodificación JSON',
+            'unexpected_structure' => 'Estructura de respuesta inesperada - verifique la clave API',
+            'sdk_internal_error' => 'Error interno del SDK',
+        ],
     ],
 ];

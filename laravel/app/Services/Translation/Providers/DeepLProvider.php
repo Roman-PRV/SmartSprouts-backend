@@ -61,7 +61,7 @@ class DeepLProvider implements TranslationProviderInterface
 
                     if ($e instanceof DeepLException && $this->isQuotaError($e)) {
                         throw new InsufficientFundsException(
-                            __('exceptions.translation.insufficient_funds').' (DeepL quota exceeded)',
+                            __('exceptions.translation.insufficient_funds').' ('.__('exceptions.translation.details.deepl_quota_exceeded').')',
                             402,
                             $e
                         );

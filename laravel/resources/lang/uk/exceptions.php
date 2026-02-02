@@ -11,5 +11,13 @@ return [
         'provider_failed' => 'Провайдер перекладу недоступний.',
         'deepl_provider_failed' => 'Сервіс перекладу DeepL недоступний.',
         'unexpected_exception' => 'Провайдер перекладу викинув неочікуване виключення.',
+        'details' => [
+            'deepl_quota_exceeded' => 'Квоту DeepL вичерпано',
+            'openai_quota_exceeded' => 'Квоту OpenAI вичерпано',
+            'empty_choices' => 'Порожній варіант відповіді',
+            'json_decode_error' => 'Помилка декодування JSON',
+            'unexpected_structure' => 'Неочікувана структура відповіді - перевірте API ключ',
+            'sdk_internal_error' => 'Внутрішня помилка SDK',
+        ],
     ],
 ];

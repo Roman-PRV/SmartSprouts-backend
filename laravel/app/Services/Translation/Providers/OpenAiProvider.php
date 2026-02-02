@@ -123,7 +123,7 @@ class OpenAiProvider implements TranslationProviderInterface
         ]);
 
         if (empty($response->choices)) {
-            throw new TranslationFailedException(__('exceptions.translation.failed').' (Empty choices)');
+            throw new TranslationFailedException(__('exceptions.translation.failed').' ('.__('exceptions.translation.details.empty_choices').')');
         }
 
         $content = $response->choices[0]->message->content ?? '{}';
@@ -132,7 +132,7 @@ class OpenAiProvider implements TranslationProviderInterface
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             throw new TranslationFailedException(
-                __('exceptions.translation.invalid_json').' (JSON decode error)',
+                __('exceptions.translation.invalid_json').' ('.__('exceptions.translation.details.json_decode_error').')',
                 0,
                 $e
             );
@@ -150,7 +150,7 @@ class OpenAiProvider implements TranslationProviderInterface
     {
         if ($e instanceof ErrorException && $this->isQuotaError($e)) {
             return new InsufficientFundsException(
-                __('exceptions.translation.insufficient_funds').' (OpenAI quota exceeded)',
+                __('exceptions.translation.insufficient_funds').' ('.__('exceptions.translation.details.openai_quota_exceeded').')',
                 402,
                 $e
             );
@@ -176,7 +176,8 @@ class OpenAiProvider implements TranslationProviderInterface
 
             // If it's a TypeError from array_map/null, it means 'choices' (or another expected key) is missing
             $isStructuralError = str_contains($message, 'array_map') && str_contains($message, 'null');
-            $errorInfo = $isStructuralError ? ' (Unexpected response structure - check API Key)' : ' (Internal SDK Error)';
+            $detailKey = $isStructuralError ? 'unexpected_structure' : 'sdk_internal_error';
+            $errorInfo = ' ('.__("exceptions.translation.details.{$detailKey}").')';
 
             return new TranslationFailedException(
                 __('exceptions.translation.failed').$errorInfo,
