@@ -6,8 +6,8 @@ use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
+use App\Services\Translation\DTO\SanitizationParametersDTO;
 use App\Services\Translation\Traits\HandlesTranslationResults;
-use App\Services\Translation\Traits\TranslationSanitizationParameters;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use OpenAI\Contracts\ClientContract;
@@ -43,7 +43,7 @@ class OpenAiProvider implements TranslationProviderInterface
 
                 $responseData = $this->callApi($systemPrompt, $text, $this->model);
 
-                return $this->sanitizeResults(new TranslationSanitizationParameters(
+                return $this->sanitizeResults(new SanitizationParametersDTO(
                     results: $responseData,
                     allowedLocales: $this->locales,
                     originalText: $text,

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\Translation\Traits;
+namespace App\Services\Translation\DTO;
 
-class TranslationSanitizationParameters
+class SanitizationParametersDTO
 {
     /**
      * @param  array<string, mixed>  $results

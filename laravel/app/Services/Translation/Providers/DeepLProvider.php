@@ -6,8 +6,8 @@ use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
 use App\Exceptions\Translation\InsufficientFundsException;
 use App\Exceptions\Translation\TranslationFailedException;
+use App\Services\Translation\DTO\SanitizationParametersDTO;
 use App\Services\Translation\Traits\HandlesTranslationResults;
-use App\Services\Translation\Traits\TranslationSanitizationParameters;
 use DeepL\DeepLClient;
 use DeepL\DeepLException;
 use Illuminate\Support\Facades\Log;
@@ -79,7 +79,7 @@ class DeepLProvider implements TranslationProviderInterface
             }
         }
 
-        $sanitized = $this->sanitizeResults(new TranslationSanitizationParameters(
+        $sanitized = $this->sanitizeResults(new SanitizationParametersDTO(
             results: $translations,
             allowedLocales: $this->locales,
             originalText: $text,

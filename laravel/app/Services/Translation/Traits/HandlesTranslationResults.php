@@ -4,6 +4,7 @@ namespace App\Services\Translation\Traits;
 
 use App\DTO\TranslationItemDTO;
 use App\Enums\TranslationStatusEnum;
+use App\Services\Translation\DTO\SanitizationParametersDTO;
 use Illuminate\Support\Facades\Log;
 
 trait HandlesTranslationResults
@@ -14,7 +15,7 @@ trait HandlesTranslationResults
      *
      * @return array<string, TranslationItemDTO>
      */
-    protected function sanitizeResults(TranslationSanitizationParameters $params): array
+    protected function sanitizeResults(SanitizationParametersDTO $params): array
     {
         $sanitized = [];
         $providerName = class_basename($this);
