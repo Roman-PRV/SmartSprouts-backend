@@ -28,8 +28,7 @@ class DeepLProvider implements TranslationProviderInterface
         private readonly int $retryTimes,
         private readonly int $retrySleep,
         private readonly array $localeMap,
-    ) {
-    }
+    ) {}
 
     /**
      * Translate the given text into all supported locales.
@@ -54,14 +53,14 @@ class DeepLProvider implements TranslationProviderInterface
                 );
             } catch (Throwable $e) {
                 if ($this->isProviderLevelError($e)) {
-                    Log::error("DeepLProvider: Critical provider-level error detected.", [
+                    Log::error('DeepLProvider: Critical provider-level error detected.', [
                         'request_id' => $requestId,
                         'locale' => $locale,
                         'error' => $e->getMessage(),
                     ]);
 
                     if ($e instanceof DeepLException && $this->isQuotaError($e)) {
-                        throw new InsufficientFundsException();
+                        throw new InsufficientFundsException;
                     }
 
                     throw new TranslationFailedException(

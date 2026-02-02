@@ -54,7 +54,7 @@ class CachingTranslationProvider implements TranslationProviderInterface
      */
     private function generateCacheKey(string $text): string
     {
-        $hash = md5($text);
+        $hash = hash('sha256', $text);
         $providerName = $this->getName();
 
         return "{$this->prefix}:{$providerName}:{$hash}";
