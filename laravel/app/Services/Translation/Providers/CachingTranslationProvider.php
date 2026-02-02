@@ -4,6 +4,7 @@ namespace App\Services\Translation\Providers;
 
 use App\Contracts\TranslationProviderInterface;
 use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationStatusEnum;
 use Illuminate\Support\Facades\Cache;
 
 class CachingTranslationProvider implements TranslationProviderInterface
@@ -38,6 +39,14 @@ class CachingTranslationProvider implements TranslationProviderInterface
             return $this->provider->translate($text);
         }
 
+        // Do not cache results with errors to allow failover logic to work.
+        // Transient failures (network issues, rate limiting) should not be cached long-term.
+        if ($this->hasErrors($result)) {
+            Cache::forget($key);
+
+            return $this->provider->translate($text);
+        }
+
         return $result;
     }
 
@@ -58,5 +67,19 @@ class CachingTranslationProvider implements TranslationProviderInterface
         $providerName = $this->getName();
 
         return "{$this->prefix}:{$providerName}:{$hash}";
+    }
+
+    /**
+     * Check if the translation result contains any errors.
+     */
+    private function hasErrors(TranslationResultDTO $result): bool
+    {
+        foreach ($result->translations as $item) {
+            if ($item->status === TranslationStatusEnum::Error) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
