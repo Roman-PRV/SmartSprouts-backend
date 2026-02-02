@@ -268,7 +268,7 @@ class DeepLProviderTest extends TestCase
             });
 
         $this->expectException(TranslationFailedException::class);
-        $this->expectExceptionMessage('DeepL provider failed');
+        $this->expectExceptionMessage(__('exceptions.translation.deepl_provider_failed'));
         $this->provider->translate($text);
     }
 }

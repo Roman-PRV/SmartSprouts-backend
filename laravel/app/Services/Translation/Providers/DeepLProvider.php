@@ -64,7 +64,7 @@ class DeepLProvider implements TranslationProviderInterface
                     }
 
                     throw new TranslationFailedException(
-                        "DeepL provider failed: {$e->getMessage()}",
+                        __('exceptions.translation.deepl_provider_failed'),
                         previous: $e
                     );
                 }

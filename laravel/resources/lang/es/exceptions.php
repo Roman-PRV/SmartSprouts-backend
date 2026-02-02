@@ -8,5 +8,7 @@ return [
         'missing_locale' => 'Falta la traducción para la configuración regional: :locale en la respuesta de IA.',
         'timeout' => 'Se agotó el tiempo de espera de la solicitud de traducción. Por favor, inténtelo de nuevo.',
         'not_found' => 'Traducción no encontrada.',
+        'provider_failed' => 'El proveedor de traducción no está disponible.',
+        'deepl_provider_failed' => 'El servicio de traducción DeepL no está disponible.',
     ],
 ];
