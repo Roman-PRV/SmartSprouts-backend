@@ -107,7 +107,12 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('error')
             ->once()
-            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, 'Critical provider-level error detected')
+                    && ! empty($context['request_id'])
+                    && $context['locale'] === 'en'
+                    && str_contains($context['error'], 'Quota exceeded');
+            });
 
         $this->expectException(InsufficientFundsException::class);
         $this->provider->translate($text);
@@ -153,7 +158,12 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('error')
             ->once()
-            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, 'Critical provider-level error detected')
+                    && ! empty($context['request_id'])
+                    && $context['locale'] === 'en'
+                    && str_contains($context['error'], 'Quota exceeded');
+            });
 
         $this->expectException(InsufficientFundsException::class);
         $this->provider->translate($text);
@@ -182,7 +192,12 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('error')
             ->once()
-            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, 'Critical provider-level error detected')
+                    && ! empty($context['request_id'])
+                    && $context['locale'] === 'uk'
+                    && str_contains($context['error'], 'Quota exceeded');
+            });
 
         $this->expectException(InsufficientFundsException::class);
         $this->provider->translate($text);
@@ -212,7 +227,12 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('warning')
             ->once()
-            ->withArgs(fn ($msg) => str_contains($msg, "DeepLProvider: Translation for locale 'uk' is missing or invalid."));
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, "DeepLProvider: Translation for locale 'uk' is missing or invalid.")
+                    && ! empty($context['request_id'])
+                    && $context['locale'] === 'uk'
+                    && isset($context['available_locales']);
+            });
 
         $result = $this->provider->translate($text);
 
@@ -240,7 +260,12 @@ class DeepLProviderTest extends TestCase
 
         Log::shouldReceive('error')
             ->once()
-            ->withArgs(fn ($msg) => str_contains($msg, 'Critical provider-level error detected'));
+            ->withArgs(function ($msg, $context = []) {
+                return str_contains($msg, 'Critical provider-level error detected')
+                    && ! empty($context['request_id'])
+                    && $context['locale'] === 'en'
+                    && str_contains($context['error'], 'Unauthorized');
+            });
 
         $this->expectException(TranslationFailedException::class);
         $this->expectExceptionMessage('DeepL provider failed');
