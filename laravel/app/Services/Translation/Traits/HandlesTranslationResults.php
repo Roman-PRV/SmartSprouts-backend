@@ -19,7 +19,6 @@ trait HandlesTranslationResults
     protected function sanitizeResults(SanitizationParametersDTO $params): array
     {
         $sanitized = [];
-        $providerName = class_basename($this);
 
         foreach ($params->allowedLocales as $locale) {
             $value = $params->results[$locale] ?? null;
