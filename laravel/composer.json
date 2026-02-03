@@ -7,7 +7,7 @@
         "laravel"
     ],
     "license": "MIT",
-    "require": {    
+    "require": {
         "php": "^8.2",
         "darkaonline/l5-swagger": "^8.6",
         "deeplcom/deepl-php": "^1.16",
@@ -17,6 +17,7 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "openai-php/client": "^0.18.0",
+        "predis/predis": "^3.3",
         "spatie/laravel-translatable": "^6.0"
     },
     "require-dev": {

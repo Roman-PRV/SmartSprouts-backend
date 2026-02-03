@@ -2,7 +2,7 @@ services:
   laravel:
     build:
       context: ./laravel
-      dockerfile: /docker/Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: pp_laravel_app
     restart: unless-stopped
     working_dir: /var/www
@@ -45,9 +45,27 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: pp_redis_cache
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-secret}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 volumes:
   mysql_data:
   vendor_data:
+  redis_data:
 
 networks:
   app-network:
