@@ -35,7 +35,12 @@ class RedisTranslationCacheTest extends TestCase
         $mockProvider->shouldReceive('getName')->andReturn('deepl');
 
         $resultDTO = new TranslationResultDTO(
-            translations: [],
+            translations: [
+                'es' => new TranslationItemDTO(
+                    status: TranslationStatusEnum::Success,
+                    text: 'Hola'
+                ),
+            ],
             requestId: 'test-request-id'
         );
 
