@@ -41,7 +41,7 @@ RUN composer dump-autoload --optimize \
   && php artisan route:cache \
   && php artisan view:cache
 
-COPY /docker/entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
