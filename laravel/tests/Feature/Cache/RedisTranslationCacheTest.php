@@ -57,6 +57,7 @@ class RedisTranslationCacheTest extends TestCase
 
         // Assert
         $this->assertSame($resultDTO, $firstResult);
+        // Result from Redis is a new instance due to serialization
         $this->assertEquals($resultDTO, $secondResult);
 
         $store = Cache::getStore();
@@ -96,8 +97,9 @@ class RedisTranslationCacheTest extends TestCase
         $secondResult = $cachingProvider->translate('Error Text');
 
         // Assert
-        $this->assertEquals($errorResultDTO, $firstResult);
-        $this->assertEquals($errorResultDTO, $secondResult);
+        // Since results are not cached, both calls return the same object from the mock
+        $this->assertSame($errorResultDTO, $firstResult);
+        $this->assertSame($errorResultDTO, $secondResult);
 
         $keys = Redis::connection('cache')->keys('*test_pref:deepl*');
         $this->assertEmpty($keys);
