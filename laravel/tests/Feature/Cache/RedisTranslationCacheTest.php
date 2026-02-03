@@ -7,6 +7,7 @@ use App\DTO\TranslationResultDTO;
 use App\Enums\TranslationStatusEnum;
 use App\Services\Translation\Providers\CachingTranslationProvider;
 use App\Services\Translation\Providers\DeepLProvider;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Redis;
 use Mockery;
@@ -53,8 +54,15 @@ class RedisTranslationCacheTest extends TestCase
         $this->assertSame($resultDTO, $firstResult);
         $this->assertEquals($resultDTO, $secondResult);
 
-        $keys = Redis::connection('cache')->keys('*test_pref:deepl*');
-        $this->assertNotEmpty($keys);
+        $store = Cache::getStore();
+        $prefix = $store->getPrefix();
+        $hash = hash('sha256', 'Hello');
+        $fullKey = "{$prefix}test_pref:deepl:{$hash}";
+
+        $ttl = Redis::connection('cache')->ttl($fullKey);
+
+        $this->assertGreaterThan(3590, $ttl, "TTL for key {$fullKey} is too low: {$ttl}");
+        $this->assertLessThanOrEqual(3600, $ttl, "TTL for key {$fullKey} is too high: {$ttl}");
     }
 
     public function test_it_does_not_cache_error_results(): void
