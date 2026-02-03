@@ -1,0 +1,92 @@
+<?php
+
+namespace Tests\Feature\Cache;
+
+use App\DTO\TranslationItemDTO;
+use App\DTO\TranslationResultDTO;
+use App\Enums\TranslationStatusEnum;
+use App\Services\Translation\Providers\CachingTranslationProvider;
+use App\Services\Translation\Providers\DeepLProvider;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Redis;
+use Mockery;
+use Tests\TestCase;
+
+class RedisTranslationCacheTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Config::set('cache.default', 'redis');
+
+        try {
+            Redis::connection('cache')->flushdb();
+        } catch (\Exception $e) {
+            $this->markTestSkipped('Redis is not available: '.$e->getMessage());
+        }
+    }
+
+    public function test_it_caches_translation_results_in_redis(): void
+    {
+        // Arrange
+        $mockProvider = Mockery::mock(DeepLProvider::class);
+        $mockProvider->shouldReceive('getName')->andReturn('deepl');
+
+        $resultDTO = new TranslationResultDTO(
+            translations: [],
+            requestId: 'test-request-id'
+        );
+
+        $mockProvider->shouldReceive('translate')
+            ->once()
+            ->with('Hello')
+            ->andReturn($resultDTO);
+
+        $cachingProvider = new CachingTranslationProvider($mockProvider, 3600, 'test_pref');
+
+        // Act
+        $firstResult = $cachingProvider->translate('Hello');
+        $secondResult = $cachingProvider->translate('Hello');
+
+        // Assert
+        $this->assertSame($resultDTO, $firstResult);
+        $this->assertEquals($resultDTO, $secondResult);
+
+        $keys = Redis::connection('cache')->keys('*test_pref:deepl*');
+        $this->assertNotEmpty($keys);
+    }
+
+    public function test_it_does_not_cache_error_results(): void
+    {
+        // Arrange
+        $mockProvider = Mockery::mock(DeepLProvider::class);
+        $mockProvider->shouldReceive('getName')->andReturn('deepl');
+
+        $errorResultDTO = new TranslationResultDTO(
+            translations: [
+                'es' => new TranslationItemDTO(status: TranslationStatusEnum::Error),
+            ],
+            requestId: 'error-request-id'
+        );
+
+        // Expect translate to be called twice because it should not be cached
+        $mockProvider->shouldReceive('translate')
+            ->twice()
+            ->with('Error Text')
+            ->andReturn($errorResultDTO);
+
+        $cachingProvider = new CachingTranslationProvider($mockProvider, 3600, 'test_pref');
+
+        // Act
+        $firstResult = $cachingProvider->translate('Error Text');
+        $secondResult = $cachingProvider->translate('Error Text');
+
+        // Assert
+        $this->assertEquals($errorResultDTO, $firstResult);
+        $this->assertEquals($errorResultDTO, $secondResult);
+
+        $keys = Redis::connection('cache')->keys('*test_pref:deepl*');
+        $this->assertEmpty($keys);
+    }
+}
