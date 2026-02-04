@@ -1,0 +1,28 @@
+
+   FAIL  Tests\Unit\Services\Tts\Providers\ElevenLabsProviderTest
+  ✓ it synthesizes speech successfully                                   0.37s  
+  ✓ it uses default voice if none provided                               0.11s  
+  ⨯ it throws quota exceeded exception on 429                            0.14s  
+  ⨯ it throws failed exception on general api error                      0.12s  
+  ✓ it fetches available voices                                          0.10s  
+  ✓ it returns empty array if voices fetch fails                         0.10s  
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\Tts\Providers\ElevenLabsProviderTest > it thr…   
+  Failed asserting that exception of type "Mockery\Exception\BadMethodCallException" matches expected exception "App\Exceptions\Tts\TtsQuotaExceededException". Message was: "Received Mockery_0_Illuminate_Log_LogManager::info(), but no expectations were specified" at
+/var/www/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php:355
+/var/www/app/Services/Tts/Providers/ElevenLabsProvider.php:35
+/var/www/tests/Unit/Services/Tts/Providers/ElevenLabsProviderTest.php:108
+.
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\Tts\Providers\ElevenLabsProviderTest > it thr…   
+  Failed asserting that exception of type "Mockery\Exception\BadMethodCallException" matches expected exception "App\Exceptions\Tts\TtsFailedException". Message was: "Received Mockery_0_Illuminate_Log_LogManager::info(), but no expectations were specified" at
+/var/www/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php:355
+/var/www/app/Services/Tts/Providers/ElevenLabsProvider.php:35
+/var/www/tests/Unit/Services/Tts/Providers/ElevenLabsProviderTest.php:129
+.
+
+
+  Tests:    2 failed, 4 passed (15 assertions)
+  Duration: 1.01s
+

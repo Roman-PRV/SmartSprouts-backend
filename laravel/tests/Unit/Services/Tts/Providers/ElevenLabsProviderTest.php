@@ -99,6 +99,13 @@ class ElevenLabsProviderTest extends TestCase
         $this->expectException(TtsQuotaExceededException::class);
         $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_quota_exceeded', ['error' => 'Quota reached']));
 
+        Log::shouldReceive('info')->once()->with(TtsLogEventEnum::SYNTHESIS_STARTED->value, Mockery::any());
+        Log::shouldReceive('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
+            'provider' => 'elevenlabs',
+            'status' => 429,
+            'error' => 'Quota reached',
+        ]);
+
         $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
     }
 
@@ -113,6 +120,13 @@ class ElevenLabsProviderTest extends TestCase
 
         $this->expectException(TtsFailedException::class);
         $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_failed', ['error' => 'Internal Server Error']));
+
+        Log::shouldReceive('info')->once()->with(TtsLogEventEnum::SYNTHESIS_STARTED->value, Mockery::any());
+        Log::shouldReceive('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
+            'provider' => 'elevenlabs',
+            'status' => 500,
+            'error' => 'Internal Server Error',
+        ]);
 
         $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
     }
@@ -148,6 +162,11 @@ class ElevenLabsProviderTest extends TestCase
 
         Http::fake([
             $cleanBaseUrl.'/voices' => Http::response([], 500),
+        ]);
+
+        Log::shouldReceive('error')->once()->with(TtsLogEventEnum::VOICES_FETCH_FAILED->value, [
+            'provider' => 'elevenlabs',
+            'status' => 500,
         ]);
 
         $voices = $this->provider->getAvailableVoices();

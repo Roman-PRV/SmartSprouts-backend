@@ -1,0 +1,15 @@
+
+   FAIL  Tests\Unit\Services\Tts\Providers\ElevenLabsProviderTest
+  ⨯ it throws quota exceeded exception on 429                            0.33s  
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Unit\Services\Tts\Providers\ElevenLabsProviderTest > it thr…   
+  Failed asserting that exception of type "Mockery\Exception\BadMethodCallException" matches expected exception "App\Exceptions\Tts\TtsQuotaExceededException". Message was: "Received Mockery_0_Illuminate_Log_LogManager::info(), but no expectations were specified" at
+/var/www/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php:355
+/var/www/app/Services/Tts/Providers/ElevenLabsProvider.php:35
+/var/www/tests/Unit/Services/Tts/Providers/ElevenLabsProviderTest.php:108
+.
+
+
+  Tests:    1 failed (2 assertions)
+  Duration: 0.40s
+
