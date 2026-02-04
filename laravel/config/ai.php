@@ -48,4 +48,12 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
             'prefix' => env('TRANSLATION_CACHE_PREFIX', 'translation'),
         ],
     ],
+
+    'tts' => [
+        'storage' => [
+            'enabled' => env('TTS_STORAGE_ENABLED', true),
+            'disk' => env('TTS_STORAGE_DISK', 'public'),
+            'path_prefix' => env('TTS_STORAGE_PATH', 'tts/audio'),
+        ],
+    ],
 ];
