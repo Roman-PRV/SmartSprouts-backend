@@ -6,18 +6,18 @@ use App\Contracts\TtsProviderInterface;
 use App\Enums\TtsLogEventEnum;
 use App\Exceptions\Tts\TtsFailedException;
 use App\Exceptions\Tts\TtsQuotaExceededException;
-use App\Helpers\ConfigHelper;
 use App\Services\Tts\DTO\TtsRequestDTO;
 use App\Services\Tts\DTO\TtsResultDTO;
+use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ElevenLabsProvider implements TtsProviderInterface
 {
-    private string $baseUrl;
-
     public function __construct(
+        private readonly string $baseUrl,
         private readonly string $apiKey,
         private readonly string $modelId,
         private readonly string $defaultVoiceId,
@@ -25,14 +25,12 @@ class ElevenLabsProvider implements TtsProviderInterface
         private readonly int $connectTimeout = 10,
         private readonly int $retryTimes = 3,
         private readonly int $retrySleep = 1000,
-    ) {
-        $this->baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-    }
+    ) {}
 
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {
         $voiceId = $request->voiceId ?: $this->defaultVoiceId;
-        $url = \sprintf('%s/text-to-speech/%s', $this->baseUrl, $voiceId);
+        $url = sprintf('%s/text-to-speech/%s', $this->baseUrl, $voiceId);
 
         Log::info(TtsLogEventEnum::SYNTHESIS_STARTED->value, [
             'provider' => $this->getName(),
@@ -45,8 +43,8 @@ class ElevenLabsProvider implements TtsProviderInterface
         ])
             ->timeout($this->timeout)
             ->connectTimeout($this->connectTimeout)
-            ->retry($this->retryTimes, $this->retrySleep, function (\Exception $exception) {
-                return $exception instanceof \Illuminate\Http\Client\ConnectionException;
+            ->retry($this->retryTimes, $this->retrySleep, function (Exception $exception) {
+                return $exception instanceof ConnectionException;
             })
             ->post($url, [
                 'text' => $request->text,
@@ -99,19 +97,19 @@ class ElevenLabsProvider implements TtsProviderInterface
 
         foreach ($voices as $voice) {
             /** @var string $voiceId */
-            $voiceId = \is_string($voice['voice_id'] ?? null) ? $voice['voice_id'] : '';
+            $voiceId = is_string($voice['voice_id'] ?? null) ? $voice['voice_id'] : '';
 
             /** @var string $name */
-            $name = \is_string($voice['name'] ?? null) ? $voice['name'] : 'unknown';
+            $name = is_string($voice['name'] ?? null) ? $voice['name'] : 'unknown';
 
             /** @var array<string, mixed> $labels */
             $labels = $voice['labels'] ?? [];
 
             /** @var string $language */
-            $language = \is_string($labels['language'] ?? null) ? $labels['language'] : 'unknown';
+            $language = is_string($labels['language'] ?? null) ? $labels['language'] : 'unknown';
 
             /** @var string $gender */
-            $gender = \is_string($labels['gender'] ?? null) ? $labels['gender'] : 'unknown';
+            $gender = is_string($labels['gender'] ?? null) ? $labels['gender'] : 'unknown';
 
             $result[$voiceId] = [
                 'name' => $name,
