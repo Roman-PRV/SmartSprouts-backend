@@ -7,10 +7,11 @@ use Exception;
 class TtsQuotaExceededException extends Exception
 {
     public function __construct(
-        string $message = 'TTS provider quota exceeded',
+        ?string $message = null,
         int $code = 429,
         ?\Throwable $previous = null,
     ) {
+        $message ??= __('exceptions.tts.quota_exceeded');
         parent::__construct($message, $code, $previous);
     }
 }

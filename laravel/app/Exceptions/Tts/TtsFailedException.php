@@ -7,10 +7,11 @@ use Exception;
 class TtsFailedException extends Exception
 {
     public function __construct(
-        string $message = 'Text-to-speech synthesis failed',
+        ?string $message = null,
         int $code = 500,
         ?\Throwable $previous = null,
     ) {
+        $message ??= __('exceptions.tts.failed');
         parent::__construct($message, $code, $previous);
     }
 }

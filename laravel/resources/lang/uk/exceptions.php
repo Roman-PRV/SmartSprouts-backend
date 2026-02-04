@@ -20,4 +20,11 @@ return [
             'sdk_internal_error' => 'Внутрішня помилка SDK',
         ],
     ],
+    'tts' => [
+        'invalid_voice' => 'Запитано некоректний голос',
+        'failed' => 'Помилка синтезу мовлення',
+        'quota_exceeded' => 'Ліміт провайдера TTS вичерпано',
+        'elevenlabs_failed' => 'Помилка синтезу ElevenLabs: :error',
+        'elevenlabs_quota_exceeded' => 'Ліміт ElevenLabs вичерпано: :error',
+    ],
 ];

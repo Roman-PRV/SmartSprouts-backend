@@ -137,9 +137,14 @@ class ElevenLabsProvider implements TtsProviderInterface
         ]);
 
         if ($status === 429) {
-            throw new TtsQuotaExceededException("ElevenLabs quota exceeded: {$errorString}");
+            throw new TtsQuotaExceededException(
+                __('exceptions.tts.elevenlabs_quota_exceeded', ['error' => $errorString])
+            );
         }
 
-        throw new TtsFailedException("ElevenLabs synthesis failed: {$errorString}", $status);
+        throw new TtsFailedException(
+            __('exceptions.tts.elevenlabs_failed', ['error' => $errorString]),
+            $status
+        );
     }
 }

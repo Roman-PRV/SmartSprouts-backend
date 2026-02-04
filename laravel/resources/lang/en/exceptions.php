@@ -20,4 +20,11 @@ return [
             'sdk_internal_error' => 'Internal SDK Error',
         ],
     ],
+    'tts' => [
+        'invalid_voice' => 'Invalid voice requested',
+        'failed' => 'Text-to-speech synthesis failed',
+        'quota_exceeded' => 'TTS provider quota exceeded',
+        'elevenlabs_failed' => 'ElevenLabs synthesis failed: :error',
+        'elevenlabs_quota_exceeded' => 'ElevenLabs quota exceeded: :error',
+    ],
 ];

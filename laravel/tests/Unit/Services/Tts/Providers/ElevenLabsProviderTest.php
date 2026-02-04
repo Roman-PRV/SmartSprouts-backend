@@ -83,7 +83,7 @@ class ElevenLabsProviderTest extends TestCase
         ]);
 
         $this->expectException(TtsQuotaExceededException::class);
-        $this->expectExceptionMessage('ElevenLabs quota exceeded');
+        $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_quota_exceeded', ['error' => 'Quota reached']));
 
         $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
     }
@@ -95,7 +95,7 @@ class ElevenLabsProviderTest extends TestCase
         ]);
 
         $this->expectException(TtsFailedException::class);
-        $this->expectExceptionMessage('ElevenLabs synthesis failed: Internal Server Error');
+        $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_failed', ['error' => 'Internal Server Error']));
 
         $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
     }
