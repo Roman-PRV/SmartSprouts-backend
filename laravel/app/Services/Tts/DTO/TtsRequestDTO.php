@@ -6,7 +6,7 @@ readonly class TtsRequestDTO
 {
     public function __construct(
         public string $text,
-        public string $voiceId,
+        public ?string $voiceId = null,
         public ?string $modelId = null,
         public ?float $stability = null,
         public ?float $similarityBoost = null,
