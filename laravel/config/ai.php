@@ -46,7 +46,7 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
         'tts' => [
             'api_key' => env('ELEVENLABS_API_KEY'),
             'model' => env('ELEVENLABS_TTS_MODEL', 'eleven_multilingual_v2'),
-            'voice' => env('ELEVENLABS_DEFAULT_VOICE', 'hpp4J3VqNfWAUOO0d1Us'), // Britany
+            'voice' => env('ELEVENLABS_DEFAULT_VOICE', 'hpp4J3VqNfWAUOO0d1Us'),
             'request_timeout' => (int) env('ELEVENLABS_REQUEST_TIMEOUT', 30),
             'connect_timeout' => (int) env('ELEVENLABS_CONNECT_TIMEOUT', 10),
             'retry_times' => (int) env('ELEVENLABS_RETRY_TIMES', 3),

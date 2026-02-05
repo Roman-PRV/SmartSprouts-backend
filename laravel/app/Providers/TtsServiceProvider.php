@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\TtsProviderInterface;
 use App\Helpers\ConfigHelper;
 use App\Services\Tts\Providers\ElevenLabsProvider;
 use App\Services\Tts\TtsStorageService;
@@ -33,6 +34,8 @@ class TtsServiceProvider extends ServiceProvider
                 retrySleep: ConfigHelper::getInt('ai.elevenlabs.tts.retry_sleep', 1000),
             );
         });
+
+        $this->app->bind(TtsProviderInterface::class, ElevenLabsProvider::class);
     }
 
     /**
