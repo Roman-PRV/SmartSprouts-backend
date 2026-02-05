@@ -27,8 +27,7 @@ class ElevenLabsProvider implements TtsProviderInterface
         private readonly int $connectTimeout = 10,
         private readonly int $retryTimes = 3,
         private readonly int $retrySleep = 1000,
-    ) {
-    }
+    ) {}
 
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {

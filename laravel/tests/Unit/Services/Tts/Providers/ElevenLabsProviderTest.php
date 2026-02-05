@@ -97,18 +97,20 @@ class ElevenLabsProviderTest extends TestCase
             ], 429),
         ]);
 
-        $this->expectException(TtsQuotaExceededException::class);
-        $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_quota_exceeded', ['error' => 'Quota reached']));
+        try {
+            $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
+            $this->fail('Expected TtsQuotaExceededException was not thrown.');
+        } catch (TtsQuotaExceededException $e) {
+            $this->assertEquals(__('exceptions.tts.elevenlabs_quota_exceeded', ['error' => 'Quota reached']), $e->getMessage());
+        }
 
-        $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
-
-        $this->logSpy->shouldHaveReceived('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
+        $this->logSpy->shouldHaveReceived('error')->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
             'provider' => 'elevenlabs',
             'status' => 429,
             'error' => 'Quota reached',
         ]);
 
-        $this->logSpy->shouldHaveReceived('error')->once()->with(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
+        $this->logSpy->shouldHaveReceived('error')->with(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
             'provider' => 'elevenlabs',
         ]);
     }
@@ -122,10 +124,12 @@ class ElevenLabsProviderTest extends TestCase
             $cleanBaseUrl.'/text-to-speech/*' => Http::response('Server Error', 500),
         ]);
 
-        $this->expectException(TtsFailedException::class);
-        $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_failed', ['error' => 'Internal Server Error']));
-
-        $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
+        try {
+            $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
+            $this->fail('Expected TtsFailedException was not thrown.');
+        } catch (TtsFailedException $e) {
+            $this->assertEquals(__('exceptions.tts.elevenlabs_failed', ['error' => 'Internal Server Error']), $e->getMessage());
+        }
 
         $this->logSpy->shouldHaveReceived('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
             'provider' => 'elevenlabs',
@@ -143,10 +147,12 @@ class ElevenLabsProviderTest extends TestCase
             $cleanBaseUrl.'/text-to-speech/*' => Http::response('', 200),
         ]);
 
-        $this->expectException(TtsFailedException::class);
-        $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_empty_response'));
-
-        $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
+        try {
+            $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
+            $this->fail('Expected TtsFailedException was not thrown.');
+        } catch (TtsFailedException $e) {
+            $this->assertEquals(__('exceptions.tts.elevenlabs_empty_response'), $e->getMessage());
+        }
 
         $this->logSpy->shouldHaveReceived('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
             'provider' => 'elevenlabs',
