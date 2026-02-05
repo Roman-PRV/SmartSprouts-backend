@@ -10,8 +10,7 @@ class TtsStorageService
     public function __construct(
         private readonly string $disk,
         private readonly string $pathPrefix,
-    ) {
-    }
+    ) {}
 
     /**
      * Store the synthesized audio data to disk.

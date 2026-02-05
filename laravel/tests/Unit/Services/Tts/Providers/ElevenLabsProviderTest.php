@@ -31,6 +31,7 @@ class ElevenLabsProviderTest extends TestCase
             apiKey: 'test-api-key',
             modelId: 'test-model',
             defaultVoiceId: 'test-voice',
+            defaultOutputFormat: 'mp3_44100_128',
             timeout: 30,
             retryTimes: 0
         );

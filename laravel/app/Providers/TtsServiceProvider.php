@@ -28,6 +28,7 @@ class TtsServiceProvider extends ServiceProvider
                 apiKey: ConfigHelper::getRequiredString('ai.elevenlabs.tts.api_key'),
                 modelId: ConfigHelper::getString('ai.elevenlabs.tts.model', 'eleven_multilingual_v2'),
                 defaultVoiceId: ConfigHelper::getString('ai.elevenlabs.tts.voice', 'hpp4J3VqNfWAUOO0d1Us'),
+                defaultOutputFormat: ConfigHelper::getString('ai.elevenlabs.tts.output_format', 'mp3_44100_128'),
                 timeout: ConfigHelper::getInt('ai.elevenlabs.tts.request_timeout', 30),
                 connectTimeout: ConfigHelper::getInt('ai.elevenlabs.tts.connect_timeout', 10),
                 retryTimes: ConfigHelper::getInt('ai.elevenlabs.tts.retry_times', 3),

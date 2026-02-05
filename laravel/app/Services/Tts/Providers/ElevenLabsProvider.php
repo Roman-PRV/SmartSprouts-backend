@@ -22,6 +22,7 @@ class ElevenLabsProvider implements TtsProviderInterface
         private readonly string $apiKey,
         private readonly string $modelId,
         private readonly string $defaultVoiceId,
+        private readonly string $defaultOutputFormat,
         private readonly int $timeout = 30,
         private readonly int $connectTimeout = 10,
         private readonly int $retryTimes = 3,
@@ -41,7 +42,7 @@ class ElevenLabsProvider implements TtsProviderInterface
 
         $response = $this->httpClient()
             ->withQueryParameters([
-                'output_format' => $request->outputFormat ?? 'mp3_44100_128',
+                'output_format' => $request->outputFormat ?? $this->defaultOutputFormat,
             ])
             ->post($url, [
                 'text' => $request->text,
@@ -78,7 +79,7 @@ class ElevenLabsProvider implements TtsProviderInterface
 
         return new TtsResultDTO(
             audioData: $audioData,
-            format: $this->extractExtension($request->outputFormat ?? 'mp3_44100_128'),
+            format: $this->extractExtension($request->outputFormat ?? $this->defaultOutputFormat),
             requestId: $response->header('request-id'),
         );
     }

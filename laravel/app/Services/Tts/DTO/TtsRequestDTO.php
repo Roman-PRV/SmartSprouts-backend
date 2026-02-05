@@ -11,6 +11,6 @@ readonly class TtsRequestDTO
         public ?float $stability = null,
         public ?float $similarityBoost = null,
         public ?float $speed = null,
-        public ?string $outputFormat = 'mp3_44100_128',
+        public ?string $outputFormat = null,
     ) {}
 }
