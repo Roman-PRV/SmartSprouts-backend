@@ -41,6 +41,9 @@ class ElevenLabsProvider implements TtsProviderInterface
         $response = Http::withHeaders([
             'xi-api-key' => $this->apiKey,
         ])
+            ->withQueryParameters([
+                'output_format' => $request->outputFormat ?? 'mp3_44100_128',
+            ])
             ->timeout($this->timeout)
             ->connectTimeout($this->connectTimeout)
             ->retry($this->retryTimes, $this->retrySleep, function (Exception $exception) {

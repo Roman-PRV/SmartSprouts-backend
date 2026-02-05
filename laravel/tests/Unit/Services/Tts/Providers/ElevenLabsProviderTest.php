@@ -62,7 +62,7 @@ class ElevenLabsProviderTest extends TestCase
         $this->assertEquals($requestId, $result->requestId);
 
         Http::assertSent(function ($request) use ($baseUrl) {
-            return $request->url() === $baseUrl.'/text-to-speech/voice-123' &&
+            return $request->url() === $baseUrl.'/text-to-speech/voice-123?output_format=mp3_44100_128' &&
                 $request['text'] === 'Hello world' &&
                 $request['model_id'] === 'test-model';
         });
@@ -81,7 +81,7 @@ class ElevenLabsProviderTest extends TestCase
         $this->provider->synthesize($request);
 
         Http::assertSent(function ($request) use ($baseUrl) {
-            return $request->url() === $baseUrl.'/text-to-speech/test-voice';
+            return $request->url() === $baseUrl.'/text-to-speech/test-voice?output_format=mp3_44100_128';
         });
     }
 
