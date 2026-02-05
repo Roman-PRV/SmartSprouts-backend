@@ -10,15 +10,17 @@ class TtsStorageService
     public function __construct(
         private readonly string $disk,
         private readonly string $pathPrefix,
-    ) {}
+    ) {
+    }
 
     /**
      * Store the synthesized audio data to disk.
      */
     public function store(TtsResultDTO $result, string $text, string $voiceId): string
     {
-        $filename = $this->generateFilename($text, $voiceId, $result->format);
-        $path = "{$this->pathPrefix}/{$voiceId}/{$filename}";
+        $safeVoiceId = $this->sanitizeVoiceId($voiceId);
+        $filename = $this->generateFilename($text, $safeVoiceId, $result->format);
+        $path = "{$this->pathPrefix}/{$safeVoiceId}/{$filename}";
 
         Storage::disk($this->disk)->put($path, $result->audioData);
 
@@ -38,8 +40,9 @@ class TtsStorageService
      */
     public function exists(string $text, string $voiceId, string $format): ?string
     {
-        $filename = $this->generateFilename($text, $voiceId, $format);
-        $path = "{$this->pathPrefix}/{$voiceId}/{$filename}";
+        $safeVoiceId = $this->sanitizeVoiceId($voiceId);
+        $filename = $this->generateFilename($text, $safeVoiceId, $format);
+        $path = "{$this->pathPrefix}/{$safeVoiceId}/{$filename}";
 
         return Storage::disk($this->disk)->exists($path) ? $path : null;
     }
@@ -50,5 +53,13 @@ class TtsStorageService
     private function generateFilename(string $text, string $voiceId, string $format): string
     {
         return md5($text.$voiceId).'.'.$format;
+    }
+
+    /**
+     * Sanitize voice ID to prevent path traversal.
+     */
+    private function sanitizeVoiceId(string $voiceId): string
+    {
+        return (string) preg_replace('/[^a-zA-Z0-9\-_]/', '', $voiceId);
     }
 }
