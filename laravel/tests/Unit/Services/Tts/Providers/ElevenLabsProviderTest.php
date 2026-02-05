@@ -40,13 +40,12 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_synthesizes_speech_successfully(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         $audioData = 'fake-binary-audio-content';
         $requestId = 'test-request-id';
 
         Http::fake([
-            $cleanBaseUrl.'/text-to-speech/*' => Http::response($audioData, 200, [
+            $baseUrl.'/text-to-speech/*' => Http::response($audioData, 200, [
                 'request-id' => $requestId,
             ]),
         ]);
@@ -72,10 +71,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_uses_default_voice_if_none_provided(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/text-to-speech/*' => Http::response('audio', 200),
+            $baseUrl.'/text-to-speech/*' => Http::response('audio', 200),
         ]);
 
         $request = new TtsRequestDTO(text: 'Hello');
@@ -89,10 +87,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_throws_quota_exceeded_exception_on_429(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/text-to-speech/*' => Http::response([
+            $baseUrl.'/text-to-speech/*' => Http::response([
                 'detail' => ['message' => 'Quota reached'],
             ], 429),
         ]);
@@ -118,10 +115,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_throws_failed_exception_on_general_api_error(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/text-to-speech/*' => Http::response('Server Error', 500),
+            $baseUrl.'/text-to-speech/*' => Http::response('Server Error', 500),
         ]);
 
         try {
@@ -141,10 +137,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_throws_failed_exception_on_empty_response(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/text-to-speech/*' => Http::response('', 200),
+            $baseUrl.'/text-to-speech/*' => Http::response('', 200),
         ]);
 
         try {
@@ -164,10 +159,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_fetches_available_voices(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/voices' => Http::response([
+            $baseUrl.'/voices' => Http::response([
                 'voices' => [
                     [
                         'voice_id' => 'v1',
@@ -188,10 +182,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_handles_missing_labels_in_voices(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/voices' => Http::response([
+            $baseUrl.'/voices' => Http::response([
                 'voices' => [
                     [
                         'voice_id' => 'v1',
@@ -219,10 +212,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_returns_empty_array_if_voices_fetch_fails(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/voices' => Http::response([], 500),
+            $baseUrl.'/voices' => Http::response([], 500),
         ]);
 
         $voices = $this->provider->getAvailableVoices();
@@ -239,10 +231,9 @@ class ElevenLabsProviderTest extends TestCase
     public function test_it_extracts_format_from_output_format(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
-        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
 
         Http::fake([
-            $cleanBaseUrl.'/text-to-speech/*' => Http::response('audio', 200),
+            $baseUrl.'/text-to-speech/*' => Http::response('audio', 200),
         ]);
 
         // PCM format
