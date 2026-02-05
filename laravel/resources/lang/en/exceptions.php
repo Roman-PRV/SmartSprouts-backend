@@ -26,5 +26,6 @@ return [
         'quota_exceeded' => 'TTS provider quota exceeded',
         'elevenlabs_failed' => 'ElevenLabs synthesis failed: :error',
         'elevenlabs_quota_exceeded' => 'ElevenLabs quota exceeded: :error',
+        'elevenlabs_empty_response' => 'ElevenLabs returned an empty audio response.',
     ],
 ];

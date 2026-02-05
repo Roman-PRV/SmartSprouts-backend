@@ -62,13 +62,28 @@ class ElevenLabsProvider implements TtsProviderInterface
             $this->handleErrorResponse($response);
         }
 
+        $audioData = $response->body();
+
+        if (empty($audioData)) {
+            Log::error(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
+                'provider' => $this->getName(),
+                'status' => $response->status(),
+                'error' => 'Empty audio data received',
+            ]);
+
+            throw new TtsFailedException(
+                __('exceptions.tts.elevenlabs_empty_response'),
+                $response->status()
+            );
+        }
+
         Log::info(TtsLogEventEnum::SYNTHESIS_SUCCESS->value, [
             'provider' => $this->getName(),
             'request_id' => $response->header('request-id'),
         ]);
 
         return new TtsResultDTO(
-            audioData: $response->body(),
+            audioData: $audioData,
             format: 'mp3',
             requestId: $response->header('request-id'),
         );

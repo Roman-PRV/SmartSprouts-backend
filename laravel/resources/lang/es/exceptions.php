@@ -26,5 +26,6 @@ return [
         'quota_exceeded' => 'Cuota del proveedor de TTS excedida',
         'elevenlabs_failed' => 'La síntesis de ElevenLabs falló: :error',
         'elevenlabs_quota_exceeded' => 'Cuota de ElevenLabs excedida: :error',
+        'elevenlabs_empty_response' => 'ElevenLabs devolvió una respuesta de audio vacía.',
     ],
 ];

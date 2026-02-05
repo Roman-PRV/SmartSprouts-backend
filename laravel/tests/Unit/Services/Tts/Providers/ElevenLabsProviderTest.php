@@ -131,6 +131,27 @@ class ElevenLabsProviderTest extends TestCase
         $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
     }
 
+    public function test_it_throws_failed_exception_on_empty_response(): void
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
+
+        Http::fake([
+            $cleanBaseUrl.'/text-to-speech/*' => Http::response('', 200),
+        ]);
+
+        $this->expectException(TtsFailedException::class);
+        $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_empty_response'));
+
+        Log::shouldReceive('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
+            'provider' => 'elevenlabs',
+            'status' => 200,
+            'error' => 'Empty audio data received',
+        ]);
+
+        $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
+    }
+
     public function test_it_fetches_available_voices(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
