@@ -10,6 +10,7 @@ use App\Services\Tts\DTO\TtsRequestDTO;
 use App\Services\Tts\DTO\TtsResultDTO;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -38,17 +39,10 @@ class ElevenLabsProvider implements TtsProviderInterface
             'text_length' => mb_strlen($request->text),
         ]);
 
-        $response = Http::withHeaders([
-            'xi-api-key' => $this->apiKey,
-        ])
+        $response = $this->httpClient()
             ->withQueryParameters([
                 'output_format' => $request->outputFormat ?? 'mp3_44100_128',
             ])
-            ->timeout($this->timeout)
-            ->connectTimeout($this->connectTimeout)
-            ->retry($this->retryTimes, $this->retrySleep, function (Exception $exception) {
-                return $exception instanceof ConnectionException;
-            })
             ->post($url, [
                 'text' => $request->text,
                 'model_id' => $request->modelId ?: $this->modelId,
@@ -96,9 +90,7 @@ class ElevenLabsProvider implements TtsProviderInterface
 
     public function getAvailableVoices(): array
     {
-        $response = Http::withHeaders([
-            'xi-api-key' => $this->apiKey,
-        ])->get($this->baseUrl.'/voices');
+        $response = $this->httpClient()->get($this->baseUrl.'/voices');
 
         if ($response->failed()) {
             Log::error(TtsLogEventEnum::VOICES_FETCH_FAILED->value, [
@@ -151,5 +143,20 @@ class ElevenLabsProvider implements TtsProviderInterface
             __('exceptions.tts.elevenlabs_failed', ['error' => $errorString]),
             $status
         );
+    }
+
+    /**
+     * Get pre-configured HTTP client for ElevenLabs API.
+     */
+    private function httpClient(): PendingRequest
+    {
+        return Http::withHeaders([
+            'xi-api-key' => $this->apiKey,
+        ])
+            ->timeout($this->timeout)
+            ->connectTimeout($this->connectTimeout)
+            ->retry($this->retryTimes, $this->retrySleep, function (Exception $exception) {
+                return $exception instanceof ConnectionException;
+            });
     }
 }
