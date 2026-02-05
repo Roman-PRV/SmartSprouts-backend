@@ -195,4 +195,38 @@ class ElevenLabsProviderTest extends TestCase
         $this->assertIsArray($voices);
         $this->assertEmpty($voices);
     }
+
+    public function test_it_extracts_format_from_output_format(): void
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
+
+        Http::fake([
+            $cleanBaseUrl.'/text-to-speech/*' => Http::response('audio', 200),
+        ]);
+
+        // PCM format
+        $request = new TtsRequestDTO(
+            text: 'Hello',
+            outputFormat: 'pcm_44100'
+        );
+        $result = $this->provider->synthesize($request);
+        $this->assertEquals('pcm', $result->format);
+
+        // ULAW format
+        $request = new TtsRequestDTO(
+            text: 'Hello',
+            outputFormat: 'ulaw_8000'
+        );
+        $result = $this->provider->synthesize($request);
+        $this->assertEquals('ulaw', $result->format);
+
+        // MP3 with bitrates
+        $request = new TtsRequestDTO(
+            text: 'Hello',
+            outputFormat: 'mp3_44100_192'
+        );
+        $result = $this->provider->synthesize($request);
+        $this->assertEquals('mp3', $result->format);
+    }
 }

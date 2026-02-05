@@ -78,7 +78,7 @@ class ElevenLabsProvider implements TtsProviderInterface
 
         return new TtsResultDTO(
             audioData: $audioData,
-            format: 'mp3',
+            format: $this->extractExtension($request->outputFormat ?? 'mp3_44100_128'),
             requestId: $response->header('request-id'),
         );
     }
@@ -143,6 +143,14 @@ class ElevenLabsProvider implements TtsProviderInterface
             __('exceptions.tts.elevenlabs_failed', ['error' => $errorString]),
             $status
         );
+    }
+
+    /**
+     * Extract file extension from ElevenLabs output format string.
+     */
+    private function extractExtension(string $outputFormat): string
+    {
+        return explode('_', $outputFormat)[0] ?: 'mp3';
     }
 
     /**
