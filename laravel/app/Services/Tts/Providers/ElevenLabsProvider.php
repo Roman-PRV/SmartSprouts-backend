@@ -123,6 +123,10 @@ class ElevenLabsProvider implements TtsProviderInterface
         ]);
 
         if ($status === 429) {
+            Log::error(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
+                'provider' => $this->getName(),
+            ]);
+
             throw new TtsQuotaExceededException(
                 __('exceptions.tts.elevenlabs_quota_exceeded', ['error' => $errorString])
             );

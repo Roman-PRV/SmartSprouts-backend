@@ -103,6 +103,10 @@ class ElevenLabsProviderTest extends TestCase
             'error' => 'Quota reached',
         ]);
 
+        Log::shouldReceive('error')->once()->with(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
+            'provider' => 'elevenlabs',
+        ]);
+
         $this->provider->synthesize(new TtsRequestDTO(text: 'test', voiceId: 'voice'));
     }
 
