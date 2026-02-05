@@ -28,4 +28,7 @@ return [
         'elevenlabs_quota_exceeded' => 'Cuota de ElevenLabs excedida: :error',
         'elevenlabs_empty_response' => 'ElevenLabs devolvió una respuesta de audio vacía.',
     ],
+    'config' => [
+        'required_missing' => 'El valor de configuración para la clave [:key] es obligatorio y debe ser una cadena no vacía.',
+    ],
 ];

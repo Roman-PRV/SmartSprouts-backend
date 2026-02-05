@@ -28,4 +28,7 @@ return [
         'elevenlabs_quota_exceeded' => 'Ліміт ElevenLabs вичерпано: :error',
         'elevenlabs_empty_response' => 'ElevenLabs повернув порожню аудіо-відповідь.',
     ],
+    'config' => [
+        'required_missing' => 'Параметр конфігурації [:key] є обов\'язковим і повинен бути непорожнім рядком.',
+    ],
 ];
