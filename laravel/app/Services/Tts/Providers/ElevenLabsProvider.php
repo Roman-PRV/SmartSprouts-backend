@@ -91,34 +91,19 @@ class ElevenLabsProvider implements TtsProviderInterface
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $voices */
+        /** @var array<int|string, mixed> $voices */
         $voices = $response->json('voices') ?? [];
-        $result = [];
 
-        foreach ($voices as $voice) {
-            /** @var string $voiceId */
-            $voiceId = is_string($voice['voice_id'] ?? null) ? $voice['voice_id'] : '';
-
-            /** @var string $name */
-            $name = is_string($voice['name'] ?? null) ? $voice['name'] : 'unknown';
-
-            /** @var array<string, mixed> $labels */
-            $labels = $voice['labels'] ?? [];
-
-            /** @var string $language */
-            $language = is_string($labels['language'] ?? null) ? $labels['language'] : 'unknown';
-
-            /** @var string $gender */
-            $gender = is_string($labels['gender'] ?? null) ? $labels['gender'] : 'unknown';
-
-            $result[$voiceId] = [
-                'name' => $name,
-                'language' => $language,
-                'gender' => $gender,
-            ];
-        }
-
-        return $result;
+        return collect($voices)
+            ->filter(fn ($voice) => is_array($voice) && ! empty($voice['voice_id']))
+            ->mapWithKeys(fn (array $voice) => [
+                (string) $voice['voice_id'] => [
+                    'name' => (string) ($voice['name'] ?? 'unknown'),
+                    'language' => (string) ($voice['labels']['language'] ?? 'unknown'),
+                    'gender' => (string) ($voice['labels']['gender'] ?? 'unknown'),
+                ],
+            ])
+            ->all();
     }
 
     private function handleErrorResponse(Response $response): void
