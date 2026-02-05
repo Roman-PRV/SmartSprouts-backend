@@ -179,6 +179,37 @@ class ElevenLabsProviderTest extends TestCase
         $this->assertEquals('en', $voices['v1']['language']);
     }
 
+    public function test_it_handles_missing_labels_in_voices(): void
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+        $cleanBaseUrl = str_replace(['https://', 'http://'], '', $baseUrl);
+
+        Http::fake([
+            $cleanBaseUrl.'/voices' => Http::response([
+                'voices' => [
+                    [
+                        'voice_id' => 'v1',
+                        'name' => 'Alice',
+                        'labels' => null, // Case where labels is null
+                    ],
+                    [
+                        'voice_id' => 'v2',
+                        'name' => 'Bob',
+                        // labels is missing entirely
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $voices = $this->provider->getAvailableVoices();
+
+        $this->assertCount(2, $voices);
+        $this->assertEquals('', $voices['v1']['language']);
+        $this->assertEquals('', $voices['v1']['gender']);
+        $this->assertEquals('', $voices['v2']['language']);
+        $this->assertEquals('', $voices['v2']['gender']);
+    }
+
     public function test_it_returns_empty_array_if_voices_fetch_fails(): void
     {
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');

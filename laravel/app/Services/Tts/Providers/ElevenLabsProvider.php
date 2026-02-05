@@ -27,7 +27,8 @@ class ElevenLabsProvider implements TtsProviderInterface
         private readonly int $connectTimeout = 10,
         private readonly int $retryTimes = 3,
         private readonly int $retrySleep = 1000,
-    ) {}
+    ) {
+    }
 
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {
@@ -109,9 +110,9 @@ class ElevenLabsProvider implements TtsProviderInterface
             ->filter(fn ($voice) => is_array($voice) && ! empty($voice['voice_id']))
             ->mapWithKeys(fn (array $voice) => [
                 (string) $voice['voice_id'] => [
-                    'name' => (string) ($voice['name'] ?? 'unknown'),
-                    'language' => (string) ($voice['labels']['language'] ?? 'unknown'),
-                    'gender' => (string) ($voice['labels']['gender'] ?? 'unknown'),
+                    'name' => (string) ($voice['name'] ?? ''),
+                    'language' => is_string($lang = data_get($voice, 'labels.language')) ? $lang : '',
+                    'gender' => is_string($gender = data_get($voice, 'labels.gender')) ? $gender : '',
                 ],
             ])
             ->all();
