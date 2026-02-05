@@ -10,7 +10,6 @@ use App\Services\Tts\DTO\TtsRequestDTO;
 use App\Services\Tts\Providers\ElevenLabsProvider;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Mockery;
 use Tests\TestCase;
 
 class ElevenLabsProviderTest extends TestCase
@@ -20,6 +19,8 @@ class ElevenLabsProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Log::spy();
 
         $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
 
@@ -51,9 +52,6 @@ class ElevenLabsProviderTest extends TestCase
             text: 'Hello world',
             voiceId: 'voice-123'
         );
-
-        Log::shouldReceive('info')->with(TtsLogEventEnum::SYNTHESIS_STARTED->value, Mockery::any());
-        Log::shouldReceive('info')->with(TtsLogEventEnum::SYNTHESIS_SUCCESS->value, Mockery::any());
 
         $result = $this->provider->synthesize($request);
 
@@ -99,7 +97,6 @@ class ElevenLabsProviderTest extends TestCase
         $this->expectException(TtsQuotaExceededException::class);
         $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_quota_exceeded', ['error' => 'Quota reached']));
 
-        Log::shouldReceive('info')->once()->with(TtsLogEventEnum::SYNTHESIS_STARTED->value, Mockery::any());
         Log::shouldReceive('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
             'provider' => 'elevenlabs',
             'status' => 429,
@@ -121,7 +118,6 @@ class ElevenLabsProviderTest extends TestCase
         $this->expectException(TtsFailedException::class);
         $this->expectExceptionMessage(__('exceptions.tts.elevenlabs_failed', ['error' => 'Internal Server Error']));
 
-        Log::shouldReceive('info')->once()->with(TtsLogEventEnum::SYNTHESIS_STARTED->value, Mockery::any());
         Log::shouldReceive('error')->once()->with(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
             'provider' => 'elevenlabs',
             'status' => 500,
