@@ -25,7 +25,7 @@ class TtsServiceProvider extends ServiceProvider
         $this->app->singleton(ElevenLabsProvider::class, function () {
             return new ElevenLabsProvider(
                 baseUrl: ConfigHelper::getString('ai.elevenlabs.base_url', 'https://api.elevenlabs.io/v1'),
-                apiKey: ConfigHelper::getString('ai.elevenlabs.tts.api_key'),
+                apiKey: ConfigHelper::getRequiredString('ai.elevenlabs.tts.api_key'),
                 modelId: ConfigHelper::getString('ai.elevenlabs.tts.model', 'eleven_multilingual_v2'),
                 defaultVoiceId: ConfigHelper::getString('ai.elevenlabs.tts.voice', 'hpp4J3VqNfWAUOO0d1Us'),
                 timeout: ConfigHelper::getInt('ai.elevenlabs.tts.request_timeout', 30),
