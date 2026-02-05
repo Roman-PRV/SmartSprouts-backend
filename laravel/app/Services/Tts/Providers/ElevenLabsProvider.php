@@ -31,7 +31,7 @@ class ElevenLabsProvider implements TtsProviderInterface
 
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {
-        $voiceId = $request->voiceId ?: $this->defaultVoiceId;
+        $voiceId = $request->voiceId ?? $this->defaultVoiceId;
         $url = sprintf('%s/text-to-speech/%s', $this->baseUrl, $voiceId);
 
         Log::info(TtsLogEventEnum::SYNTHESIS_STARTED->value, [
@@ -46,7 +46,7 @@ class ElevenLabsProvider implements TtsProviderInterface
             ])
             ->post($url, [
                 'text' => $request->text,
-                'model_id' => $request->modelId ?: $this->modelId,
+                'model_id' => $request->modelId ?? $this->modelId,
                 'voice_settings' => [
                     'stability' => $request->stability ?? 0.5,
                     'similarity_boost' => $request->similarityBoost ?? 0.75,
