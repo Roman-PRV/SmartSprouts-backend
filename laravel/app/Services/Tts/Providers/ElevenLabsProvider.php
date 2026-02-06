@@ -11,7 +11,6 @@ use App\Services\Tts\DTO\TtsResultDTO;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -41,24 +40,18 @@ class ElevenLabsProvider implements TtsProviderInterface
             'text_length' => mb_strlen($request->text),
         ]);
 
-        try {
-            $response = $this->httpClient()
-                ->withQueryParameters([
-                    'output_format' => $request->outputFormat ?? $this->defaultOutputFormat,
-                ])
-                ->post($url, [
-                    'text' => $request->text,
-                    'model_id' => $request->modelId ?? $this->modelId,
-                    'voice_settings' => [
-                        'stability' => $request->stability ?? 0.5,
-                        'similarity_boost' => $request->similarityBoost ?? 0.75,
-                    ],
-                ]);
-        } catch (RequestException $e) {
-            $this->handleErrorResponse($e->response);
-
-            throw $e;
-        }
+        $response = $this->httpClient()
+            ->withQueryParameters([
+                'output_format' => $request->outputFormat ?? $this->defaultOutputFormat,
+            ])
+            ->post($url, [
+                'text' => $request->text,
+                'model_id' => $request->modelId ?? $this->modelId,
+                'voice_settings' => [
+                    'stability' => $request->stability ?? 0.5,
+                    'similarity_boost' => $request->similarityBoost ?? 0.75,
+                ],
+            ]);
 
         if ($response->failed()) {
             $this->handleErrorResponse($response);
