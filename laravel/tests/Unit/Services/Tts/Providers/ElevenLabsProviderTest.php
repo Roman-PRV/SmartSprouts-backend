@@ -317,7 +317,7 @@ class ElevenLabsProviderTest extends TestCase
         // Track number of attempts
         $attemptCount = 0;
 
-        // Mock HTTP to always fail with connection errors (initial + 3 retries = 4 total)
+        //  Mock HTTP to always fail with connection errors so all retry attempts are exhausted
         Http::fake(function () use (&$attemptCount) {
             $attemptCount++;
             throw new ConnectException(
