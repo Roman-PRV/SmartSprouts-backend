@@ -17,9 +17,7 @@ class TtsStorageService
      */
     public function store(TtsResultDTO $result, string $text, string $voiceId): string
     {
-        $safeVoiceId = $this->sanitizeVoiceId($voiceId);
-        $filename = $this->generateFilename($text, $safeVoiceId, $result->format);
-        $path = "{$this->pathPrefix}/{$safeVoiceId}/{$filename}";
+        $path = $this->generateFilename($text, $voiceId, $result->format);
 
         Storage::disk($this->disk)->put($path, $result->audioData);
 
@@ -39,26 +37,28 @@ class TtsStorageService
      */
     public function exists(string $text, string $voiceId, string $format): ?string
     {
-        $safeVoiceId = $this->sanitizeVoiceId($voiceId);
-        $filename = $this->generateFilename($text, $safeVoiceId, $format);
-        $path = "{$this->pathPrefix}/{$safeVoiceId}/{$filename}";
+        $path = $this->generateFilename($text, $voiceId, $format);
 
         return Storage::disk($this->disk)->exists($path) ? $path : null;
     }
 
     /**
-     * Generate a unique filename based on the text hash and voice ID.
+     * Generate the full storage path for the audio file.
+     * Public to allow calculating once for caching logic.
      */
-    private function generateFilename(string $text, string $voiceId, string $format): string
+    public function generateFilename(string $text, string $voiceId, string $format): string
     {
-        return md5($text.$voiceId).'.'.$format;
+        $safeVoiceId = $this->sanitize($voiceId);
+        $safeFormat = $this->sanitize($format);
+
+        return "{$this->pathPrefix}/{$safeVoiceId}/".md5($text.$safeVoiceId).".{$safeFormat}";
     }
 
     /**
-     * Sanitize voice ID to prevent path traversal.
+     * Sanitize values to prevent path traversal and other filesystem issues.
      */
-    private function sanitizeVoiceId(string $voiceId): string
+    private function sanitize(string $value): string
     {
-        return (string) preg_replace('/[^a-zA-Z0-9\-_]/', '', $voiceId);
+        return (string) preg_replace('/[^a-zA-Z0-9\-_]/', '', $value);
     }
 }

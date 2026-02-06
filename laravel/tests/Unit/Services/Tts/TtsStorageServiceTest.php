@@ -60,4 +60,22 @@ class TtsStorageServiceTest extends TestCase
 
         $this->assertEquals($path, $this->service->exists($text, $voiceId, $format));
     }
+
+    public function test_it_sanitizes_voice_id_and_format_to_prevent_path_traversal(): void
+    {
+        $result = new TtsResultDTO(audioData: 'content', format: '../../bad');
+        $text = 'Test';
+        $voiceId = '../malicious/voice';
+
+        $path = $this->service->store($result, $text, $voiceId);
+
+        // ../malicious/voice -> maliciousvoice
+        // ../../bad -> bad
+        $expectedVoiceId = 'maliciousvoice';
+        $expectedFormat = 'bad';
+        $expectedPath = "{$this->pathPrefix}/{$expectedVoiceId}/".md5($text.$expectedVoiceId).".{$expectedFormat}";
+
+        $this->assertEquals($expectedPath, $path);
+        Storage::disk($this->disk)->assertExists($path);
+    }
 }
