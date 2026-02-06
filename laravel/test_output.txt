@@ -1,0 +1,40 @@
+PHPUnit 10.5.48 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.29
+Configuration: /var/www/phpunit.xml
+
+...........E                                                      12 / 12 (100%)
+
+Time: 00:05.605, Memory: 28.00 MB
+
+Eleven Labs Provider (Tests\Unit\Services\Tts\Providers\ElevenLabsProvider)
+ ✔ It synthesizes speech successfully
+ ✔ It uses default voice if none provided
+ ✔ It throws quota exceeded exception on 429
+ ✔ It throws failed exception on general api error
+ ✔ It throws failed exception on empty response
+ ✔ It fetches available voices
+ ✔ It handles missing labels in voices
+ ✔ It returns empty array if voices fetch fails
+ ✔ It extracts format from output format
+ ✔ It retries on connection exception and eventually succeeds
+ ✔ It exhausts retries and throws exception on persistent connection failure
+ ✘ It does not retry on non connection errors
+   │
+   │ Illuminate\Http\Client\RequestException: HTTP request returned status code 500:
+   │ {"detail":{"message":"Custom Error"}}
+   │
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Http/Client/Response.php:272
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Http/Client/Response.php:289
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php:923
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Support/helpers.php:320
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php:894
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Support/helpers.php:261
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php:892
+   │ /var/www/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php:798
+   │ /var/www/app/Services/Tts/Providers/ElevenLabsProvider.php:47
+   │ /var/www/tests/Unit/Services/Tts/Providers/ElevenLabsProviderTest.php:369
+   │
+
+ERRORS!
+Tests: 12, Assertions: 32, Errors: 1.

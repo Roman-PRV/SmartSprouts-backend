@@ -8,6 +8,9 @@ use App\Exceptions\Tts\TtsQuotaExceededException;
 use App\Helpers\ConfigHelper;
 use App\Services\Tts\DTO\TtsRequestDTO;
 use App\Services\Tts\Providers\ElevenLabsProvider;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request as GuzzleRequest;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -259,5 +262,135 @@ class ElevenLabsProviderTest extends TestCase
         );
         $result = $this->provider->synthesize($request);
         $this->assertEquals('mp3', $result->format);
+    }
+
+    public function test_it_retries_on_connection_exception_and_eventually_succeeds(): void
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+        $audioData = 'fake-audio-data';
+        $requestId = 'retry-success-id';
+
+        // Create provider with retry enabled
+        $providerWithRetry = $this->createProviderWithRetry();
+
+        // Track number of attempts
+        $attemptCount = 0;
+
+        // Mock HTTP to fail twice with ConnectException, then succeed
+        Http::fake(function () use (&$attemptCount, $audioData, $requestId) {
+            $attemptCount++;
+
+            // Fail first two attempts with Guzzle ConnectException
+            if ($attemptCount <= 2) {
+                throw new ConnectException(
+                    'Connection timeout',
+                    new GuzzleRequest('POST', 'test')
+                );
+            }
+
+            // Succeed on third attempt
+            return Http::response($audioData, 200, ['request-id' => $requestId]);
+        });
+
+        $request = new TtsRequestDTO(
+            text: 'Retry test',
+            voiceId: 'test-voice'
+        );
+
+        $result = $providerWithRetry->synthesize($request);
+
+        $this->assertEquals($audioData, $result->audioData);
+        $this->assertEquals('mp3', $result->format);
+        $this->assertEquals($requestId, $result->requestId);
+
+        // Verify exactly 3 requests were made (2 failures + 1 success)
+        $this->assertEquals(3, $attemptCount);
+    }
+
+    public function test_it_exhausts_retries_and_throws_exception_on_persistent_connection_failure(): void
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+
+        // Create provider with retry enabled
+        $providerWithRetry = $this->createProviderWithRetry();
+
+        // Track number of attempts
+        $attemptCount = 0;
+
+        // Mock HTTP to always fail with connection errors (initial + 3 retries = 4 total)
+        Http::fake(function () use (&$attemptCount) {
+            $attemptCount++;
+            throw new ConnectException(
+                'Connection timeout',
+                new GuzzleRequest('POST', 'test')
+            );
+        });
+
+        $request = new TtsRequestDTO(
+            text: 'Persistent failure',
+            voiceId: 'test-voice'
+        );
+
+        try {
+            $providerWithRetry->synthesize($request);
+            $this->fail('Expected ConnectionException was not thrown after retry exhaustion.');
+        } catch (ConnectionException $e) {
+            // Verify ConnectionException is thrown after all retries are exhausted
+            $this->assertStringContainsString('Connection timeout', $e->getMessage());
+        }
+
+        // Verify exactly 3 requests were made (1 initial + 2 retries, as retry(3) is max 3 total attempts)
+        $this->assertEquals(3, $attemptCount);
+    }
+
+    public function test_it_does_not_retry_on_non_connection_errors(): void
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+
+        // Create provider with retry enabled
+        $providerWithRetry = $this->createProviderWithRetry();
+
+        // Track number of attempts
+        $attemptCount = 0;
+
+        // Mock HTTP to return 500 error (non-connection error)
+        Http::fake(function () use (&$attemptCount) {
+            $attemptCount++;
+
+            return Http::response(['detail' => ['message' => 'Custom Error']], 500);
+        });
+
+        $request = new TtsRequestDTO(
+            text: 'No retry test',
+            voiceId: 'test-voice'
+        );
+
+        try {
+            $providerWithRetry->synthesize($request);
+            $this->fail('Expected TtsFailedException was not thrown.');
+        } catch (TtsFailedException $e) {
+            $this->assertEquals(__('exceptions.tts.elevenlabs_failed', ['error' => 'Custom Error']), $e->getMessage());
+        }
+
+        // Verify only 1 request was made (no retries for non-connection errors)
+        $this->assertEquals(1, $attemptCount);
+    }
+
+    /**
+     * Create a provider instance with retry mechanism enabled.
+     */
+    private function createProviderWithRetry(): ElevenLabsProvider
+    {
+        $baseUrl = ConfigHelper::getString('ai.elevenlabs.base_url');
+
+        return new ElevenLabsProvider(
+            baseUrl: $baseUrl,
+            apiKey: 'test-api-key',
+            modelId: 'test-model',
+            defaultVoiceId: 'test-voice',
+            defaultOutputFormat: 'mp3_44100_128',
+            timeout: 30,
+            retryTimes: 3
+        );
     }
 }

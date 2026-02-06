@@ -166,6 +166,6 @@ class ElevenLabsProvider implements TtsProviderInterface
             ->connectTimeout($this->connectTimeout)
             ->retry($this->retryTimes, $this->retrySleep, function (Exception $exception) {
                 return $exception instanceof ConnectionException;
-            });
+            }, false);
     }
 }
