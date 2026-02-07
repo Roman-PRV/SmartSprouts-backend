@@ -208,6 +208,7 @@ return [
 
         App\Providers\GameServiceProvider::class,
         App\Providers\TranslationServiceProvider::class,
+        App\Providers\TtsServiceProvider::class,
 
     ],
 

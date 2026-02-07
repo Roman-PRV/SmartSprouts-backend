@@ -23,7 +23,7 @@ class TranslationServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ClientContract::class, function () {
             return OpenAI::factory()
-                ->withApiKey(ConfigHelper::getString('services.openai.api_key'))
+                ->withApiKey(ConfigHelper::getRequiredString('services.openai.api_key'))
                 ->withHttpClient(new Client([
                     'timeout' => ConfigHelper::getInt('ai.openai.translation.request_timeout', 30),
                     'connect_timeout' => ConfigHelper::getInt('ai.openai.translation.connect_timeout', 10),
@@ -32,7 +32,7 @@ class TranslationServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(DeepLClient::class, function ($app) {
-            return new DeepLClient(ConfigHelper::getString('services.deepl.api_key'), [
+            return new DeepLClient(ConfigHelper::getRequiredString('services.deepl.api_key'), [
                 'timeout' => ConfigHelper::getInt('ai.deepl.translation.request_timeout', 30),
                 'connect_timeout' => ConfigHelper::getInt('ai.deepl.translation.connect_timeout', 10),
             ]);
