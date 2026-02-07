@@ -20,4 +20,15 @@ return [
             'sdk_internal_error' => 'Error interno del SDK',
         ],
     ],
+    'tts' => [
+        'invalid_voice' => 'Voz solicitada no válida',
+        'failed' => 'La síntesis de texto a voz falló',
+        'quota_exceeded' => 'Cuota del proveedor de TTS excedida',
+        'elevenlabs_failed' => 'La síntesis de ElevenLabs falló: :error',
+        'elevenlabs_quota_exceeded' => 'Cuota de ElevenLabs excedida: :error',
+        'elevenlabs_empty_response' => 'ElevenLabs devolvió una respuesta de audio vacía.',
+    ],
+    'config' => [
+        'required_missing' => 'El valor de configuración para la clave [:key] es obligatorio y debe ser una cadena no vacía.',
+    ],
 ];

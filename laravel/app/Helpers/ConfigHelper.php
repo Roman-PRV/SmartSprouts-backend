@@ -23,6 +23,22 @@ class ConfigHelper
     }
 
     /**
+     * Get required string from config. Throws exception if missing or empty.
+     *
+     * @throws \RuntimeException
+     */
+    public static function getRequiredString(string $key): string
+    {
+        $value = \config($key);
+
+        if (\is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        throw new \RuntimeException(__('exceptions.config.required_missing', ['key' => $key]));
+    }
+
+    /**
      * Get integer from config with validation
      */
     public static function getInt(string $key, int $default = 0): int

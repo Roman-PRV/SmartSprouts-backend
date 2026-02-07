@@ -41,11 +41,33 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
         ],
     ],
 
+    'elevenlabs' => [
+        'base_url' => env('ELEVENLABS_BASE_URL', 'https://api.elevenlabs.io/v1'),
+        'tts' => [
+            'api_key' => env('ELEVENLABS_API_KEY'),
+            'model' => env('ELEVENLABS_TTS_MODEL', 'eleven_multilingual_v2'),
+            'voice' => env('ELEVENLABS_DEFAULT_VOICE', 'hpp4J3VqNfWAUOO0d1Us'),
+            'output_format' => env('ELEVENLABS_TTS_OUTPUT_FORMAT', 'mp3_44100_128'),
+            'request_timeout' => (int) env('ELEVENLABS_REQUEST_TIMEOUT', 30),
+            'connect_timeout' => (int) env('ELEVENLABS_CONNECT_TIMEOUT', 10),
+            'retry_times' => (int) env('ELEVENLABS_RETRY_TIMES', 3),
+            'retry_sleep' => (int) env('ELEVENLABS_RETRY_SLEEP', 1000),
+        ],
+    ],
+
     'translation' => [
         'cache' => [
             'enabled' => env('TRANSLATION_CACHE_ENABLED', true),
             'ttl' => (int) env('TRANSLATION_CACHE_TTL', 86400 * 30), // Default 30 days
             'prefix' => env('TRANSLATION_CACHE_PREFIX', 'translation'),
+        ],
+    ],
+
+    'tts' => [
+        'storage' => [
+            'enabled' => env('TTS_STORAGE_ENABLED', true),
+            'disk' => env('TTS_STORAGE_DISK', 'public'),
+            'path_prefix' => env('TTS_STORAGE_PATH_PREFIX', 'tts/audio'),
         ],
     ],
 ];
