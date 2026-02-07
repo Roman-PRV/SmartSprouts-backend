@@ -15,6 +15,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from pydub import AudioSegment
 from ukrainian_tts.tts import TTS, Voices, Stress
 
 # Configure logging
@@ -115,9 +116,9 @@ async def synthesize_speech(request: SynthesizeRequest):
             
             return Response(
                 content=wav_data,
-                media_type="audio/wav",
+                media_type="audio/mpeg",
                 headers={
-                    "Content-Disposition": "attachment; filename=speech.wav"
+                    "Content-Disposition": "attachment; filename=speech.mp3"
                 }
             )
             
@@ -159,7 +160,16 @@ def _synthesize_sync(text: str, speaker: str) -> bytes:
         logger.info(f"Generated speech with stressed text: {output_text}")
         
         # Get bytes from buffer
-        return buffer.getvalue()
+        buffer.seek(0)
+        
+        # Convert WAV to MP3 using pydub
+        logger.info("Converting WAV to MP3...")
+        audio = AudioSegment.from_wav(buffer)
+        
+        mp3_buffer = io.BytesIO()
+        audio.export(mp3_buffer, format="mp3", bitrate="128k")
+        
+        return mp3_buffer.getvalue()
     except Exception as e:
         logger.error(f"Error in synchronous synthesis: {e}")
         raise

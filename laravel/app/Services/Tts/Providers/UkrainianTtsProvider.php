@@ -68,7 +68,7 @@ class UkrainianTtsProvider implements TtsProviderInterface
 
         return new TtsResultDTO(
             audioData: $audioData,
-            format: 'wav',
+            format: 'mp3',
             requestId: null,
         );
     }

@@ -51,7 +51,7 @@ class UkrainianTtsProviderTest extends TestCase
         $result = $this->provider->synthesize($request);
 
         $this->assertEquals($audioData, $result->audioData);
-        $this->assertEquals('wav', $result->format);
+        $this->assertEquals('mp3', $result->format);
         $this->assertNull($result->requestId);
 
         Http::assertSent(function ($request) {
@@ -177,7 +177,7 @@ class UkrainianTtsProviderTest extends TestCase
         $result = $providerWithRetry->synthesize($request);
 
         $this->assertEquals($audioData, $result->audioData);
-        $this->assertEquals('wav', $result->format);
+        $this->assertEquals('mp3', $result->format);
 
         // Verify exactly 3 requests were made (2 failures + 1 success)
         $this->assertEquals(3, $attemptCount);

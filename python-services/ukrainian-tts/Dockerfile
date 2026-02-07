@@ -37,6 +37,11 @@ FROM python:3.9-slim AS runtime
 
 WORKDIR /app
 
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy installed Python packages from builder stage
 # Use site-packages to avoid git dependency in runtime
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
