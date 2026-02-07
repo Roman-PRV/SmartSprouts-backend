@@ -27,6 +27,8 @@ return [
         'elevenlabs_failed' => 'La síntesis de ElevenLabs falló: :error',
         'elevenlabs_quota_exceeded' => 'Cuota de ElevenLabs excedida: :error',
         'elevenlabs_empty_response' => 'ElevenLabs devolvió una respuesta de audio vacía.',
+        'ukrainian_tts_failed' => 'La síntesis de Ukrainian TTS falló: :error',
+        'ukrainian_tts_empty_response' => 'Ukrainian TTS devolvió una respuesta de audio vacía.',
     ],
     'config' => [
         'required_missing' => 'El valor de configuración para la clave [:key] es obligatorio y debe ser una cadena no vacía.',

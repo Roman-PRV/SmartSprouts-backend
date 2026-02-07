@@ -55,7 +55,19 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
         ],
     ],
 
+    'ukrainian_tts' => [
+        'base_url' => env('UKRAINIAN_TTS_BASE_URL', 'http://ukrainian-tts:5001'),
+        'tts' => [
+            'speaker' => env('UKRAINIAN_TTS_SPEAKER', 'lada'),
+            'request_timeout' => (int) env('UKRAINIAN_TTS_REQUEST_TIMEOUT', 60),
+            'connect_timeout' => (int) env('UKRAINIAN_TTS_CONNECT_TIMEOUT', 10),
+            'retry_times' => (int) env('UKRAINIAN_TTS_RETRY_TIMES', 3),
+            'retry_sleep' => (int) env('UKRAINIAN_TTS_RETRY_SLEEP', 2000),
+        ],
+    ],
+
     'translation' => [
+
         'cache' => [
             'enabled' => env('TRANSLATION_CACHE_ENABLED', true),
             'ttl' => (int) env('TRANSLATION_CACHE_TTL', 86400 * 30), // Default 30 days
