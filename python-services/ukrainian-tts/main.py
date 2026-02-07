@@ -121,6 +121,9 @@ async def synthesize_speech(request: SynthesizeRequest):
                 }
             )
             
+        except MemoryError as e:
+            logger.error(f"OOM during synthesis: {e}")
+            raise HTTPException(status_code=507, detail="Server is out of memory")
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")
             raise HTTPException(status_code=500, detail=f"Synthesis failed: {str(e)}")
@@ -137,40 +140,31 @@ def _synthesize_sync(text: str, speaker: str) -> bytes:
     Returns:  
         WAV audio data as bytes
     """
-    import tempfile
-    import os
+    # Dynamic speaker mapping: search for speaker in Voices enum
+    voice = Voices.Lada.value  # Default
+    speaker_clean = speaker.strip().lower()
     
-    # Map speaker names to Voices enum
-    voice_map = {
-        'lada': Voices.Lada.value,
-        'mykyta': Voices.Mykyta.value,
-        'tetiana': Voices.Tetiana.value,
-        'dmytro': Voices.Dmytro.value,
-        'oleksa': Voices.Oleksa.value,
-    }
+    for v in Voices:
+        if v.name.lower() == speaker_clean:
+            voice = v.value
+            break
     
-    voice = voice_map.get(speaker.lower(), Voices.Lada.value)
-    
-    # Create temporary file for WAV output
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-        temp_path = temp_file.name
+    # Use io.BytesIO for in-memory WAV generation
+    buffer = io.BytesIO()
     
     try:
-        # Generate speech - tts() writes to file object
-        with open(temp_path, 'wb') as f:
-            _, output_text = tts_model.tts(text, voice, Stress.Dictionary.value, f)
+        # Generate speech - tts() writes to file-like object
+        _, output_text = tts_model.tts(text, voice, Stress.Dictionary.value, buffer)
         
         logger.info(f"Generated speech with stressed text: {output_text}")
         
-        # Read WAV data
-        with open(temp_path, 'rb') as f:
-            wav_data = f.read()
-        
-        return wav_data
+        # Get bytes from buffer
+        return buffer.getvalue()
+    except Exception as e:
+        logger.error(f"Error in synchronous synthesis: {e}")
+        raise
     finally:
-        # Clean up temporary file
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
+        buffer.close()
 
 
 if __name__ == "__main__":
