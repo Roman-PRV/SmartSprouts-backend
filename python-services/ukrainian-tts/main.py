@@ -25,11 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global variables
-tts_model: Optional[TTS] = None
-synthesis_lock = asyncio.Lock()
-
-
 class SynthesizeRequest(BaseModel):
     """Request model for text synthesis."""
     text: str = Field(..., min_length=1, max_length=500, description="Text to synthesize")
@@ -42,15 +37,22 @@ class HealthResponse(BaseModel):
     model_loaded: bool
 
 
+# Create FastAPI app
+app = FastAPI(
+    title="Ukrainian TTS Service",
+    description="Text-to-speech synthesis for Ukrainian language",
+    version="1.0.0"
+)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load TTS model on startup, cleanup on shutdown."""
-    global tts_model
-    
     logger.info("Loading Ukrainian TTS model...")
     try:
-        # Load the model
-        tts_model = TTS(device='cpu')
+        # Store model and lock in app.state for better lifecycle management
+        app.state.tts_model = TTS(device='cpu')
+        app.state.synthesis_lock = asyncio.Lock()
         logger.info("Ukrainian TTS model loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load TTS model: {e}")
@@ -59,25 +61,20 @@ async def lifespan(app: FastAPI):
     yield
     
     logger.info("Shutting down TTS service")
-    tts_model = None
+    app.state.tts_model = None
 
 
-# Create FastAPI app
-app = FastAPI(
-    title="Ukrainian TTS Service",
-    description="Text-to-speech synthesis for Ukrainian language",
-    version="1.0.0",
-    lifespan=lifespan
-)
+app.router.lifespan_context = lifespan
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check(request: Request):
     """
     Health check endpoint.
     
     Returns healthy status only when the model is loaded and ready.
     """
+    tts_model = getattr(request.app.state, 'tts_model', None)
     return HealthResponse(
         status="healthy" if tts_model is not None else "unhealthy",
         model_loaded=tts_model is not None
@@ -97,7 +94,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 @app.post("/synthesize")
-async def synthesize_speech(request: SynthesizeRequest):
+async def synthesize_speech(request: Request, body: SynthesizeRequest):
     """
     Synthesize speech from text.
     
@@ -105,29 +102,33 @@ async def synthesize_speech(request: SynthesizeRequest):
     preventing memory issues from concurrent model usage.
     
     Returns:
-        WAV audio file
+        MP3 audio file
     """
-    if tts_model is None:
-        raise HTTPException(status_code=503, detail="TTS model not loaded")
+    tts_model = getattr(request.app.state, 'tts_model', None)
+    synthesis_lock = getattr(request.app.state, 'synthesis_lock', None)
+
+    if tts_model is None or synthesis_lock is None:
+        raise HTTPException(status_code=503, detail="TTS model or lock not initialized")
     
-    logger.info(f"Synthesis request: text_length={len(request.text)}, speaker={request.speaker}")
+    logger.info(f"Synthesis request: text_length={len(body.text)}, speaker={body.speaker}")
     
     # Acquire lock to process one request at a time
     async with synthesis_lock:
         try:
             # Run synthesis in thread pool to avoid blocking event loop
             loop = asyncio.get_event_loop()
-            wav_data = await loop.run_in_executor(
+            mp3_data = await loop.run_in_executor(
                 None,
                 _synthesize_sync,
-                request.text,
-                request.speaker
+                tts_model,
+                body.text,
+                body.speaker
             )
             
-            logger.info(f"Synthesis completed: audio_size={len(wav_data)} bytes")
+            logger.info(f"Synthesis completed: audio_size={len(mp3_data)} bytes")
             
             return Response(
-                content=wav_data,
+                content=mp3_data,
                 media_type="audio/mpeg",
                 headers={
                     "Content-Disposition": "attachment; filename=speech.mp3"
@@ -142,16 +143,17 @@ async def synthesize_speech(request: SynthesizeRequest):
             raise HTTPException(status_code=500, detail="Synthesis failed. Please try again later.")
 
 
-def _synthesize_sync(text: str, speaker: str) -> bytes:
+def _synthesize_sync(tts_model: TTS, text: str, speaker: str) -> bytes:
     """
     Synchronous synthesis function to run in thread pool.
     
     Args:
+        tts_model: The TTS model instance
         text: Text to synthesize
         speaker: Speaker name
         
     Returns:  
-        WAV audio data as bytes
+        MP3 audio data as bytes
     """
     # Dynamic speaker mapping: search for speaker in Voices enum
     voice = Voices.Lada.value  # Default
@@ -162,33 +164,30 @@ def _synthesize_sync(text: str, speaker: str) -> bytes:
             voice = v.value
             break
     
-    # Use io.BytesIO for in-memory WAV generation
-    buffer = io.BytesIO()
-    
-    try:
-        # Generate speech - tts() writes to file-like object
-        _, output_text = tts_model.tts(text, voice, Stress.Dictionary.value, buffer)
-        
-        # Use debug level for potentially sensitive text
-        logger.debug(f"Generated speech with stressed text: {output_text}")
-        logger.info(f"Generated speech: text_length={len(text)} characters")
-        
-        # Get bytes from buffer
-        buffer.seek(0)
-        
-        # Convert WAV to MP3 using pydub
-        logger.info("Converting WAV to MP3...")
-        audio = AudioSegment.from_wav(buffer)
-        
-        mp3_buffer = io.BytesIO()
-        audio.export(mp3_buffer, format="mp3", bitrate="128k")
-        
-        return mp3_buffer.getvalue()
-    except Exception as e:
-        logger.error(f"Error in synchronous synthesis: {e}")
-        raise
-    finally:
-        buffer.close()
+    # Use io.BytesIO for in-memory WAV generation via context manager
+    with io.BytesIO() as buffer:
+        try:
+            # Generate speech - tts() writes to file-like object
+            _, output_text = tts_model.tts(text, voice, Stress.Dictionary.value, buffer)
+            
+            # Use debug level for potentially sensitive text
+            logger.debug(f"Generated speech with stressed text: {output_text}")
+            logger.info(f"Generated speech: text_length={len(text)} characters")
+            
+            # Get bytes from buffer
+            buffer.seek(0)
+            
+            # Convert WAV to MP3 using pydub
+            logger.info("Converting WAV to MP3...")
+            audio = AudioSegment.from_wav(buffer)
+            
+            with io.BytesIO() as mp3_buffer:
+                audio.export(mp3_buffer, format="mp3", bitrate="128k")
+                return mp3_buffer.getvalue()
+                
+        except Exception as e:
+            logger.error(f"Error in synchronous synthesis: {e}")
+            raise
 
 
 if __name__ == "__main__":
