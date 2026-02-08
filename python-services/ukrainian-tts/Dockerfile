@@ -46,6 +46,9 @@ RUN groupadd -g 1000 appgroup && \
 
 WORKDIR /app
 
+# Pre-create application and cache directories with correct ownership
+RUN mkdir -p /app/.cache && chown -R appuser:appgroup /app
+
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -53,7 +56,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder stage
-COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder --chown=appuser:appgroup /opt/venv /opt/venv
 
 # Set environment variables
 # TORCH_HOME is set to /app/.cache so appuser can write models there
@@ -65,10 +68,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     TORCH_HOME=/app/.cache
 
 # Copy application code
-COPY main.py .
-
-# Ensure appuser owns the application directory and virtual environment
-RUN chown -R appuser:appgroup /app /opt/venv
+COPY --chown=appuser:appgroup main.py .
 
 # Switch to non-root user
 USER appuser
