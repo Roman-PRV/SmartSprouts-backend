@@ -40,6 +40,10 @@ RUN find /opt/venv/lib/python3.9/site-packages -type d -name "tests" -exec rm -r
 # ============================================
 FROM python:3.9-slim AS runtime
 
+# Create a non-root user and group
+RUN groupadd -g 1000 appgroup && \
+    useradd -u 1000 -g appgroup -s /bin/sh -m appuser
+
 WORKDIR /app
 
 # Install runtime dependencies
@@ -51,14 +55,22 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /opt/venv /opt/venv
 
 # Set environment variables
+# TORCH_HOME is set to /app/.cache so appuser can write models there
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     OMP_NUM_THREADS=2 \
     MKL_NUM_THREADS=2 \
-    TTS_PORT=5001
+    TTS_PORT=5001 \
+    TORCH_HOME=/app/.cache
 
 # Copy application code
 COPY main.py .
+
+# Ensure appuser owns the application directory and virtual environment
+RUN chown -R appuser:appgroup /app /opt/venv
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE ${TTS_PORT}
