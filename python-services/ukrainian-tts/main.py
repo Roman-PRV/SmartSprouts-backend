@@ -12,8 +12,8 @@ import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import Response
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel, Field
 from pydub import AudioSegment
 from ukrainian_tts.tts import TTS, Voices, Stress
@@ -84,6 +84,18 @@ async def health_check():
     )
 
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Global exception handler to prevent leaking internal details.
+    """
+    logger.exception(f"Unhandled exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please try again later."}
+    )
+
+
 @app.post("/synthesize")
 async def synthesize_speech(request: SynthesizeRequest):
     """
@@ -122,12 +134,12 @@ async def synthesize_speech(request: SynthesizeRequest):
                 }
             )
             
-        except MemoryError as e:
-            logger.error(f"OOM during synthesis: {e}")
-            raise HTTPException(status_code=507, detail="Server is out of memory")
-        except Exception as e:
-            logger.error(f"Synthesis failed: {e}")
-            raise HTTPException(status_code=500, detail=f"Synthesis failed: {str(e)}")
+        except MemoryError:
+            logger.exception("OOM during synthesis")
+            raise HTTPException(status_code=507, detail="Server is temporary unavailable due to high load")
+        except Exception:
+            logger.exception("Synthesis failed")
+            raise HTTPException(status_code=500, detail="Synthesis failed. Please try again later.")
 
 
 def _synthesize_sync(text: str, speaker: str) -> bytes:
@@ -157,7 +169,9 @@ def _synthesize_sync(text: str, speaker: str) -> bytes:
         # Generate speech - tts() writes to file-like object
         _, output_text = tts_model.tts(text, voice, Stress.Dictionary.value, buffer)
         
-        logger.info(f"Generated speech with stressed text: {output_text}")
+        # Use debug level for potentially sensitive text
+        logger.debug(f"Generated speech with stressed text: {output_text}")
+        logger.info(f"Generated speech: text_length={len(text)} characters")
         
         # Get bytes from buffer
         buffer.seek(0)
