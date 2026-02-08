@@ -70,12 +70,6 @@ services:
     restart: unless-stopped
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request, os; urllib.request.urlopen(f'http://localhost:{os.environ.get(\\\"TTS_PORT\\\", 5001)}/health')\""]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
 
 volumes:
   mysql_data:

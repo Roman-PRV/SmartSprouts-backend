@@ -49,6 +49,7 @@ WORKDIR /app
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder stage
@@ -77,7 +78,7 @@ EXPOSE ${TTS_PORT}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.environ.get('TTS_PORT', '5001') + '/health')" || exit 1
+    CMD curl -f http://localhost:${TTS_PORT}/health || exit 1
 
 # Run application
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${TTS_PORT} --workers 1"]
