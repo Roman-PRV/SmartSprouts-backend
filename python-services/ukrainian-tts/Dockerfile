@@ -27,6 +27,10 @@ RUN pip install --no-cache-dir torch==2.1.0 torchaudio==2.1.0 --index-url https:
 # Install all other dependencies (including git-based)
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download models to cache during build
+ENV TORCH_HOME=/opt/model_cache
+RUN python -c "from ukrainian_tts.tts import TTS; TTS(device='cpu')"
+
 # Cleanup unnecessary files to reduce image size
 RUN find /opt/venv/lib/python3.9/site-packages -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv/lib/python3.9/site-packages -type d -name "test" -exec rm -rf {} + 2>/dev/null || true && \
@@ -49,6 +53,9 @@ WORKDIR /app
 # Pre-create application and cache directories with correct ownership
 RUN mkdir -p /app/.cache && chown -R appuser:appgroup /app
 
+# Copy model cache from builder stage
+COPY --from=builder --chown=appuser:appgroup /opt/model_cache /app/.cache
+
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -62,8 +69,8 @@ COPY --from=builder --chown=appuser:appgroup /opt/venv /opt/venv
 # TORCH_HOME is set to /app/.cache so appuser can write models there
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    OMP_NUM_THREADS=2 \
-    MKL_NUM_THREADS=2 \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
     TTS_PORT=5001 \
     TORCH_HOME=/app/.cache
 

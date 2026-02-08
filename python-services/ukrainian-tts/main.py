@@ -10,7 +10,6 @@ import io
 import logging
 import os
 from contextlib import asynccontextmanager
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response, JSONResponse
