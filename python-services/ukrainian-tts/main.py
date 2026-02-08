@@ -70,13 +70,19 @@ app.router.lifespan_context = lifespan
 async def health_check(request: Request):
     """
     Health check endpoint.
-    
-    Returns healthy status only when the model is loaded and ready.
+
+    Returns healthy status (200) only when the model is loaded and ready.
+    Otherwise returns unhealthy status (503).
     """
     tts_model = getattr(request.app.state, 'tts_model', None)
-    return HealthResponse(
-        status="healthy" if tts_model is not None else "unhealthy",
-        model_loaded=tts_model is not None
+    is_healthy = tts_model is not None
+
+    return JSONResponse(
+        status_code=200 if is_healthy else 503,
+        content={
+            "status": "healthy" if is_healthy else "unhealthy",
+            "model_loaded": is_healthy
+        }
     )
 
 
