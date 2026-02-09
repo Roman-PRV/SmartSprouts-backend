@@ -49,10 +49,27 @@ async def lifespan(app: FastAPI):
     """Load TTS model on startup, cleanup on shutdown."""
     logger.info("Loading Ukrainian TTS model...")
     try:
-        # Store model and lock in app.state for better lifecycle management
-        app.state.tts_model = TTS(device='cpu')
-        app.state.synthesis_lock = asyncio.Lock()
-        logger.info("Ukrainian TTS model loaded successfully")
+        # Get cache directory from environment variable or default to '.'
+        cache_dir = os.environ.get("TTS_CACHE_DIR", ".")
+        if cache_dir != "." and not os.path.exists(cache_dir):
+            logger.info(f"Creating cache directory: {cache_dir}")
+            os.makedirs(cache_dir, exist_ok=True)
+            
+        # espnet2 (used by ukrainian-tts) expects feats_stats.npz to be in the CWD
+        # as specified in the model's config.yaml. We change directory temporarily.
+        original_cwd = os.getcwd()
+        os.chdir(cache_dir)
+        
+        try:
+            # Store model and lock in app.state for better lifecycle management
+            # We use '.' because we already changed directory to cache_dir
+            app.state.tts_model = TTS(cache_folder='.', device='cpu')
+            app.state.synthesis_lock = asyncio.Lock()
+            logger.info(f"Ukrainian TTS model loaded successfully in {cache_dir}")
+        finally:
+            # Change back to original directory
+            os.chdir(original_cwd)
+            
     except Exception as e:
         logger.error(f"Failed to load TTS model: {e}")
         raise

@@ -29,7 +29,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download models to cache during build
 ENV TORCH_HOME=/opt/model_cache
-RUN python -c "from ukrainian_tts.tts import TTS; TTS(device='cpu')"
+RUN mkdir -p /opt/model_cache && \
+    cd /opt/model_cache && \
+    python -c "from ukrainian_tts.tts import TTS; TTS(cache_folder='.', device='cpu')"
 
 # Cleanup unnecessary files to reduce image size
 RUN find /opt/venv/lib/python3.9/site-packages -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
@@ -66,12 +68,12 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder --chown=appuser:appgroup /opt/venv /opt/venv
 
 # Set environment variables
-# TORCH_HOME is set to /app/.cache so appuser can write models there
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1 \
     TTS_PORT=5001 \
+    TTS_CACHE_DIR=/app/.cache \
     TORCH_HOME=/app/.cache
 
 # Copy application code
