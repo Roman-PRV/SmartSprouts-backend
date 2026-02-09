@@ -27,6 +27,8 @@ return [
         'elevenlabs_failed' => 'Помилка синтезу ElevenLabs: :error',
         'elevenlabs_quota_exceeded' => 'Ліміт ElevenLabs вичерпано: :error',
         'elevenlabs_empty_response' => 'ElevenLabs повернув порожню аудіо-відповідь.',
+        'ukrainian_tts_failed' => 'Помилка синтезу Ukrainian TTS: :error',
+        'ukrainian_tts_empty_response' => 'Ukrainian TTS повернув порожню аудіо-відповідь.',
     ],
     'config' => [
         'required_missing' => 'Параметр конфігурації [:key] є обов\'язковим і повинен бути непорожнім рядком.',

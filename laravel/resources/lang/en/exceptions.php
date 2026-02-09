@@ -27,6 +27,8 @@ return [
         'elevenlabs_failed' => 'ElevenLabs synthesis failed: :error',
         'elevenlabs_quota_exceeded' => 'ElevenLabs quota exceeded: :error',
         'elevenlabs_empty_response' => 'ElevenLabs returned an empty audio response.',
+        'ukrainian_tts_failed' => 'Ukrainian TTS synthesis failed: :error',
+        'ukrainian_tts_empty_response' => 'Ukrainian TTS returned an empty audio response.',
     ],
     'config' => [
         'required_missing' => 'Configuration value for key [:key] is required and must be a non-empty string.',
