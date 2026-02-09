@@ -135,8 +135,8 @@ class TrueFalseTextService implements GameServiceInterface
                 'correct' => $correct,
                 'is_true' => $statement->is_true,
                 'explanation' => $statement->explanation,
-                'statement_audio_url' => $statement->statement_audio_url,
-                'explanation_audio_url' => $statement->explanation_audio_url,
+                'statement_audio_url' => $statement->getTranslation('statement_audio_url', app()->getLocale(), false) ?: null,
+                'explanation_audio_url' => $statement->getTranslation('explanation_audio_url', app()->getLocale(), false) ?: null,
             ];
         }
 

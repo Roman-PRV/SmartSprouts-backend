@@ -40,7 +40,7 @@ class TrueFalseTextLevelResource extends JsonResource
             'title' => $level->title,
             'image_url' => $level->image_url,
             'text' => $level->text,
-            'text_audio_url' => $level->text_audio_url,
+            'text_audio_url' => $level->getTranslation('text_audio_url', app()->getLocale(), false) ?: null,
             'statements' => TrueFalseTextStatementResource::collection($this->whenLoaded('statements')),
         ];
     }

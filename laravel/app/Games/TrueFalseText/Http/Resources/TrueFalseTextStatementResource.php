@@ -58,14 +58,15 @@ class TrueFalseTextStatementResource extends JsonResource
 
         /** @var TrueFalseTextStatement $statement */
         $statement = $this->resource;
+        $locale = app()->getLocale();
 
         return [
             'id' => $statement->id,
             'level_id' => $statement->level_id,
             'statement' => $statement->statement,
             'explanation' => $statement->explanation,
-            'statement_audio_url' => $statement->statement_audio_url,
-            'explanation_audio_url' => $statement->explanation_audio_url,
+            'statement_audio_url' => $statement->getTranslation('statement_audio_url', $locale, false) ?: null,
+            'explanation_audio_url' => $statement->getTranslation('explanation_audio_url', $locale, false) ?: null,
         ];
     }
 }
