@@ -382,6 +382,18 @@
                         "description": "Explanation for the correct answer",
                         "type": "string",
                         "example": "Cats have pointy ears"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -405,6 +417,18 @@
                     "explanation": {
                         "description": "Explanation for the statement",
                         "type": "string"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -440,6 +464,13 @@
                         "type": "string",
                         "example": "Some introductory text"
                     },
+                    "text_audio_url": {
+                        "description": "Text audio URL",
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com/audio/text_uk.mp3",
+                        "nullable": true
+                    },
                     "statements": {
                         "type": "array",
                         "items": {
@@ -471,6 +502,18 @@
                         "description": "Explanation for the correct answer",
                         "type": "string",
                         "example": "Cats have pointy ears"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -494,6 +537,18 @@
                     "explanation": {
                         "description": "Explanation for the statement",
                         "type": "string"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "url",
+                        "nullable": true
                     }
                 },
                 "type": "object"

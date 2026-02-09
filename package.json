@@ -8,7 +8,8 @@
     "format": "docker exec -i pp_laravel_app php vendor/bin/pint",
     "prepare": "husky install",
     "quality": "npm run format && npm run lint && npm run test",
-    "test": "docker exec -i pp_laravel_app php artisan test"
+    "test": "docker exec -i pp_laravel_app php artisan test",
+    "docs": "docker exec -i pp_laravel_app php artisan l5-swagger:generate && docker exec -i pp_laravel_app cp storage/api-docs/api-docs.json public/docs/api-docs.json"
   },
   "repository": {
     "type": "git",
