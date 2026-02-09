@@ -468,4 +468,40 @@ class TrueFalseTextServiceTest extends TestCase
         $this->assertTrue($firstResult['is_true']);
         $this->assertEquals('Explanation text', $firstResult['explanation']);
     }
+
+    /** @test */
+    public function it_disables_audio_fallback_in_check_result(): void
+    {
+        $level = TrueFalseTextLevel::create([
+            'title' => ['en' => 'English Level'],
+            'text' => 'Test',
+            'image_url' => 'test.jpg',
+        ]);
+
+        $statement = TrueFalseTextStatement::create([
+            'level_id' => $level->id,
+            'statement' => ['en' => 'English Statement'],
+            'is_true' => true,
+            'explanation' => ['en' => 'English Explanation'],
+            'statement_audio_url' => ['en' => 'en_audio.mp3'],
+            'explanation_audio_url' => ['en' => 'en_expl.mp3'],
+        ]);
+
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+        $dto = new CheckAnswersDTO($user->id, $game, $level->id, [
+            ['statement_id' => $statement->id, 'answer' => true],
+        ]);
+
+        // Current locale is 'uk' (set in setUp)
+        $result = $this->service->check($dto);
+        $firstResult = $result['results'][0];
+
+        // Text SHOULD fallback (default behavior)
+        $this->assertEquals('English Explanation', $firstResult['explanation']);
+
+        // Audio SHOULD NOT fallback
+        $this->assertNull($firstResult['statement_audio_url']);
+        $this->assertNull($firstResult['explanation_audio_url']);
+    }
 }
