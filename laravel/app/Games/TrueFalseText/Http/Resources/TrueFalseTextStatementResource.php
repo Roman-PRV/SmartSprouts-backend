@@ -37,14 +37,14 @@ class TrueFalseTextStatementResource extends JsonResource
      *     @OA\Property(
      *         property="statement_audio_url",
      *         type="string",
-     *         format="url",
+     *         format="uri",
      *         nullable=true,
      *         description="Audio URL for the statement"
      *     ),
      *     @OA\Property(
      *         property="explanation_audio_url",
      *         type="string",
-     *         format="url",
+     *         format="uri",
      *         nullable=true,
      *         description="Audio URL for the explanation"
      *     )
