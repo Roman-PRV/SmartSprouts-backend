@@ -25,6 +25,7 @@ class TrueFalseTextServiceTest extends TestCase
     {
         parent::setUp();
         $this->service = new TrueFalseTextService;
+        $this->app->setLocale('uk');
     }
 
     /** @test */
@@ -53,6 +54,7 @@ class TrueFalseTextServiceTest extends TestCase
             'title' => 'Test Level 1',
             'text' => 'This is test text for level 1',
             'image_url' => 'test1.jpg',
+            'text_audio_url' => ['uk' => 'test1_uk.mp3'],
         ]);
 
         $level2 = TrueFalseTextLevel::create([
@@ -95,6 +97,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 1',
             'is_true' => true,
             'explanation' => 'Explanation 1',
+            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
         ]);
 
         TrueFalseTextStatement::create([
@@ -102,6 +106,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 2',
             'is_true' => false,
             'explanation' => 'Explanation 2',
+            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
         ]);
 
         $result = $this->service->fetchLevel($level->id);
@@ -144,6 +150,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Test statement',
             'is_true' => true,
             'explanation' => 'Test explanation',
+            'statement_audio_url' => ['uk' => 'stmt_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl_uk.mp3'],
         ]);
 
         $result = $this->service->fetchLevel($level->id);
@@ -168,6 +176,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 1',
             'is_true' => true,
             'explanation' => 'Explanation 1',
+            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
         ]);
 
         $statement2 = TrueFalseTextStatement::create([
@@ -175,6 +185,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 2',
             'is_true' => false,
             'explanation' => 'Explanation 2',
+            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
         ]);
 
         // Create statement for different level (should not be returned)
@@ -247,6 +259,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 1',
             'is_true' => true,
             'explanation' => 'Explanation 1',
+            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
         ]);
 
         $statement2 = TrueFalseTextStatement::create([
@@ -254,6 +268,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 2',
             'is_true' => false,
             'explanation' => 'Explanation 2',
+            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
         ]);
 
         $answers = [
@@ -269,6 +285,8 @@ class TrueFalseTextServiceTest extends TestCase
         $this->assertArrayHasKey('results', $result);
         $this->assertCount(2, $result['results']);
         $this->assertTrue($result['results'][0]['correct']);
+        $this->assertEquals('stmt1_uk.mp3', $result['results'][0]['statement_audio_url']);
+        $this->assertEquals('expl1_uk.mp3', $result['results'][0]['explanation_audio_url']);
         $this->assertTrue($result['results'][1]['correct']);
     }
 
@@ -286,6 +304,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement',
             'is_true' => true,
             'explanation' => 'Explanation',
+            'statement_audio_url' => ['uk' => 'stmt_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl_uk.mp3'],
         ]);
 
         $game = Game::factory()->create();
@@ -381,6 +401,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 1',
             'is_true' => true,
             'explanation' => 'Explanation 1',
+            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
         ]);
 
         $statement2 = TrueFalseTextStatement::create([
@@ -388,6 +410,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement 2',
             'is_true' => false,
             'explanation' => 'Explanation 2',
+            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
         ]);
 
         $game = Game::factory()->create();
@@ -419,6 +443,8 @@ class TrueFalseTextServiceTest extends TestCase
             'statement' => 'Statement',
             'is_true' => true,
             'explanation' => 'Explanation text',
+            'statement_audio_url' => ['uk' => 'stmt_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl_uk.mp3'],
         ]);
 
         $game = Game::factory()->create();
@@ -434,6 +460,8 @@ class TrueFalseTextServiceTest extends TestCase
         $this->assertArrayHasKey('correct', $firstResult);
         $this->assertArrayHasKey('is_true', $firstResult);
         $this->assertArrayHasKey('explanation', $firstResult);
+        $this->assertArrayHasKey('statement_audio_url', $firstResult);
+        $this->assertArrayHasKey('explanation_audio_url', $firstResult);
 
         $this->assertEquals($statement->id, $firstResult['statement_id']);
         $this->assertTrue($firstResult['correct']);

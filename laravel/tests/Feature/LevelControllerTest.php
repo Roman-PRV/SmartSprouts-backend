@@ -109,6 +109,8 @@ class LevelControllerTest extends TestCase
                 'statement' => json_encode(['en' => 'The sky is blue', 'es' => 'El cielo es azul', 'uk' => 'Небо блакитне']),
                 'is_true' => true,
                 'explanation' => json_encode(['en' => 'Because of Rayleigh scattering', 'es' => 'Debido a la dispersión de Rayleigh', 'uk' => 'Через розсіювання Релея']),
+                'statement_audio_url' => json_encode(['en' => 'stmt10_en.mp3']),
+                'explanation_audio_url' => json_encode(['en' => 'expl10_en.mp3']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -118,6 +120,8 @@ class LevelControllerTest extends TestCase
                 'statement' => json_encode(['en' => 'Cats can fly', 'es' => 'Los gatos pueden volar', 'uk' => 'Коти можуть літати']),
                 'is_true' => false,
                 'explanation' => null,
+                'statement_audio_url' => null,
+                'explanation_audio_url' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -132,7 +136,7 @@ class LevelControllerTest extends TestCase
                 'title',
                 'image_url',
                 'statements' => [
-                    ['id', 'level_id', 'statement', 'explanation'],
+                    ['id', 'level_id', 'statement', 'explanation', 'statement_audio_url', 'explanation_audio_url'],
                 ],
             ])
             ->assertJson([
