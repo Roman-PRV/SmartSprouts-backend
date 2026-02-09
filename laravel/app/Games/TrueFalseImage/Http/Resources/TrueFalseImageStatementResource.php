@@ -33,6 +33,20 @@ class TrueFalseImageStatementResource extends JsonResource
      *         property="explanation",
      *         type="string",
      *         description="Explanation for the statement"
+     *     ),
+     *     @OA\Property(
+     *         property="statement_audio_url",
+     *         type="string",
+     *         format="url",
+     *         nullable=true,
+     *         description="Audio URL for the statement"
+     *     ),
+     *     @OA\Property(
+     *         property="explanation_audio_url",
+     *         type="string",
+     *         format="url",
+     *         nullable=true,
+     *         description="Audio URL for the explanation"
      *     )
      * )
      *
@@ -50,6 +64,8 @@ class TrueFalseImageStatementResource extends JsonResource
             'level_id' => $statement->level_id,
             'statement' => $statement->statement,
             'explanation' => $statement->explanation,
+            'statement_audio_url' => $statement->statement_audio_url,
+            'explanation_audio_url' => $statement->explanation_audio_url,
         ];
     }
 }

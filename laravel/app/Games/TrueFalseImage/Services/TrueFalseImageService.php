@@ -135,6 +135,8 @@ class TrueFalseImageService implements GameServiceInterface
                 'correct' => $correct,
                 'is_true' => $statement->is_true,
                 'explanation' => $statement->explanation,
+                'statement_audio_url' => $statement->statement_audio_url,
+                'explanation_audio_url' => $statement->explanation_audio_url,
             ];
         }
 

@@ -20,6 +20,7 @@ class TrueFalseTextLevelResource extends JsonResource
      *     @OA\Property(property="title", type="string", example="Level 1", description="Level title"),
      *     @OA\Property(property="image_url", type="string", example="https://example.com/image.png", description="Level image URL"),
      *     @OA\Property(property="text", type="string", example="Some introductory text", description="Level text"),
+     *     @OA\Property(property="text_audio_url", type="string", format="url", nullable=true, example="https://example.com/audio/text_uk.mp3", description="Text audio URL"),
      *     @OA\Property(
      *         property="statements",
      *         type="array",
@@ -39,6 +40,7 @@ class TrueFalseTextLevelResource extends JsonResource
             'title' => $level->title,
             'image_url' => $level->image_url,
             'text' => $level->text,
+            'text_audio_url' => $level->text_audio_url,
             'statements' => TrueFalseTextStatementResource::collection($this->whenLoaded('statements')),
         ];
     }
