@@ -3,6 +3,7 @@
 namespace App\Games\TrueFalseImage\Http\Resources;
 
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
+use App\Helpers\MediaHelper;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TrueFalseImageStatementResource extends JsonResource
@@ -33,6 +34,20 @@ class TrueFalseImageStatementResource extends JsonResource
      *         property="explanation",
      *         type="string",
      *         description="Explanation for the statement"
+     *     ),
+     *     @OA\Property(
+     *         property="statement_audio_url",
+     *         type="string",
+     *         format="uri",
+     *         nullable=true,
+     *         description="Audio URL for the statement"
+     *     ),
+     *     @OA\Property(
+     *         property="explanation_audio_url",
+     *         type="string",
+     *         format="uri",
+     *         nullable=true,
+     *         description="Audio URL for the explanation"
      *     )
      * )
      *
@@ -44,12 +59,15 @@ class TrueFalseImageStatementResource extends JsonResource
 
         /** @var TrueFalseImageStatement $statement */
         $statement = $this->resource;
+        $locale = app()->getLocale();
 
         return [
             'id' => $statement->id,
             'level_id' => $statement->level_id,
             'statement' => $statement->statement,
             'explanation' => $statement->explanation,
+            'statement_audio_url' => MediaHelper::getAttributeUrl($statement, 'statement_audio_url', locale: $locale),
+            'explanation_audio_url' => MediaHelper::getAttributeUrl($statement, 'explanation_audio_url', locale: $locale),
         ];
     }
 }

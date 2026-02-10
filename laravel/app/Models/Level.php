@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @OA\Property(property="id", type="integer", example=1),
  * @OA\Property(property="title", type="string", example="Level 1"),
- * @OA\Property(property="image_url", type="string", format="url", example="https://example.com/storage/levels/level1.png")
+ * @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/storage/levels/level1.png")
  * )
  *
  * @OA\Schema(
