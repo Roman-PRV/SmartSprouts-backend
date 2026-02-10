@@ -390,13 +390,13 @@
                     "statement_audio_url": {
                         "description": "Audio URL for the statement",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     },
                     "explanation_audio_url": {
                         "description": "Audio URL for the explanation",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     }
                 },
@@ -425,13 +425,13 @@
                     "statement_audio_url": {
                         "description": "Audio URL for the statement",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     },
                     "explanation_audio_url": {
                         "description": "Audio URL for the explanation",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     }
                 },
@@ -471,7 +471,7 @@
                     "text_audio_url": {
                         "description": "Text audio URL",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "example": "https://example.com/audio/text_uk.mp3",
                         "nullable": true
                     },
@@ -510,13 +510,13 @@
                     "statement_audio_url": {
                         "description": "Audio URL for the statement",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     },
                     "explanation_audio_url": {
                         "description": "Audio URL for the explanation",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     }
                 },
@@ -545,13 +545,13 @@
                     "statement_audio_url": {
                         "description": "Audio URL for the statement",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     },
                     "explanation_audio_url": {
                         "description": "Audio URL for the explanation",
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "nullable": true
                     }
                 },
@@ -646,7 +646,7 @@
                     },
                     "icon_url": {
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "example": "https://example.com/storage/icons/game1.png"
                     },
                     "is_active": {
@@ -674,7 +674,7 @@
                     },
                     "image_url": {
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "example": "https://example.com/storage/levels/level1.png"
                     }
                 },

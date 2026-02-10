@@ -21,8 +21,8 @@ return [
                 'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
 
                 /*
-                * Edit to set path where swagger ui assets should be stored
-                */
+                 * Edit to set path where swagger ui assets should be stored
+                 */
                 'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
 
                 /*
@@ -81,7 +81,8 @@ return [
             /*
              * Absolute path to location where parsed annotations will be stored
              */
-            'docs' => storage_path('api-docs'),
+            // 'docs' => storage_path('api-docs'),
+            'docs' => public_path('docs'),
 
             /*
              * Absolute path to directory where to export views
@@ -167,7 +168,7 @@ return [
 
         /*
          * API security definitions. Will be generated into documentation file.
-        */
+         */
         'securityDefinitions' => [
             'securitySchemes' => [
                 /*
@@ -194,40 +195,40 @@ return [
                 */
 
             /* Open API 3.0 support
-                'passport' => [ // Unique name of security
-                    'type' => 'oauth2', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Laravel passport oauth2 security.',
-                    'in' => 'header',
-                    'scheme' => 'https',
-                    'flows' => [
-                        "password" => [
-                            "authorizationUrl" => config('app.url') . '/oauth/authorize',
-                            "tokenUrl" => config('app.url') . '/oauth/token',
-                            "refreshUrl" => config('app.url') . '/token/refresh',
-                            "scopes" => []
+                    'passport' => [ // Unique name of security
+                        'type' => 'oauth2', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
+                        'description' => 'Laravel passport oauth2 security.',
+                        'in' => 'header',
+                        'scheme' => 'https',
+                        'flows' => [
+                            "password" => [
+                                "authorizationUrl" => config('app.url') . '/oauth/authorize',
+                                "tokenUrl" => config('app.url') . '/oauth/token',
+                                "refreshUrl" => config('app.url') . '/token/refresh',
+                                "scopes" => []
+                            ],
                         ],
                     ],
-                ],
-                'sanctum' => [ // Unique name of security
-                    'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Enter token in format (Bearer <token>)',
-                    'name' => 'Authorization', // The name of the header or query parameter to be used.
-                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
-                ],
-                */],
+                    'sanctum' => [ // Unique name of security
+                        'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
+                        'description' => 'Enter token in format (Bearer <token>)',
+                        'name' => 'Authorization', // The name of the header or query parameter to be used.
+                        'in' => 'header', // The location of the API key. Valid values are "query" or "header".
+                    ],
+                    */],
             'security' => [
                 /*
                  * Examples of Securities
                  */
                 [
                 /*
-                    'oauth2_security_example' => [
-                        'read',
-                        'write'
-                    ],
+                        'oauth2_security_example' => [
+                            'read',
+                            'write'
+                        ],
 
-                    'passport' => []
-                    */],
+                        'passport' => []
+                        */],
             ],
         ],
 

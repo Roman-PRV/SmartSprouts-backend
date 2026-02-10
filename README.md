@@ -145,8 +145,6 @@ To regenerate the local spec if it is out of date:
 ```bash
 # inside the Laravel container
 php artisan l5-swagger:generate
-# make the spec public (if your setup requires it)
-mkdir -p public/docs && cp storage/api-docs/api-docs.json public/docs/api-docs.json
 ```
 
 ## 7. Folder Structure
