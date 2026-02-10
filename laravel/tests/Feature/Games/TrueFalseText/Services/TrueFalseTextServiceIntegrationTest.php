@@ -18,7 +18,7 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
     {
         parent::setUp();
         $this->service = new TrueFalseTextService;
-        // Tables are created via migrations, no need to create manually
+        $this->app->setLocale('uk');
     }
 
     /** @test */
@@ -30,6 +30,10 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
                 'title' => "Level {$i}",
                 'text' => "Text for level {$i}",
                 'image_url' => "level{$i}.jpg",
+                'text_audio_url' => [
+                    'uk' => "level{$i}_uk.mp3",
+                    'en' => "level{$i}_en.mp3",
+                ],
             ]);
 
             // Create 5 statements for each level
@@ -39,6 +43,8 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
                     'statement' => "Statement {$j} for level {$i}",
                     'is_true' => ($j % 2 === 1), // Alternate true/false
                     'explanation' => "Explanation {$j} for level {$i}",
+                    'statement_audio_url' => ['uk' => "stmt{$j}_uk.mp3"],
+                    'explanation_audio_url' => ['uk' => "expl{$j}_uk.mp3"],
                 ]);
             }
         }
@@ -63,6 +69,7 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
             'title' => 'Integrity Test Level',
             'text' => 'Testing data integrity',
             'image_url' => 'integrity.jpg',
+            'text_audio_url' => ['uk' => 'integrity_uk.mp3'],
         ]);
 
         $statement = TrueFalseTextStatement::create([
@@ -70,6 +77,14 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
             'statement' => 'This is a test statement',
             'is_true' => true,
             'explanation' => 'This statement is true for testing',
+            'statement_audio_url' => [
+                'uk' => 'stmt_uk.mp3',
+                'en' => 'stmt_en.mp3',
+            ],
+            'explanation_audio_url' => [
+                'uk' => 'expl_uk.mp3',
+                'en' => 'expl_en.mp3',
+            ],
         ]);
 
         // Fetch all levels and verify our level exists
@@ -89,6 +104,8 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
         $this->assertCount(1, $statements);
         $this->assertTrue($statements->first()->is_true);
         $this->assertEquals('This statement is true for testing', $statements->first()->explanation);
+        $this->assertEquals('stmt_uk.mp3', $statements->first()->statement_audio_url);
+        $this->assertEquals('expl_uk.mp3', $statements->first()->explanation_audio_url);
     }
 
     /** @test */
@@ -122,6 +139,8 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
             'statement' => 'Test statement',
             'is_true' => true,
             'explanation' => 'Test explanation',
+            'statement_audio_url' => ['uk' => 'test_stmt_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'test_expl_uk.mp3'],
         ]);
 
         // Should get both levels

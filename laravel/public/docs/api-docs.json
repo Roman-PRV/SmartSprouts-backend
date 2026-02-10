@@ -256,13 +256,17 @@
                                             "statement_id": 10,
                                             "correct": true,
                                             "is_true": true,
-                                            "explanation": "Because of Rayleigh scattering"
+                                            "explanation": "Because of Rayleigh scattering",
+                                            "statement_audio_url": "https://example.com/storage/audio/uk.mp3",
+                                            "explanation_audio_url": null
                                         },
                                         {
                                             "statement_id": 11,
                                             "correct": false,
                                             "is_true": false,
-                                            "explanation": "Cats cannot fly naturally"
+                                            "explanation": "Cats cannot fly naturally",
+                                            "statement_audio_url": null,
+                                            "explanation_audio_url": null
                                         }
                                     ]
                                 }
@@ -382,6 +386,18 @@
                         "description": "Explanation for the correct answer",
                         "type": "string",
                         "example": "Cats have pointy ears"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -405,6 +421,18 @@
                     "explanation": {
                         "description": "Explanation for the statement",
                         "type": "string"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -440,6 +468,13 @@
                         "type": "string",
                         "example": "Some introductory text"
                     },
+                    "text_audio_url": {
+                        "description": "Text audio URL",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/audio/text_uk.mp3",
+                        "nullable": true
+                    },
                     "statements": {
                         "type": "array",
                         "items": {
@@ -471,6 +506,18 @@
                         "description": "Explanation for the correct answer",
                         "type": "string",
                         "example": "Cats have pointy ears"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -494,6 +541,18 @@
                     "explanation": {
                         "description": "Explanation for the statement",
                         "type": "string"
+                    },
+                    "statement_audio_url": {
+                        "description": "Audio URL for the statement",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "explanation_audio_url": {
+                        "description": "Audio URL for the explanation",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -587,7 +646,7 @@
                     },
                     "icon_url": {
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "example": "https://example.com/storage/icons/game1.png"
                     },
                     "is_active": {
@@ -615,7 +674,7 @@
                     },
                     "image_url": {
                         "type": "string",
-                        "format": "url",
+                        "format": "uri",
                         "example": "https://example.com/storage/levels/level1.png"
                     }
                 },

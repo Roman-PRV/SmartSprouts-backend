@@ -18,10 +18,11 @@ class TrueFalseTextLevel extends Level
         'title',
         'image_url',
         'text',
+        'text_audio_url',
     ];
 
     /** @var array<int, string> */
-    public $translatable = ['title', 'text'];
+    public $translatable = ['title', 'text', 'text_audio_url'];
 
     public function statements(): HasMany
     {

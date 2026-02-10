@@ -26,6 +26,8 @@ class TrueFalseTextStatement extends Model
         'statement',
         'is_true',
         'explanation',
+        'statement_audio_url',
+        'explanation_audio_url',
     ];
 
     protected $casts = [
@@ -33,7 +35,7 @@ class TrueFalseTextStatement extends Model
     ];
 
     /** @var array<int, string> */
-    public $translatable = ['statement', 'explanation'];
+    public $translatable = ['statement', 'explanation', 'statement_audio_url', 'explanation_audio_url'];
 
     public function level(): BelongsTo
     {
