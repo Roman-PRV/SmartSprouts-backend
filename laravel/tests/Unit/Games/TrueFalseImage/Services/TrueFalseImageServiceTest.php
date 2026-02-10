@@ -10,6 +10,7 @@ use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TrueFalseImageServiceTest extends TestCase
@@ -23,6 +24,10 @@ class TrueFalseImageServiceTest extends TestCase
         parent::setUp();
         $this->service = new TrueFalseImageService;
         $this->app->setLocale('uk');
+
+        // Isolate storage for tests
+        config(['ai.tts.storage.disk' => 'public']);
+        Storage::fake('public');
     }
 
     /** @test */

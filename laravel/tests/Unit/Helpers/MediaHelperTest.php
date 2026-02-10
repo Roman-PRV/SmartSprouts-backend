@@ -16,6 +16,7 @@ class MediaHelperTest extends TestCase
 
         // Ensure APP_URL is set (default in test environment usually is)
         Config::set('app.url', 'http://test-url.com');
+        config(['ai.tts.storage.disk' => 'public']);
 
         $path = 'test-file.mp3';
         $url = MediaHelper::getUrl($path, 'ai.tts.storage.disk', 'public');

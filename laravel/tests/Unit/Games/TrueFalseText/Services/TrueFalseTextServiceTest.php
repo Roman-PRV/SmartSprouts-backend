@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
@@ -26,6 +27,10 @@ class TrueFalseTextServiceTest extends TestCase
         parent::setUp();
         $this->service = new TrueFalseTextService;
         $this->app->setLocale('uk');
+
+        // Isolate storage for tests
+        config(['ai.tts.storage.disk' => 'public']);
+        Storage::fake('public');
     }
 
     /** @test */
