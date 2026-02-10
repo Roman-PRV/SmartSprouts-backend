@@ -285,8 +285,8 @@ class TrueFalseTextServiceTest extends TestCase
         $this->assertArrayHasKey('results', $result);
         $this->assertCount(2, $result['results']);
         $this->assertTrue($result['results'][0]['correct']);
-        $this->assertEquals('/storage/stmt1_uk.mp3', $result['results'][0]['statement_audio_url']);
-        $this->assertEquals('/storage/expl1_uk.mp3', $result['results'][0]['explanation_audio_url']);
+        $this->assertEquals(url('/storage/stmt1_uk.mp3'), $result['results'][0]['statement_audio_url']);
+        $this->assertEquals(url('/storage/expl1_uk.mp3'), $result['results'][0]['explanation_audio_url']);
         $this->assertTrue($result['results'][1]['correct']);
     }
 

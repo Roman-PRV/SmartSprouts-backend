@@ -18,7 +18,7 @@ class TrueFalseImageResourceTest extends TestCase
     }
 
     /** @test */
-    public function true_false_image_statement_resource_disables_audio_fallback()
+    public function true_false_image_statement_resource_disables_audio_fallback(): void
     {
         $statement = new TrueFalseImageStatement;
         $statement->setTranslation('statement', 'en', 'English Statement');

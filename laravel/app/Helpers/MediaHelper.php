@@ -21,7 +21,7 @@ class MediaHelper
 
         $diskName = ConfigHelper::getString($diskConfigKey, $defaultDisk);
 
-        return Storage::disk($diskName)->url($path);
+        return url(Storage::disk($diskName)->url($path));
     }
 
     /**
