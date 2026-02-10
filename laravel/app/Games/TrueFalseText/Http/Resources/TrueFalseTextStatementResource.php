@@ -3,6 +3,7 @@
 namespace App\Games\TrueFalseText\Http\Resources;
 
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
+use App\Helpers\MediaHelper;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TrueFalseTextStatementResource extends JsonResource
@@ -65,8 +66,8 @@ class TrueFalseTextStatementResource extends JsonResource
             'level_id' => $statement->level_id,
             'statement' => $statement->statement,
             'explanation' => $statement->explanation,
-            'statement_audio_url' => $statement->getTranslation('statement_audio_url', $locale, false) ?: null,
-            'explanation_audio_url' => $statement->getTranslation('explanation_audio_url', $locale, false) ?: null,
+            'statement_audio_url' => MediaHelper::getAttributeUrl($statement, 'statement_audio_url', locale: $locale),
+            'explanation_audio_url' => MediaHelper::getAttributeUrl($statement, 'explanation_audio_url', locale: $locale),
         ];
     }
 }
