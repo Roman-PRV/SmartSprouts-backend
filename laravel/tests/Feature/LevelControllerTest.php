@@ -150,6 +150,8 @@ class LevelControllerTest extends TestCase
             'level_id' => 1,
             'statement' => 'The sky is blue',
             'explanation' => 'Because of Rayleigh scattering',
+            'statement_audio_url' => 'http://localhost/storage/stmt10_en.mp3',
+            'explanation_audio_url' => 'http://localhost/storage/expl10_en.mp3',
         ]);
 
         $response->assertJsonFragment([
@@ -157,6 +159,8 @@ class LevelControllerTest extends TestCase
             'level_id' => 1,
             'statement' => 'Cats can fly',
             'explanation' => null,
+            'statement_audio_url' => null,
+            'explanation_audio_url' => null,
         ]);
 
         $this->assertCount(2, $response->json('statements'));
@@ -509,6 +513,10 @@ class LevelControllerTest extends TestCase
                 'es' => 'Debido a la dispersión de Rayleigh',
                 'uk' => 'Через розсіювання Релея',
             ]),
+            'statement_audio_url' => json_encode([
+                'uk' => 'stmt_uk.mp3',
+                'en' => 'stmt_en.mp3',
+            ]),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -525,6 +533,14 @@ class LevelControllerTest extends TestCase
         // Verify statements are also localized
         $statements = $response->json('statements');
         $this->assertNotEmpty($statements);
+
+        if ($locale === 'uk') {
+            $this->assertEquals('http://localhost/storage/stmt_uk.mp3', $statements[0]['statement_audio_url']);
+        } elseif ($locale === 'es') {
+            $this->assertNull($statements[0]['statement_audio_url']);
+        } else {
+            $this->assertEquals('http://localhost/storage/stmt_en.mp3', $statements[0]['statement_audio_url']);
+        }
     }
 
     public function test_unauthenticated_user_cannot_access_game_routes(): void
