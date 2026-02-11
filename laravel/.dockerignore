@@ -8,3 +8,5 @@ phpunit_error.log
 .git
 .vscode
 .agent
+public/storage
+

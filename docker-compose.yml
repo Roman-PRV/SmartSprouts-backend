@@ -9,7 +9,7 @@ services:
     volumes:
       - ./laravel:/var/www
       - ./laravel/storage:/var/www/storage
-      - vendor_data:/var/www/vendor
+      # - vendor_data:/var/www/vendor
     networks:
       - app-network
     depends_on:
