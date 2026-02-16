@@ -18,7 +18,6 @@ class TtsServiceProvider extends ServiceProvider
         $this->app->singleton(TtsStorageService::class, function () {
             return new TtsStorageService(
                 disk: ConfigHelper::getString('ai.tts.storage.disk', 'public'),
-                pathPrefix: ConfigHelper::getString('ai.tts.storage.path_prefix', 'tts/audio'),
             );
         });
 
