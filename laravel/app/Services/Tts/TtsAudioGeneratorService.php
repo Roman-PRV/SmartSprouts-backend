@@ -2,7 +2,6 @@
 
 namespace App\Services\Tts;
 
-use App\Contracts\TtsAudioInterface;
 use App\Contracts\TtsProviderInterface;
 use App\Enums\Tts\TtsModelMappingEnum;
 use App\Helpers\ConfigHelper;
@@ -19,6 +18,8 @@ class TtsAudioGeneratorService
 
     private const FALLBACK_ENTITY_TYPE = 'unknown';
 
+    private const HASH_LENGTH = 8;
+
     public function __construct(
         private readonly TtsProviderInterface $ttsProvider,
         private readonly TtsStorageService $storageService,
@@ -33,31 +34,24 @@ class TtsAudioGeneratorService
     public function generateForModel(TtsAudioContext $context): ?string
     {
         try {
-            $model = $context->getModel();
-            $attribute = $context->getAttribute();
-            $locale = $context->getLocale();
+            $text = $context->getText() ?? $this->extractTextContent($context);
 
-            $text = $context->getText() ?? $this->extractTextContent($model, $attribute, $locale);
-
-            if (! $this->validateText($text, $model, $attribute, $locale)) {
+            if (! $this->validateText($text, $context)) {
                 return null;
             }
 
             /** @var string|null $path */
-            $path = $this->resolveAudioPath($model, $attribute, $locale, $text);
+            $path = $this->resolveAudioPath($context);
 
             if ($path) {
                 return $path;
             }
 
-            return $this->synthesizeAndStore($model, $attribute, $locale, $text);
+            return $this->synthesizeAndStore($context);
 
         } catch (\Throwable $e) {
-            Log::error('Failed to generate TTS audio', [
-                'model' => get_class($context->getModel()),
-                'id' => $context->getModel()->getKey(),
-                'attribute' => $context->getAttribute(),
-                'locale' => $context->getLocale(),
+            Log::channel('tts')->error('Failed to generate TTS audio', [
+                ...$context->toLogContext(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -74,30 +68,31 @@ class TtsAudioGeneratorService
         $disk = ConfigHelper::getString('ai.tts.storage.disk', 'public');
 
         return Storage::disk($disk)->exists($path);
-
     }
 
     /**
-     * Extract text content from model attribute.
+     * Extract text content from the context.
      */
-    private function extractTextContent(TtsAudioInterface&Model $model, string $attribute, string $locale): ?string
+    private function extractTextContent(TtsAudioContext $context): ?string
     {
-        return $model->getTtsText($attribute, $locale);
+        return $context->getModel()->getTtsText($context->getAttribute(), $context->getLocale());
     }
 
     /**
      * Generate storage path for audio file.
      */
-    private function generateStoragePath(TtsAudioInterface&Model $model, string $attribute, string $locale, string $format, string $text): string
+    private function generateStoragePath(TtsAudioContext $context, string $format): string
     {
+        $model = $context->getModel();
         $mapping = TtsModelMappingEnum::fromModel($model);
 
         $gameType = $mapping?->getGameType() ?? self::FALLBACK_GAME_TYPE;
         $entityType = $mapping?->getEntityType() ?? self::FALLBACK_ENTITY_TYPE;
 
-        $attributeBaseName = $model->getTtsSourceAttribute($attribute);
+        $attributeBaseName = $model->getTtsSourceAttribute($context->getAttribute());
 
-        $hash = substr(md5($text.$locale), 0, 8);
+        $text = $context->getText() ?? '';
+        $hash = substr(md5($text.$context->getLocale()), 0, self::HASH_LENGTH);
 
         /** @var int $id */
         $id = $model->getKey();
@@ -108,7 +103,7 @@ class TtsAudioGeneratorService
             $gameType,
             $entityType,
             $id,
-            $locale,
+            $context->getLocale(),
             $attributeBaseName,
             $hash,
             $format
@@ -118,16 +113,17 @@ class TtsAudioGeneratorService
     /**
      * Resolve audio path for model attribute.
      */
-    private function resolveAudioPath(TtsAudioInterface&Model $model, string $attribute, string $locale, string $text): ?string
+    private function resolveAudioPath(TtsAudioContext $context): ?string
     {
         $expectedFormat = ConfigHelper::getString('ai.tts.output_format', 'mp3');
-        $path = $this->generateStoragePath($model, $attribute, $locale, $expectedFormat, $text);
+        $path = $this->generateStoragePath($context, $expectedFormat);
 
         if ($this->audioExists($path)) {
-            Log::info('TTS audio file already exists for model, skipping generation', [
+            Log::channel('tts')->info('TTS audio file already exists for model, skipping generation', [
+                ...$context->toLogContext(),
                 'path' => $path,
             ]);
-            $this->updateModelAudioUrl($model, $attribute, $locale, $path);
+            $this->updateModelAudioUrl($context, $path);
 
             return $this->storageService->getUrl($path);
         }
@@ -138,21 +134,20 @@ class TtsAudioGeneratorService
     /**
      * Synthesize audio and store it.
      */
-    private function synthesizeAndStore(TtsAudioInterface&Model $model, string $attribute, string $locale, string $text): string
+    private function synthesizeAndStore(TtsAudioContext $context): string
     {
+        $text = $context->getText() ?? '';
         $request = new TtsRequestDTO(text: $text);
+
         // $result = $this->ttsProvider->synthesize($request);
         $result = new TtsResultDTO(audioData: 'test', format: 'mp3');
 
-        $path = $this->generateStoragePath($model, $attribute, $locale, $result->format, $text);
+        $path = $this->generateStoragePath($context, $result->format);
         $this->storageService->storeWithPath($result, $path);
-        $this->updateModelAudioUrl($model, $attribute, $locale, $path);
+        $this->updateModelAudioUrl($context, $path);
 
-        Log::info('TTS audio generated successfully', [
-            'model' => get_class($model),
-            'id' => $model->getKey(),
-            'attribute' => $attribute,
-            'locale' => $locale,
+        Log::channel('tts')->info('TTS audio generated successfully', [
+            ...$context->toLogContext(),
             'path' => $path,
         ]);
 
@@ -162,8 +157,12 @@ class TtsAudioGeneratorService
     /**
      * Update the model's audio URL attribute.
      */
-    private function updateModelAudioUrl(TtsAudioInterface&Model $model, string $attribute, string $locale, string $path): void
+    private function updateModelAudioUrl(TtsAudioContext $context, string $path): void
     {
+        $model = $context->getModel();
+        $attribute = $context->getAttribute();
+        $locale = $context->getLocale();
+
         if (method_exists($model, 'setTranslation')) {
             $model->setTranslation($attribute, $locale, $path);
             $model->save();
@@ -178,15 +177,10 @@ class TtsAudioGeneratorService
      *
      * @phpstan-assert-if-true string $text
      */
-    private function validateText(?string $text, TtsAudioInterface&Model $model, string $attribute, string $locale): bool
+    private function validateText(?string $text, TtsAudioContext $context): bool
     {
         if (! $text) {
-            Log::warning('No text content found for TTS generation', [
-                'model' => get_class($model),
-                'id' => $model->getKey(),
-                'attribute' => $attribute,
-                'locale' => $locale,
-            ]);
+            Log::channel('tts')->warning('No text content found for TTS generation', $context->toLogContext());
 
             return false;
         }

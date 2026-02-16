@@ -48,12 +48,7 @@ class TtsOrchestrator
                 return;
             }
 
-            Log::channel('tts')->info('Audio URL is missing, dispatching TTS generation event', [
-                'model' => get_class($model),
-                'id' => $model->getKey(),
-                'attribute' => $attribute,
-                'locale' => $locale,
-            ]);
+            Log::channel('tts')->info('Audio URL is missing, dispatching TTS generation event', $context->toLogContext());
 
             TtsAudioRequestedEvent::dispatch(
                 TtsAudioContext::make($model, $attribute, $locale, $text)
@@ -61,10 +56,7 @@ class TtsOrchestrator
 
         } catch (Throwable $e) {
             Log::channel('tts')->error('Error dispatching TTS generation event', [
-                'model' => get_class($context->getModel()),
-                'id' => $context->getModel()->getKey(),
-                'attribute' => $context->getAttribute(),
-                'locale' => $context->getLocale(),
+                ...$context->toLogContext(),
                 'error' => $e->getMessage(),
             ]);
         }

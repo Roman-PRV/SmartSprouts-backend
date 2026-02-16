@@ -38,4 +38,19 @@ readonly class TtsAudioContext
     {
         return $this->text;
     }
+
+    /**
+     * Get the context for logging.
+     *
+     * @return array<string, mixed>
+     */
+    public function toLogContext(): array
+    {
+        return [
+            'model' => get_class($this->model),
+            'id' => $this->model->getKey(),
+            'attribute' => $this->attribute,
+            'locale' => $this->locale,
+        ];
+    }
 }

@@ -50,21 +50,13 @@ class GenerateTtsAudioJob implements ShouldQueue
         try {
             $model = $this->context->getModel();
 
-            Log::info('Starting TTS audio generation via Job', [
-                'model' => get_class($model),
-                'id' => $model->getKey(),
-                'attribute' => $this->context->getAttribute(),
-                'locale' => $this->context->getLocale(),
-            ]);
+            Log::info('Starting TTS audio generation via Job', $this->context->toLogContext());
 
             $audioGenerator->generateForModel($this->context);
 
         } catch (TtsQuotaExceededException $e) {
             Log::error(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
-                'model' => get_class($this->context->getModel()),
-                'id' => $this->context->getModel()->getKey(),
-                'attribute' => $this->context->getAttribute(),
-                'locale' => $this->context->getLocale(),
+                ...$this->context->toLogContext(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -72,10 +64,7 @@ class GenerateTtsAudioJob implements ShouldQueue
             $this->release($this->calculateBackoff());
         } catch (\Throwable $e) {
             Log::error(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
-                'model' => get_class($this->context->getModel()),
-                'id' => $this->context->getModel()->getKey(),
-                'attribute' => $this->context->getAttribute(),
-                'locale' => $this->context->getLocale(),
+                ...$this->context->toLogContext(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

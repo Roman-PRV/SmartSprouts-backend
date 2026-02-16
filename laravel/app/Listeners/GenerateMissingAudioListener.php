@@ -81,22 +81,12 @@ class GenerateMissingAudioListener
 
     private function logAudioExists(TtsAudioContext $context): void
     {
-        Log::info('Audio already exists, skipping generation', [
-            'model' => get_class($context->getModel()),
-            'id' => $context->getModel()->getKey(),
-            'attribute' => $context->getAttribute(),
-            'locale' => $context->getLocale(),
-        ]);
+        Log::info('Audio already exists, skipping generation', $context->toLogContext());
     }
 
     private function logJobDispatched(TtsAudioContext $context): void
     {
-        Log::info('Dispatched TTS generation job', [
-            'model' => get_class($context->getModel()),
-            'id' => $context->getModel()->getKey(),
-            'attribute' => $context->getAttribute(),
-            'locale' => $context->getLocale(),
-        ]);
+        Log::info('Dispatched TTS generation job', $context->toLogContext());
     }
 
     private function logLockFailure(string $lockKey): void
