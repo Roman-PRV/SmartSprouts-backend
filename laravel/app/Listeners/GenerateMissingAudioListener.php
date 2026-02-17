@@ -55,22 +55,17 @@ class GenerateMissingAudioListener
     }
 
     /**
-     * Get the current audio URL value from the model.
-     */
-    private function getCurrentAudioUrl(TtsAudioContext $context): ?string
-    {
-        $model = $context->getModel();
-        $model->refresh();
-
-        return $model->getTranslatableAttribute($context->getAttribute(), $context->getLocale());
-    }
-
-    /**
      * Process the audio generation request.
      */
     private function processGeneration(TtsAudioContext $context): bool
     {
-        $currentValue = $this->getCurrentAudioUrl($context);
+        $model = $context->getModel()->fresh();
+
+        if (! $model) {
+            return false;
+        }
+
+        $currentValue = $model->getTranslatableAttribute($context->getAttribute(), $context->getLocale());
 
         if ($currentValue !== null && $currentValue !== '') {
             $this->logAudioExists($context);
