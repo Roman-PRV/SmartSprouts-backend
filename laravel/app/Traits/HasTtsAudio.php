@@ -49,4 +49,15 @@ trait HasTtsAudio
 
         return $this->{$attribute} ?? null;
     }
+
+    public function setAudioPath(string $attribute, string $locale, string $path): void
+    {
+        if (method_exists($this, 'setTranslation')) {
+            $this->setTranslation($attribute, $locale, $path);
+        } else {
+            $this->{$attribute} = $path;
+        }
+
+        $this->save();
+    }
 }

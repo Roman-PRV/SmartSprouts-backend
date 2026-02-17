@@ -34,4 +34,13 @@ interface TtsAudioInterface
      * @return string|null The attribute value or null if not found
      */
     public function getTranslatableAttribute(string $attribute, string $locale): ?string;
+
+    /**
+     * Set the audio path for a given attribute and locale.
+     *
+     * @param  string  $attribute  The attribute name (e.g., 'statement_audio_url')
+     * @param  string  $locale  The locale for which to set the path
+     * @param  string  $path  The path to the audio file
+     */
+    public function setAudioPath(string $attribute, string $locale, string $path): void;
 }

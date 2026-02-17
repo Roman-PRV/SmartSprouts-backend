@@ -128,8 +128,8 @@ class TtsAudioGeneratorService
         $text = $context->getText() ?? '';
         $request = new TtsRequestDTO(text: $text);
 
-        // $result = $this->ttsProvider->synthesize($request);
-        $result = new TtsResultDTO(audioData: 'test', format: 'mp3');
+        $result = $this->ttsProvider->synthesize($request);
+        // $result = new TtsResultDTO(audioData: 'test', format: 'mp3');
 
         $path = $this->generateStoragePath($context, $result->format);
         $this->storageService->storeWithPath($result, $path);
@@ -148,17 +148,11 @@ class TtsAudioGeneratorService
      */
     private function updateModelAudioUrl(TtsAudioContext $context, string $path): void
     {
-        $model = $context->getModel();
-        $attribute = $context->getAttribute();
-        $locale = $context->getLocale();
-
-        if (method_exists($model, 'setTranslation')) {
-            $model->setTranslation($attribute, $locale, $path);
-            $model->save();
-        } else {
-            $model->{$attribute} = $path;
-            $model->save();
-        }
+        $context->getModel()->setAudioPath(
+            $context->getAttribute(),
+            $context->getLocale(),
+            $path
+        );
     }
 
     /**
