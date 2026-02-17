@@ -16,7 +16,11 @@ class TtsStorageService
      */
     public function storeWithPath(TtsResultDTO $result, string $path): string
     {
-        Storage::disk($this->disk)->put($path, $result->audioData);
+        $stored = Storage::disk($this->disk)->put($path, $result->audioData);
+
+        if ($stored === false) {
+            throw new \RuntimeException("Failed to store TTS audio file to disk [{$this->disk}] at path: {$path}");
+        }
 
         return $path;
     }
