@@ -17,15 +17,21 @@ class GenerateMissingAudioListener
 
     public function handle(TtsAudioRequestedEvent $event): void
     {
-        $context = $event->context;
-        $lockKey = $this->getLockKey($context);
-
-        $acquired = Cache::lock($lockKey, self::LOCK_DURATION)
-            ->get(fn () => $this->processGeneration($context));
-
-        if (! $acquired) {
-            $this->logLockFailure($lockKey);
+        try {
+            $lockKey = $this->getLockKey($event->context);
+            $acquired = Cache::lock($lockKey, self::LOCK_DURATION)
+                ->get(fn () => $this->processGeneration($event->context));
+            if (! $acquired) {
+                $this->logLockFailure($lockKey);
+            }
+        } catch (\Throwable $e) {
+            Log::channel('tts')->error('Failed to handle TTS audio generation', [
+                ...$event->context->toLogContext(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
+
     }
 
     /**
