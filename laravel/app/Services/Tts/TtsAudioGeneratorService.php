@@ -8,9 +8,7 @@ use App\Helpers\ConfigHelper;
 use App\Services\Tts\DTO\TtsAudioContext;
 use App\Services\Tts\DTO\TtsRequestDTO;
 use App\Services\Tts\DTO\TtsResultDTO;
-use Illuminate\Database\Eloquent\Model;
 use Psr\Log\LoggerInterface;
-use Storage;
 
 class TtsAudioGeneratorService
 {
@@ -62,16 +60,6 @@ class TtsAudioGeneratorService
     }
 
     /**
-     * Check if audio file exists for model attribute.
-     */
-    private function audioExists(string $path): bool
-    {
-        $disk = ConfigHelper::getString('ai.tts.storage.disk', 'public');
-
-        return Storage::disk($disk)->exists($path);
-    }
-
-    /**
      * Extract text content from the context.
      */
     private function extractTextContent(TtsAudioContext $context): ?string
@@ -119,7 +107,7 @@ class TtsAudioGeneratorService
         $expectedFormat = ConfigHelper::getString('ai.tts.output_format', 'mp3');
         $path = $this->generateStoragePath($context, $expectedFormat);
 
-        if ($this->audioExists($path)) {
+        if ($this->storageService->exists($path)) {
             $this->logger->info('TTS audio file already exists for model, skipping generation', [
                 ...$context->toLogContext(),
                 'path' => $path,

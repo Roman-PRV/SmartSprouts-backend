@@ -24,4 +24,12 @@ class TtsStorageService
 
         return $path;
     }
+
+    /**
+     * Check if a file exists on the configured disk.
+     */
+    public function exists(string $path): bool
+    {
+        return Storage::disk($this->disk)->exists($path);
+    }
 }
