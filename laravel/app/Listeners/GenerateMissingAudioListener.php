@@ -23,9 +23,14 @@ class GenerateMissingAudioListener
     {
         try {
             $lockKey = $this->getLockKey($event->context);
-            $acquired = Cache::lock($lockKey, self::LOCK_DURATION)
-                ->get(fn () => $this->processGeneration($event->context));
-            if (! $acquired) {
+            $lock = Cache::lock($lockKey, self::LOCK_DURATION);
+            if ($lock->get()) {
+                try {
+                    $this->processGeneration($event->context);
+                } finally {
+                    $lock->release();
+                }
+            } else {
                 $this->logLockFailure($lockKey);
             }
         } catch (\Throwable $e) {
