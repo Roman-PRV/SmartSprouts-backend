@@ -35,6 +35,17 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(\App\Contracts\Media\MediaUrlGeneratorInterface::class, \App\Services\Media\MediaUrlGenerator::class);
+
+        $this->app->singleton(\App\Services\Tts\TtsOrchestrator::class, function ($app) {
+            return new \App\Services\Tts\TtsOrchestrator(
+                mediaUrlGenerator: $app->make(\App\Contracts\Media\MediaUrlGeneratorInterface::class),
+                logger: \Illuminate\Support\Facades\Log::channel('tts'),
+                autoGenerateEnabled: ConfigHelper::getBool('ai.tts.auto_generate.enabled', true),
+                ttsDisk: ConfigHelper::getString('ai.tts.storage.disk', 'public'),
+            );
+        });
+
         $this->app->bind(TtsProviderInterface::class, ElevenLabsProvider::class);
     }
 
