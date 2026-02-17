@@ -19,14 +19,6 @@ class TtsStorageServiceTest extends TestCase
         $this->service = new TtsStorageService($this->disk);
     }
 
-    public function test_it_returns_url_for_path(): void
-    {
-        $path = 'tts/audio/voice-1/file.mp3';
-        $fullUrl = $this->service->getUrl($path);
-
-        $this->assertStringContainsString($path, $fullUrl);
-    }
-
     public function test_it_throws_exception_if_storage_fails(): void
     {
         $this->expectException(\RuntimeException::class);

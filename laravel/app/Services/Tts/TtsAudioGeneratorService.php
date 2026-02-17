@@ -125,7 +125,7 @@ class TtsAudioGeneratorService
             ]);
             $this->updateModelAudioUrl($context, $path);
 
-            return $this->storageService->getUrl($path);
+            return $path;
         }
 
         return null;
@@ -151,7 +151,7 @@ class TtsAudioGeneratorService
             'path' => $path,
         ]);
 
-        return $this->storageService->getUrl($path);
+        return $path;
     }
 
     /**

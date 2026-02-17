@@ -24,12 +24,4 @@ class TtsStorageService
 
         return $path;
     }
-
-    /**
-     * Get the full URL for the stored audio file.
-     */
-    public function getUrl(string $path): string
-    {
-        return Storage::disk($this->disk)->url($path);
-    }
 }

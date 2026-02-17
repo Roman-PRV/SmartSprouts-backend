@@ -48,8 +48,6 @@ class GenerateTtsAudioJob implements ShouldQueue
     public function handle(TtsAudioGeneratorService $audioGenerator): void
     {
         try {
-            $model = $this->context->getModel();
-
             Log::info('Starting TTS audio generation via Job', $this->context->toLogContext());
 
             $audioGenerator->generateForModel($this->context);
