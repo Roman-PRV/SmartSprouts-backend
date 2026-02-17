@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 
 class GenerateTtsAudioJob implements ShouldQueue
 {
@@ -45,15 +45,15 @@ class GenerateTtsAudioJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(TtsAudioGeneratorService $audioGenerator): void
+    public function handle(TtsAudioGeneratorService $audioGenerator, LoggerInterface $logger): void
     {
         try {
-            Log::info('Starting TTS audio generation via Job', $this->context->toLogContext());
+            $logger->info('Starting TTS audio generation via Job', $this->context->toLogContext());
 
             $audioGenerator->generateForModel($this->context);
 
         } catch (TtsQuotaExceededException $e) {
-            Log::error(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
+            $logger->error(TtsLogEventEnum::PROVIDER_QUOTA_EXCEEDED->value, [
                 ...$this->context->toLogContext(),
                 'error' => $e->getMessage(),
             ]);
@@ -61,7 +61,7 @@ class GenerateTtsAudioJob implements ShouldQueue
             // Release job back to queue with exponential backoff
             $this->release($this->calculateBackoff());
         } catch (\Throwable $e) {
-            Log::error(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
+            $logger->error(TtsLogEventEnum::SYNTHESIS_FAILED->value, [
                 ...$this->context->toLogContext(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

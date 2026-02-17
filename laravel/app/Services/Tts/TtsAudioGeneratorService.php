@@ -9,7 +9,7 @@ use App\Services\Tts\DTO\TtsAudioContext;
 use App\Services\Tts\DTO\TtsRequestDTO;
 use App\Services\Tts\DTO\TtsResultDTO;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 use Storage;
 
 class TtsAudioGeneratorService
@@ -23,6 +23,7 @@ class TtsAudioGeneratorService
     public function __construct(
         private readonly TtsProviderInterface $ttsProvider,
         private readonly TtsStorageService $storageService,
+        private readonly LoggerInterface $logger,
     ) {}
 
     /**
@@ -50,7 +51,7 @@ class TtsAudioGeneratorService
             return $this->synthesizeAndStore($context);
 
         } catch (\Throwable $e) {
-            Log::channel('tts')->error('Failed to generate TTS audio', [
+            $this->logger->error('Failed to generate TTS audio', [
                 ...$context->toLogContext(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -119,7 +120,7 @@ class TtsAudioGeneratorService
         $path = $this->generateStoragePath($context, $expectedFormat);
 
         if ($this->audioExists($path)) {
-            Log::channel('tts')->info('TTS audio file already exists for model, skipping generation', [
+            $this->logger->info('TTS audio file already exists for model, skipping generation', [
                 ...$context->toLogContext(),
                 'path' => $path,
             ]);
@@ -146,7 +147,7 @@ class TtsAudioGeneratorService
         $this->storageService->storeWithPath($result, $path);
         $this->updateModelAudioUrl($context, $path);
 
-        Log::channel('tts')->info('TTS audio generated successfully', [
+        $this->logger->info('TTS audio generated successfully', [
             ...$context->toLogContext(),
             'path' => $path,
         ]);
@@ -180,7 +181,7 @@ class TtsAudioGeneratorService
     private function validateText(?string $text, TtsAudioContext $context): bool
     {
         if (! $text) {
-            Log::channel('tts')->warning('No text content found for TTS generation', $context->toLogContext());
+            $this->logger->warning('No text content found for TTS generation', $context->toLogContext());
 
             return false;
         }

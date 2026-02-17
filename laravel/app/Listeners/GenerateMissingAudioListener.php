@@ -6,10 +6,14 @@ use App\Events\TtsAudioRequestedEvent;
 use App\Jobs\Tts\GenerateTtsAudioJob;
 use App\Services\Tts\DTO\TtsAudioContext;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 
 class GenerateMissingAudioListener
 {
+    public function __construct(
+        private readonly LoggerInterface $logger,
+    ) {}
+
     /**
      * The number of seconds before a lock expires.
      */
@@ -25,7 +29,7 @@ class GenerateMissingAudioListener
                 $this->logLockFailure($lockKey);
             }
         } catch (\Throwable $e) {
-            Log::channel('tts')->error('Failed to handle TTS audio generation', [
+            $this->logger->error('Failed to handle TTS audio generation', [
                 ...$event->context->toLogContext(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -82,17 +86,17 @@ class GenerateMissingAudioListener
 
     private function logAudioExists(TtsAudioContext $context): void
     {
-        Log::info('Audio already exists, skipping generation', $context->toLogContext());
+        $this->logger->info('Audio already exists, skipping generation', $context->toLogContext());
     }
 
     private function logJobDispatched(TtsAudioContext $context): void
     {
-        Log::info('Dispatched TTS generation job', $context->toLogContext());
+        $this->logger->info('Dispatched TTS generation job', $context->toLogContext());
     }
 
     private function logLockFailure(string $lockKey): void
     {
-        Log::debug('Could not acquire lock for TTS generation, skipping', [
+        $this->logger->debug('Could not acquire lock for TTS generation, skipping', [
             'lock_key' => $lockKey,
         ]);
     }
