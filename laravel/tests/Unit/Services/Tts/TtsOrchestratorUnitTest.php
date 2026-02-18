@@ -85,4 +85,72 @@ class TtsOrchestratorUnitTest extends TestCase
 
         Event::assertDispatched(TtsAudioRequestedEvent::class);
     }
+
+    public function test_does_not_dispatch_event_when_auto_generate_disabled()
+    {
+        $this->orchestrator = new TtsOrchestrator(
+            $this->mediaUrlGenerator,
+            $this->logger,
+            false,
+            'public'
+        );
+
+        $model = $this->createMock(TtsMockModel::class);
+        $model->method('getTranslatableAttribute')->willReturn(null);
+
+        $context = new TtsAudioContext($model, 'audio', 'uk');
+
+        $this->mediaUrlGenerator->method('getUrl')->willReturn(null);
+
+        $this->orchestrator->getOrGenerate($context);
+
+        Event::assertNotDispatched(TtsAudioRequestedEvent::class);
+    }
+
+    public function test_does_not_dispatch_event_when_tts_text_is_null()
+    {
+        $this->orchestrator = new TtsOrchestrator(
+            $this->mediaUrlGenerator,
+            $this->logger,
+            true,
+            'public'
+        );
+
+        $model = $this->createMock(TtsMockModel::class);
+        $model->method('getTranslatableAttribute')->willReturn(null);
+        $model->method('getTtsText')->willReturn(null);
+
+        $context = new TtsAudioContext($model, 'audio', 'uk');
+
+        $this->mediaUrlGenerator->method('getUrl')->willReturn(null);
+
+        $this->orchestrator->getOrGenerate($context);
+
+        Event::assertNotDispatched(TtsAudioRequestedEvent::class);
+    }
+
+    public function test_catches_exception_during_dispatch_and_returns_url()
+    {
+        $this->orchestrator = new TtsOrchestrator(
+            $this->mediaUrlGenerator,
+            $this->logger,
+            true,
+            'public'
+        );
+
+        $model = $this->createMock(TtsMockModel::class);
+        $model->method('getTranslatableAttribute')->willReturn(null);
+        $model->method('getTtsText')
+            ->willThrowException(new \RuntimeException('DB error'));
+
+        $context = new TtsAudioContext($model, 'audio', 'uk');
+
+        $this->mediaUrlGenerator->method('getUrl')->willReturn(null);
+
+        $this->logger->expects($this->once())->method('error');
+
+        $result = $this->orchestrator->getOrGenerate($context);
+
+        $this->assertNull($result);
+    }
 }

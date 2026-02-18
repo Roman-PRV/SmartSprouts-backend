@@ -22,8 +22,7 @@ class TtsAudioGeneratorService
         private readonly TtsProviderInterface $ttsProvider,
         private readonly TtsStorageService $storageService,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * Generate TTS audio for a model attribute and locale.
