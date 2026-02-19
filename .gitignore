@@ -1,6 +1,6 @@
 # Laravel
 /vendor/
-/storage/
+**/storage/
 /bootstrap/cache/
 .env
 **/.env
