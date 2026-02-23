@@ -7,7 +7,6 @@ use App\Enums\Tts\TtsModelMappingEnum;
 use App\Helpers\ConfigHelper;
 use App\Services\Tts\DTO\TtsAudioContext;
 use App\Services\Tts\DTO\TtsRequestDTO;
-use App\Services\Tts\DTO\TtsResultDTO;
 use Psr\Log\LoggerInterface;
 
 class TtsAudioGeneratorService
@@ -129,7 +128,6 @@ class TtsAudioGeneratorService
         $request = new TtsRequestDTO(text: $text);
 
         $result = $this->ttsProvider->synthesize($request);
-        // $result = new TtsResultDTO(audioData: 'test', format: 'mp3');
 
         $path = $this->generateStoragePath($context, $result->format);
         $this->storageService->storeWithPath($result, $path);
