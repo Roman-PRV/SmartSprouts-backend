@@ -19,11 +19,9 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Xdebug
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
-# Xdebug config
 COPY docker/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
 COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
@@ -35,7 +33,6 @@ WORKDIR /var/www
 COPY composer.json composer.lock ./
 
 RUN composer install \
-  # --no-dev \
   --no-scripts \
   --optimize-autoloader \
   --classmap-authoritative
@@ -43,11 +40,7 @@ RUN composer install \
 COPY . .
 
 RUN composer dump-autoload --optimize \
-  && php artisan package:discover --ansi 
-  # \
-  # && php artisan config:cache \
-  # && php artisan route:cache \
-  # && php artisan view:cache
+  && php artisan package:discover --ansi
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
