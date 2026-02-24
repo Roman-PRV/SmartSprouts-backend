@@ -12,6 +12,8 @@ services:
       - vendor_data:/var/www/vendor
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - mysql
 
