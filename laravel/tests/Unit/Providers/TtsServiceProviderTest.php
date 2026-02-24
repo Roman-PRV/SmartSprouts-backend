@@ -46,8 +46,7 @@ class TtsServiceProviderTest extends TestCase
 
         $registeredListeners = $rawListeners[TtsAudioRequestedEvent::class];
 
-        $listenerClasses = array_filter($registeredListeners, fn ($listener) =>
-            is_string($listener) && str_contains($listener, class_basename(GenerateMissingAudioListener::class))
+        $listenerClasses = array_filter($registeredListeners, fn ($listener) => is_string($listener) && str_contains($listener, class_basename(GenerateMissingAudioListener::class))
         );
 
         $this->assertNotEmpty(

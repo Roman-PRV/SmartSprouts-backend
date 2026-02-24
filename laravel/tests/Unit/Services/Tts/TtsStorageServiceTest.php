@@ -15,7 +15,6 @@ class TtsStorageServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake($this->disk);
         $this->service = new TtsStorageService($this->disk);
     }
 
@@ -38,6 +37,7 @@ class TtsStorageServiceTest extends TestCase
 
     public function test_store_with_path_saves_file_to_disk(): void
     {
+        Storage::fake($this->disk);
         $result = new \App\Services\Tts\DTO\TtsResultDTO(audioData: 'audio-binary-data', format: 'mp3');
 
         $path = $this->service->storeWithPath($result, 'tts/test/audio.mp3');
@@ -48,6 +48,7 @@ class TtsStorageServiceTest extends TestCase
 
     public function test_exists_returns_true_when_file_exists(): void
     {
+        Storage::fake($this->disk);
         Storage::disk($this->disk)->put('tts/existing.mp3', 'data');
 
         $this->assertTrue($this->service->exists('tts/existing.mp3'));
@@ -55,6 +56,7 @@ class TtsStorageServiceTest extends TestCase
 
     public function test_exists_returns_false_when_file_does_not_exist(): void
     {
+        Storage::fake($this->disk);
         $this->assertFalse($this->service->exists('tts/nonexistent.mp3'));
     }
 }
