@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Services\Tts;
 
-use App\Services\Tts\DTO\TtsResultDTO;
 use App\Services\Tts\TtsStorageService;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -13,69 +12,51 @@ class TtsStorageServiceTest extends TestCase
 
     private string $disk = 'public';
 
-    private string $pathPrefix = 'tts/audio';
-
     protected function setUp(): void
     {
         parent::setUp();
+        $this->service = new TtsStorageService($this->disk);
+    }
+
+    public function test_it_throws_exception_if_storage_fails(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Failed to store TTS audio file to disk [{$this->disk}] at path: fail.mp3");
+
+        Storage::shouldReceive('disk')
+            ->with($this->disk)
+            ->andReturn($diskMock = \Mockery::mock());
+
+        $diskMock->shouldReceive('put')
+            ->once()
+            ->andReturn(false);
+
+        $result = new \App\Services\Tts\DTO\TtsResultDTO(audioData: 'data', format: 'mp3');
+        $this->service->storeWithPath($result, 'fail.mp3');
+    }
+
+    public function test_store_with_path_saves_file_to_disk(): void
+    {
         Storage::fake($this->disk);
-        $this->service = new TtsStorageService($this->disk, $this->pathPrefix);
+        $result = new \App\Services\Tts\DTO\TtsResultDTO(audioData: 'audio-binary-data', format: 'mp3');
+
+        $path = $this->service->storeWithPath($result, 'tts/test/audio.mp3');
+
+        $this->assertEquals('tts/test/audio.mp3', $path);
+        Storage::disk($this->disk)->assertExists('tts/test/audio.mp3');
     }
 
-    public function test_it_stores_audio_data_successfully(): void
+    public function test_exists_returns_true_when_file_exists(): void
     {
-        $result = new TtsResultDTO(audioData: 'binary-content', format: 'mp3');
-        $text = 'Test text';
-        $voiceId = 'voice-1';
+        Storage::fake($this->disk);
+        Storage::disk($this->disk)->put('tts/existing.mp3', 'data');
 
-        $path = $this->service->store($result, $text, $voiceId);
-
-        $expectedFilename = md5($text.$voiceId).'.mp3';
-        $expectedPath = "{$this->pathPrefix}/{$voiceId}/{$expectedFilename}";
-
-        $this->assertEquals($expectedPath, $path);
-        Storage::disk($this->disk)->assertExists($path);
-        $this->assertEquals('binary-content', Storage::disk($this->disk)->get($path));
+        $this->assertTrue($this->service->exists('tts/existing.mp3'));
     }
 
-    public function test_it_returns_url_for_path(): void
+    public function test_exists_returns_false_when_file_does_not_exist(): void
     {
-        $path = 'tts/audio/voice-1/file.mp3';
-        $fullUrl = $this->service->getUrl($path);
-
-        $this->assertStringContainsString($path, $fullUrl);
-    }
-
-    public function test_it_checks_if_file_exists(): void
-    {
-        $text = 'Existing text';
-        $voiceId = 'voice-1';
-        $format = 'mp3';
-        $filename = md5($text.$voiceId).'.mp3';
-        $path = "{$this->pathPrefix}/{$voiceId}/{$filename}";
-
-        $this->assertNull($this->service->exists($text, $voiceId, $format));
-
-        Storage::disk($this->disk)->put($path, 'content');
-
-        $this->assertEquals($path, $this->service->exists($text, $voiceId, $format));
-    }
-
-    public function test_it_sanitizes_voice_id_and_format_to_prevent_path_traversal(): void
-    {
-        $result = new TtsResultDTO(audioData: 'content', format: '../../bad');
-        $text = 'Test';
-        $voiceId = '../malicious/voice';
-
-        $path = $this->service->store($result, $text, $voiceId);
-
-        // ../malicious/voice -> maliciousvoice
-        // ../../bad -> bad
-        $expectedVoiceId = 'maliciousvoice';
-        $expectedFormat = 'bad';
-        $expectedPath = "{$this->pathPrefix}/{$expectedVoiceId}/".md5($text.$expectedVoiceId).".{$expectedFormat}";
-
-        $this->assertEquals($expectedPath, $path);
-        Storage::disk($this->disk)->assertExists($path);
+        Storage::fake($this->disk);
+        $this->assertFalse($this->service->exists('tts/nonexistent.mp3'));
     }
 }

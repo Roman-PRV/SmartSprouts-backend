@@ -236,7 +236,7 @@ class DeepLProviderTest extends TestCase
                     && ! empty($context['request_id'])
                     && $context['provider'] === 'DeepLProvider'
                     && $context['locale'] === 'uk'
-                    && isset($context['available_locales']);
+                    && isset($context['supported_locales']);
             });
 
         $result = $this->provider->translate($text);

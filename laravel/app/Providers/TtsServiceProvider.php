@@ -2,11 +2,18 @@
 
 namespace App\Providers;
 
+use App\Contracts\Media\MediaUrlGeneratorInterface;
 use App\Contracts\TtsProviderInterface;
 use App\Helpers\ConfigHelper;
+use App\Listeners\GenerateMissingAudioListener;
+use App\Services\Media\MediaUrlGenerator;
 use App\Services\Tts\Providers\ElevenLabsProvider;
+use App\Services\Tts\TtsAudioGeneratorService;
+use App\Services\Tts\TtsOrchestrator;
 use App\Services\Tts\TtsStorageService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Psr\Log\LoggerInterface;
 
 class TtsServiceProvider extends ServiceProvider
 {
@@ -18,7 +25,14 @@ class TtsServiceProvider extends ServiceProvider
         $this->app->singleton(TtsStorageService::class, function () {
             return new TtsStorageService(
                 disk: ConfigHelper::getString('ai.tts.storage.disk', 'public'),
-                pathPrefix: ConfigHelper::getString('ai.tts.storage.path_prefix', 'tts/audio'),
+            );
+        });
+
+        $this->app->singleton(TtsAudioGeneratorService::class, function ($app) {
+            return new TtsAudioGeneratorService(
+                ttsProvider: $app->make(TtsProviderInterface::class),
+                storageService: $app->make(TtsStorageService::class),
+                logger: Log::channel('tts'),
             );
         });
 
@@ -36,7 +50,22 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(MediaUrlGeneratorInterface::class, MediaUrlGenerator::class);
+
+        $this->app->singleton(TtsOrchestrator::class, function ($app) {
+            return new TtsOrchestrator(
+                mediaUrlGenerator: $app->make(MediaUrlGeneratorInterface::class),
+                logger: Log::channel('tts'),
+                autoGenerateEnabled: ConfigHelper::getBool('ai.tts.auto_generate.enabled', true),
+                ttsDisk: ConfigHelper::getString('ai.tts.storage.disk', 'public'),
+            );
+        });
+
         $this->app->bind(TtsProviderInterface::class, ElevenLabsProvider::class);
+
+        $this->app->when(GenerateMissingAudioListener::class)
+            ->needs(LoggerInterface::class)
+            ->give(fn () => Log::channel('tts'));
     }
 
     /**
