@@ -32,7 +32,7 @@ trait HandlesTranslationResults
                 Log::warning(TranslationLogEventEnum::LOCALE_MISSING->value, array_merge($params->context, [
                     'provider' => class_basename($this),
                     'locale' => $locale,
-                    'available_locales' => array_keys($params->results),
+                    'supported_locales' => array_keys($params->results),
                 ]));
 
                 $sanitized[$locale] = new TranslationItemDTO(

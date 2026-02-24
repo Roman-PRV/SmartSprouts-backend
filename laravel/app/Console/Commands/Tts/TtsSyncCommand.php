@@ -4,6 +4,7 @@ namespace App\Console\Commands\Tts;
 
 use App\Contracts\TtsAudioInterface;
 use App\Enums\Tts\TtsModelMappingEnum;
+use App\Helpers\ConfigHelper;
 use App\Jobs\Tts\GenerateTtsAudioJob;
 use App\Services\Tts\DTO\TtsAudioContext;
 use Illuminate\Console\Command;
@@ -35,7 +36,7 @@ class TtsSyncCommand extends Command
         Log::channel('tts')->info('Starting TTS synchronization scan via CLI');
 
         /** @var array<string> $locales */
-        $locales = config('app.available_locales');
+        $locales = ConfigHelper::getStringList('app.supported_locales');
         $totalCount = 0;
 
         foreach (TtsModelMappingEnum::cases() as $mapping) {
