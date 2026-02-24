@@ -12,8 +12,7 @@ class GenerateMissingAudioListener
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * The number of seconds before a lock expires.

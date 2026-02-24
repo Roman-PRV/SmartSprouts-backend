@@ -36,10 +36,10 @@ class TtsSyncCommand extends Command
 
         /** @var array<string> $locales */
         $locales = config('app.available_locales');
-        $count = 0;
+        $totalCount = 0;
 
         foreach (TtsModelMappingEnum::cases() as $mapping) {
-            /** @var class-string<Model> $modelClass */
+            /** @var class-string<Model&TtsAudioInterface> $modelClass */
             $modelClass = $mapping->value;
 
             // Ensure the model supports TTS
@@ -57,56 +57,55 @@ class TtsSyncCommand extends Command
                 'explanation' => 'explanation_audio_url',
             ];
 
-            foreach ($attributesToTts as $textAttr => $audioAttr) {
-                foreach ($locales as $locale) {
-                    $count += $this->syncGroup($modelClass, $textAttr, $audioAttr, $locale);
+            $modelCount = 0;
+
+            $modelClass::query()->lazy()->each(function (Model $record) use ($attributesToTts, $locales, &$modelCount, &$totalCount) {
+                if (! $record instanceof TtsAudioInterface) {
+                    return;
                 }
+
+                foreach ($attributesToTts as $textAttr => $audioAttr) {
+                    foreach ($locales as $locale) {
+                        if ($this->shouldDispatch($record, $audioAttr, $locale)) {
+                            $text = $record->getTtsText($audioAttr, $locale);
+
+                            if (! $text) {
+                                continue;
+                            }
+
+                            GenerateTtsAudioJob::dispatch(
+                                TtsAudioContext::make($record, $audioAttr, $locale, $text)
+                            );
+
+                            $modelCount++;
+                            $totalCount++;
+                        }
+                    }
+                }
+            });
+
+            if ($modelCount > 0) {
+                $this->comment("  - Dispatched {$modelCount} jobs for ".class_basename($modelClass));
             }
         }
 
-        $this->info("TTS synchronization scan completed. Dispatched {$count} jobs.");
-        Log::channel('tts')->info('TTS synchronization scan completed', ['dispatched_count' => $count]);
+        $this->info("TTS synchronization scan completed. Dispatched {$totalCount} jobs.");
+        Log::channel('tts')->info('TTS synchronization scan completed', ['dispatched_count' => $totalCount]);
 
         return Command::SUCCESS;
     }
 
-    private function syncGroup(string $modelClass, string $textAttr, string $audioAttr, string $locale): int
+    /**
+     * Check if a job should be dispatched for the given record and attribute.
+     */
+    private function shouldDispatch(Model&TtsAudioInterface $model, string $audioAttr, string $locale): bool
     {
-        $dispatched = 0;
-
-        /** @var \Illuminate\Support\Collection<int, Model&TtsAudioInterface> $records */
-        $records = $modelClass::all()->filter(function (Model $model) use ($audioAttr, $locale) {
-            /** @var Model&TtsAudioInterface $model */
-            if (! method_exists($model, 'getTranslation')) {
-                return false;
-            }
-
-            $audio = $model->getTranslation($audioAttr, $locale, false);
-
-            return empty($audio);
-        });
-
-        if ($records->isEmpty()) {
-            return 0;
+        if (! method_exists($model, 'getTranslation')) {
+            return false;
         }
 
-        foreach ($records as $model) {
-            $text = $model->getTtsText($audioAttr, $locale);
+        $audio = $model->getTranslation($audioAttr, $locale, false);
 
-            if (! $text) {
-                continue;
-            }
-
-            GenerateTtsAudioJob::dispatch(
-                TtsAudioContext::make($model, $audioAttr, $locale, $text)
-            );
-            $dispatched++;
-        }
-
-        if ($dispatched > 0) {
-            $this->comment("  - Dispatched {$dispatched} jobs for {$textAttr} [{$locale}]");
-        }
-
-        return $dispatched;
+        return empty($audio);
     }
 }
