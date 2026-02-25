@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PRODUCTION OVERRIDES
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tts up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  laravel:
+    build:
+      target: prod         # Builds the 'prod' stage (no Xdebug, optimised OPcache)
+    restart: always
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+    # No bind-mount: code is baked into the image at build time via COPY in Dockerfile
+
+  mysql:
+    restart: always
+    # No port exposure: only accessible inside the app-network
+
+  nginx:
+    restart: always
+
+  redis:
+    restart: always
+    # No port exposure: only accessible inside the app-network
+
+  ukrainian-tts:
+    restart: always

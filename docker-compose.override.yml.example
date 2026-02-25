@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DEVELOPMENT OVERRIDES
+# Automatically merged by Docker Compose when running: docker compose up
+# Do NOT use this file in production.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  laravel:
+    build:
+      target: dev          # Builds the 'dev' stage (includes Xdebug)
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+    volumes:
+      - ./laravel:/var/www                   # Hot-reload: source code from host
+      - vendor_data:/var/www/vendor          # Preserve vendor across rebuilds
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
+
+  mysql:
+    ports:
+      - "3306:3306"   # Expose to host for local DB clients (TablePlus, DBeaver)
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
