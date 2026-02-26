@@ -10,10 +10,13 @@ services:
     build:
       target: prod         # Builds the 'prod' stage (no Xdebug, optimised OPcache)
     restart: always
+    env_file:
+      - ./laravel/.env     # No bind-mount in prod — credentials must be injected via env_file
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-    # No bind-mount: code is baked into the image at build time via COPY in Dockerfile
+    # No bind-mount: code is baked into the image at build time via COPY in Dockerfile.
+    # public/ is served via the laravel_public named volume (populated by entrypoint.sh).
 
   mysql:
     restart: always
@@ -21,6 +24,9 @@ services:
 
   nginx:
     restart: always
+    ports:
+      - "80:80"    # HTTP — publicly exposed
+      - "443:443"  # HTTPS — publicly exposed (requires SSL config in nginx)
 
   redis:
     restart: always

@@ -37,6 +37,10 @@ RUN composer install \
 
 COPY . .
 
+# Keep a copy of public/ outside the volume mount point.
+# entrypoint.sh uses this to initialise the shared laravel_public volume on first start.
+RUN cp -a /var/www/public /var/www/public-src
+
 RUN composer dump-autoload --optimize \
   && php artisan package:discover --ansi
 
@@ -75,9 +79,11 @@ RUN composer install \
   && composer dump-autoload \
   --optimize \
   --classmap-authoritative \
-  --no-dev \
-  && php artisan config:cache \
-  && php artisan route:cache \
-  && php artisan view:cache
+  --no-dev
+
+# NOTE: artisan config:cache / route:cache / view:cache are intentionally NOT run here.
+# .env is excluded from the build context (.dockerignore), so caching here would bake
+# in empty/default values (127.0.0.1, etc.). These commands run in entrypoint.sh instead,
+# where real environment variables from docker-compose are available.
 
 COPY docker/opcache.prod.ini /usr/local/etc/php/conf.d/opcache.ini
