@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# DEVELOPMENT OVERRIDES
-# Automatically merged by Docker Compose when running: docker compose up
-# Do NOT use this file in production.
+# Copy or rename this file to docker-compose.override.yml to have it
+# automatically merged by Docker Compose when running: docker compose up
+# Do NOT use this file in production as-is.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:

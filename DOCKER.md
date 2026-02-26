@@ -82,7 +82,7 @@ docker compose config --services
 
 # Verify that Xdebug is absent in the prod image
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build laravel
-docker run --rm smartsprouts-backend-laravel:prod php -m | grep -i xdebug
+docker run --rm $(docker compose -f docker-compose.yml -f docker-compose.prod.yml images -q laravel) php -m | grep -i xdebug
 ```
 
 ---
