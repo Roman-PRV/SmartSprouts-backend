@@ -1,3 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# BASE DOCKER-COMPOSE CONFIGURATION
+# Shared across all environments (dev & prod).
+#
+# Development:
+#   docker compose up                        (auto-loads override.yml)
+#   docker compose --profile tts up         (+ ukrainian-tts service)
+#
+# Production:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tts up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
   laravel:
     build:
@@ -7,15 +20,21 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./laravel:/var/www
+      - laravel_public:/var/www/public  # written by entrypoint.sh from public-src
       - ./laravel/storage:/var/www/storage
-      - vendor_data:/var/www/vendor
     networks:
       - app-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   mysql:
     image: mysql:8.0
@@ -26,22 +45,25 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-laravel}
       MYSQL_USER: ${MYSQL_USER:-laravel}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD?}
-    ports:
-      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   nginx:
-    image: nginx:latest
+    image: nginx:1.27-alpine
     container_name: pp_nginx_server
     restart: unless-stopped
-    ports:
-      - "3000:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./laravel:/var/www
+      - laravel_public:/var/www/public:ro  # populated by laravel entrypoint from image
+      - ./laravel/storage:/var/www/storage:ro
     depends_on:
       - laravel
     networks:
@@ -52,8 +74,6 @@ services:
     container_name: pp_redis_cache
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD?}
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -65,6 +85,7 @@ services:
       retries: 5
 
   ukrainian-tts:
+    profiles: ["tts"]
     build:
       context: ./python-services/ukrainian-tts
       dockerfile: Dockerfile
@@ -77,6 +98,7 @@ volumes:
   mysql_data:
   vendor_data:
   redis_data:
+  laravel_public:  # shared between laravel (write via entrypoint) and nginx (read-only)
 
 networks:
   app-network:
