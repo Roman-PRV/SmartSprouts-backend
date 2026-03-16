@@ -2,15 +2,18 @@
 
 namespace App\Games\TrueFalseText\Models;
 
+use App\Contracts\TtsAudioInterface;
 use App\Models\Level;
+use App\Traits\HasTtsAudio;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
-class TrueFalseTextLevel extends Level
+class TrueFalseTextLevel extends Level implements TtsAudioInterface
 {
     use HasFactory;
     use HasTranslations;
+    use HasTtsAudio;
 
     protected $table = 'true_false_text_levels';
 
