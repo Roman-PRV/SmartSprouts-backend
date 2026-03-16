@@ -2,8 +2,9 @@
 
 namespace App\Games\TrueFalseText\Http\Resources;
 
+use App\Facades\Tts;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
-use App\Helpers\MediaHelper;
+use App\Services\Tts\DTO\TtsAudioContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -41,7 +42,9 @@ class TrueFalseTextLevelResource extends JsonResource
             'title' => $level->title,
             'image_url' => $level->image_url,
             'text' => $level->text,
-            'text_audio_url' => MediaHelper::getAttributeUrl($level, 'text_audio_url'),
+            'text_audio_url' => Tts::getOrGenerate(
+                TtsAudioContext::make($level, 'text_audio_url', app()->getLocale())
+            ),
             'statements' => TrueFalseTextStatementResource::collection($this->whenLoaded('statements')),
         ];
     }
