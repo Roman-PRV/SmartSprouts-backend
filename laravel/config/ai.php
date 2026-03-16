@@ -66,6 +66,22 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
         ],
     ],
 
+    'kokoro' => [
+        'base_url' => env('KOKORO_TTS_BASE_URL', 'http://kokoro-tts:8880'),
+        'tts' => [
+            'default_voice' => env('KOKORO_TTS_DEFAULT_VOICE', 'af_heart'),
+            'locale_voices' => [
+                'en' => env('KOKORO_TTS_VOICE_EN', 'af_heart'),
+                'es' => env('KOKORO_TTS_VOICE_ES', 'ef_dora'),
+            ],
+            'speed' => (float) env('KOKORO_TTS_SPEED', 1.0),
+            'request_timeout' => (int) env('KOKORO_TTS_REQUEST_TIMEOUT', 60),
+            'connect_timeout' => (int) env('KOKORO_TTS_CONNECT_TIMEOUT', 10),
+            'retry_times' => (int) env('KOKORO_TTS_RETRY_TIMES', 3),
+            'retry_sleep' => (int) env('KOKORO_TTS_RETRY_SLEEP', 2000),
+        ],
+    ],
+
     'translation' => [
 
         'cache' => [
