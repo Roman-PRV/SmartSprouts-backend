@@ -36,6 +36,7 @@ class TrueFalseTextLevelResource extends JsonResource
 
         /** @var TrueFalseTextLevel $level */
         $level = $this->resource;
+        $locale = app()->getLocale();
 
         return [
             'id' => $level->id,
@@ -43,7 +44,7 @@ class TrueFalseTextLevelResource extends JsonResource
             'image_url' => $level->image_url,
             'text' => $level->text,
             'text_audio_url' => Tts::getOrGenerate(
-                TtsAudioContext::make($level, 'text_audio_url', app()->getLocale())
+                TtsAudioContext::make($level, 'text_audio_url', $locale)
             ),
             'statements' => TrueFalseTextStatementResource::collection($this->whenLoaded('statements')),
         ];
