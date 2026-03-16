@@ -8,6 +8,7 @@ use App\Helpers\ConfigHelper;
 use App\Listeners\GenerateMissingAudioListener;
 use App\Services\Media\MediaUrlGenerator;
 use App\Services\Tts\Providers\ElevenLabsProvider;
+use App\Services\Tts\Providers\KokoroTtsProvider;
 use App\Services\Tts\TtsAudioGeneratorService;
 use App\Services\Tts\TtsOrchestrator;
 use App\Services\Tts\TtsStorageService;
@@ -50,6 +51,18 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(KokoroTtsProvider::class, function () {
+            return new KokoroTtsProvider(
+                baseUrl: ConfigHelper::getString('ai.kokoro.base_url', 'http://kokoro-tts:8880'),
+                defaultVoice: ConfigHelper::getString('ai.kokoro.tts.default_voice', 'af_heart'),
+                speed: (float) ConfigHelper::getString('ai.kokoro.tts.speed', '1.0'),
+                timeout: ConfigHelper::getInt('ai.kokoro.tts.request_timeout', 60),
+                connectTimeout: ConfigHelper::getInt('ai.kokoro.tts.connect_timeout', 10),
+                retryTimes: ConfigHelper::getInt('ai.kokoro.tts.retry_times', 3),
+                retrySleep: ConfigHelper::getInt('ai.kokoro.tts.retry_sleep', 2000),
+            );
+        });
+
         $this->app->singleton(MediaUrlGeneratorInterface::class, MediaUrlGenerator::class);
 
         $this->app->singleton(TtsOrchestrator::class, function ($app) {
@@ -61,7 +74,11 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->bind(TtsProviderInterface::class, ElevenLabsProvider::class);
+        if ($this->app->environment('local')) {
+            $this->app->bind(TtsProviderInterface::class, KokoroTtsProvider::class);
+        } else {
+            $this->app->bind(TtsProviderInterface::class, ElevenLabsProvider::class);
+        }
 
         $this->app->when(GenerateMissingAudioListener::class)
             ->needs(LoggerInterface::class)

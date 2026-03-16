@@ -8,6 +8,7 @@ use App\Events\TtsAudioRequestedEvent;
 use App\Listeners\GenerateMissingAudioListener;
 use App\Services\Media\MediaUrlGenerator;
 use App\Services\Tts\Providers\ElevenLabsProvider;
+use App\Services\Tts\Providers\KokoroTtsProvider;
 use App\Services\Tts\TtsAudioGeneratorService;
 use App\Services\Tts\TtsOrchestrator;
 use App\Services\Tts\TtsStorageService;
@@ -86,11 +87,37 @@ class TtsServiceProviderTest extends TestCase
         $this->assertSame($instanceA, $instanceB, 'TtsOrchestrator must be a singleton');
     }
 
-    public function test_tts_provider_interface_resolves_to_elevenlabs_provider(): void
+    public function test_tts_provider_interface_resolves_to_kokoro_provider_in_local_environment(): void
     {
+        $this->app->detectEnvironment(fn () => 'local');
+
+        // Re-register the service provider so the environment-based bind is re-evaluated.
+        $this->app->register(\App\Providers\TtsServiceProvider::class, force: true);
+
+        $provider = $this->app->make(TtsProviderInterface::class);
+
+        $this->assertInstanceOf(KokoroTtsProvider::class, $provider);
+    }
+
+    public function test_tts_provider_interface_resolves_to_elevenlabs_provider_in_production_environment(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+
+        // Re-register the service provider so the environment-based bind is re-evaluated.
+        $this->app->register(\App\Providers\TtsServiceProvider::class, force: true);
+
         $provider = $this->app->make(TtsProviderInterface::class);
 
         $this->assertInstanceOf(ElevenLabsProvider::class, $provider);
+    }
+
+    public function test_kokoro_tts_provider_resolves_as_singleton(): void
+    {
+        $instanceA = $this->app->make(KokoroTtsProvider::class);
+        $instanceB = $this->app->make(KokoroTtsProvider::class);
+
+        $this->assertInstanceOf(KokoroTtsProvider::class, $instanceA);
+        $this->assertSame($instanceA, $instanceB, 'KokoroTtsProvider must be a singleton');
     }
 
     public function test_media_url_generator_interface_resolves_to_concrete_implementation(): void
