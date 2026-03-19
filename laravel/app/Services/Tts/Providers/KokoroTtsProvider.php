@@ -29,7 +29,6 @@ class KokoroTtsProvider implements TtsProviderInterface
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {
         $voice = $request->voiceId ?? $this->defaultVoice;
-        $url = sprintf('%s/tts', $this->baseUrl);
 
         Log::info(TtsLogEventEnum::SYNTHESIS_STARTED->value, [
             'provider' => $this->getName(),
@@ -38,7 +37,7 @@ class KokoroTtsProvider implements TtsProviderInterface
         ]);
 
         $response = $this->httpClient()
-            ->post($url, [
+            ->post($this->baseUrl, [
                 'text' => $request->text,
                 'voice' => $voice,
                 'speed' => $request->speed ?? $this->speed,

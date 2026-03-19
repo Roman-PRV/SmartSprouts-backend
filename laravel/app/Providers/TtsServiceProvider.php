@@ -55,7 +55,7 @@ class TtsServiceProvider extends ServiceProvider
 
         $this->app->singleton(KokoroTtsProvider::class, function () {
             return new KokoroTtsProvider(
-                baseUrl: ConfigHelper::getString('ai.kokoro.base_url', 'http://kokoro-tts:8880'),
+                baseUrl: ConfigHelper::getString('ai.kokoro.base_url', 'http://kokoro-tts:8880/tts'),
                 defaultVoice: ConfigHelper::getString('ai.kokoro.tts.default_voice', 'af_heart'),
                 speed: (float) ConfigHelper::getString('ai.kokoro.tts.speed', '1.0'),
                 timeout: ConfigHelper::getInt('ai.kokoro.tts.request_timeout', 60),

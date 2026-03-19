@@ -26,7 +26,7 @@ class KokoroTtsProviderTest extends TestCase
         $this->logSpy = Log::spy();
 
         $this->provider = new KokoroTtsProvider(
-            baseUrl: 'http://kokoro-tts:8880',
+            baseUrl: 'http://kokoro-tts:8880/tts',
             defaultVoice: 'af_heart',
             speed: 1.0,
             timeout: 60,
@@ -299,7 +299,7 @@ class KokoroTtsProviderTest extends TestCase
     private function createProviderWithRetry(): KokoroTtsProvider
     {
         return new KokoroTtsProvider(
-            baseUrl: 'http://kokoro-tts:8880',
+            baseUrl: 'http://kokoro-tts:8880/tts',
             defaultVoice: 'af_heart',
             speed: 1.0,
             timeout: 60,

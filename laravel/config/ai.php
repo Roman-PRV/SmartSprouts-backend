@@ -59,7 +59,7 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
     ],
 
     'kokoro' => [
-        'base_url' => env('KOKORO_TTS_BASE_URL', 'http://kokoro-tts:8880'),
+        'base_url' => env('KOKORO_TTS_BASE_URL', 'http://kokoro-tts:8880/tts'),
         'tts' => [
             'default_voice' => env('KOKORO_TTS_DEFAULT_VOICE', 'af_heart'),
             'locale_voices' => [
