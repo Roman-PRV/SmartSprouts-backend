@@ -9,6 +9,7 @@ use App\Listeners\GenerateMissingAudioListener;
 use App\Services\Media\MediaUrlGenerator;
 use App\Services\Tts\Providers\ElevenLabsProvider;
 use App\Services\Tts\Providers\KokoroTtsProvider;
+use App\Services\Tts\Providers\UkrainianTtsProvider;
 use App\Services\Tts\TtsAudioGeneratorService;
 use App\Services\Tts\TtsOrchestrator;
 use App\Services\Tts\TtsStorageService;
@@ -26,6 +27,16 @@ class TtsServiceProviderTest extends TestCase
         config([
             'ai.elevenlabs.tts.api_key' => 'test-fake-api-key',
         ]);
+    }
+
+    /**
+     * Re-register the TtsServiceProvider after changing the config
+     * so the provider map is re-evaluated.
+     */
+    private function reRegisterWithProvider(string $providerKey): void
+    {
+        config(['ai.tts.provider' => $providerKey]);
+        $this->app->register(\App\Providers\TtsServiceProvider::class, force: true);
     }
 
     // ──────────────────────────────────────────────
@@ -87,24 +98,36 @@ class TtsServiceProviderTest extends TestCase
         $this->assertSame($instanceA, $instanceB, 'TtsOrchestrator must be a singleton');
     }
 
-    public function test_tts_provider_interface_resolves_to_kokoro_provider_in_local_environment(): void
+    public function test_tts_provider_interface_resolves_to_kokoro_provider_when_configured(): void
     {
-        $this->app->detectEnvironment(fn () => 'local');
-
-        // Re-register the service provider so the environment-based bind is re-evaluated.
-        $this->app->register(\App\Providers\TtsServiceProvider::class, force: true);
+        $this->reRegisterWithProvider('kokoro');
 
         $provider = $this->app->make(TtsProviderInterface::class);
 
         $this->assertInstanceOf(KokoroTtsProvider::class, $provider);
     }
 
-    public function test_tts_provider_interface_resolves_to_elevenlabs_provider_in_production_environment(): void
+    public function test_tts_provider_interface_resolves_to_elevenlabs_provider_when_configured(): void
     {
-        $this->app->detectEnvironment(fn () => 'production');
+        $this->reRegisterWithProvider('elevenlabs');
 
-        // Re-register the service provider so the environment-based bind is re-evaluated.
-        $this->app->register(\App\Providers\TtsServiceProvider::class, force: true);
+        $provider = $this->app->make(TtsProviderInterface::class);
+
+        $this->assertInstanceOf(ElevenLabsProvider::class, $provider);
+    }
+
+    public function test_tts_provider_interface_resolves_to_ukrainian_tts_provider_when_configured(): void
+    {
+        $this->reRegisterWithProvider('ukrainian_tts');
+
+        $provider = $this->app->make(TtsProviderInterface::class);
+
+        $this->assertInstanceOf(UkrainianTtsProvider::class, $provider);
+    }
+
+    public function test_tts_provider_interface_falls_back_to_elevenlabs_on_unknown_provider_key(): void
+    {
+        $this->reRegisterWithProvider('nonexistent_provider');
 
         $provider = $this->app->make(TtsProviderInterface::class);
 

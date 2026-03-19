@@ -125,7 +125,7 @@ class TtsAudioGeneratorService
     private function synthesizeAndStore(TtsAudioContext $context): string
     {
         $text = $context->getText() ?? '';
-        $request = new TtsRequestDTO(text: $text);
+        $request = new TtsRequestDTO(text: $text, locale: $context->getLocale());
 
         $result = $this->ttsProvider->synthesize($request);
 

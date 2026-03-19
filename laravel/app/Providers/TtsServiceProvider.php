@@ -9,6 +9,8 @@ use App\Listeners\GenerateMissingAudioListener;
 use App\Services\Media\MediaUrlGenerator;
 use App\Services\Tts\Providers\ElevenLabsProvider;
 use App\Services\Tts\Providers\KokoroTtsProvider;
+use App\Services\Tts\Providers\LocaleDispatchingTtsProvider;
+use App\Services\Tts\Providers\UkrainianTtsProvider;
 use App\Services\Tts\TtsAudioGeneratorService;
 use App\Services\Tts\TtsOrchestrator;
 use App\Services\Tts\TtsStorageService;
@@ -63,6 +65,45 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(UkrainianTtsProvider::class, function () {
+            return new UkrainianTtsProvider(
+                baseUrl: ConfigHelper::getString('ai.ukrainian_tts.base_url', 'http://ukrainian-tts:5001'),
+                defaultSpeaker: ConfigHelper::getString('ai.ukrainian_tts.tts.speaker', 'lada'),
+                timeout: ConfigHelper::getInt('ai.ukrainian_tts.tts.request_timeout', 60),
+                connectTimeout: ConfigHelper::getInt('ai.ukrainian_tts.tts.connect_timeout', 10),
+                retryTimes: ConfigHelper::getInt('ai.ukrainian_tts.tts.retry_times', 3),
+                retrySleep: ConfigHelper::getInt('ai.ukrainian_tts.tts.retry_sleep', 2000),
+            );
+        });
+
+        $this->app->singleton(LocaleDispatchingTtsProvider::class, function ($app) {
+            /** @var array<string, string> $localeConfig */
+            $localeConfig = ConfigHelper::getStringMap('ai.tts.locale_dispatch.locales', []);
+
+            $fallbackKey = ConfigHelper::getString('ai.tts.locale_dispatch.fallback', 'elevenlabs');
+
+            $providerMap = [
+                'kokoro' => KokoroTtsProvider::class,
+                'elevenlabs' => ElevenLabsProvider::class,
+                'ukrainian_tts' => UkrainianTtsProvider::class,
+            ];
+
+            $localeMap = [];
+            foreach ($localeConfig as $locale => $providerKey) {
+                $class = $providerMap[$providerKey] ?? null;
+                if ($class) {
+                    $localeMap[$locale] = $app->make($class);
+                }
+            }
+
+            $fallbackClass = $providerMap[$fallbackKey] ?? ElevenLabsProvider::class;
+
+            return new LocaleDispatchingTtsProvider(
+                localeMap: $localeMap,
+                fallback: $app->make($fallbackClass),
+            );
+        });
+
         $this->app->singleton(MediaUrlGeneratorInterface::class, MediaUrlGenerator::class);
 
         $this->app->singleton(TtsOrchestrator::class, function ($app) {
@@ -74,11 +115,24 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
-        if ($this->app->environment('local')) {
-            $this->app->bind(TtsProviderInterface::class, KokoroTtsProvider::class);
-        } else {
-            $this->app->bind(TtsProviderInterface::class, ElevenLabsProvider::class);
+        $providerMap = [
+            'kokoro' => KokoroTtsProvider::class,
+            'elevenlabs' => ElevenLabsProvider::class,
+            'ukrainian_tts' => UkrainianTtsProvider::class,
+            'locale_dispatch' => LocaleDispatchingTtsProvider::class,
+        ];
+
+        $providerKey = ConfigHelper::getString('ai.tts.provider', 'elevenlabs');
+
+        if (! isset($providerMap[$providerKey])) {
+            Log::warning('Unknown TTS provider configured, falling back to ElevenLabs.', [
+                'configured' => $providerKey,
+            ]);
         }
+
+        $providerClass = $providerMap[$providerKey] ?? ElevenLabsProvider::class;
+
+        $this->app->bind(TtsProviderInterface::class, $providerClass);
 
         $this->app->when(GenerateMissingAudioListener::class)
             ->needs(LoggerInterface::class)

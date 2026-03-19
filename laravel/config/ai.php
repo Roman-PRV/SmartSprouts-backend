@@ -1,14 +1,6 @@
 <?php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | OpenAI Service Settings
-    |--------------------------------------------------------------------------
-    |
-    | Here you can configure models, prompts, and other parameters for OpenAI.
-    |
-    */
 
     'openai' => [
         'translation' => [
@@ -92,6 +84,17 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
     ],
 
     'tts' => [
+        'provider' => env('TTS_PROVIDER', 'elevenlabs'),
+
+        'locale_dispatch' => [
+            'fallback' => env('TTS_LOCALE_DISPATCH_FALLBACK', 'elevenlabs'),
+            'locales' => [
+                'uk' => env('TTS_PROVIDER_UK', 'ukrainian_tts'),
+                'en' => env('TTS_PROVIDER_EN', 'kokoro'),
+                'es' => env('TTS_PROVIDER_ES', 'kokoro'),
+            ],
+        ],
+
         'auto_generate' => [
             'enabled' => env('TTS_AUTO_GENERATE_ENABLED', true),
             'queue' => env('TTS_QUEUE', 'tts'),

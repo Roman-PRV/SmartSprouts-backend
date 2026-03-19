@@ -42,7 +42,7 @@ class KokoroTtsProviderTest extends TestCase
 
     public function test_it_synthesizes_speech_successfully(): void
     {
-        $audioData = 'fake-wav-audio-content';
+        $audioData = 'fake-mp3-audio-content';
 
         Http::fake([
             'http://kokoro-tts:8880/tts' => Http::response($audioData, 200),
@@ -56,7 +56,7 @@ class KokoroTtsProviderTest extends TestCase
         $result = $this->provider->synthesize($request);
 
         $this->assertEquals($audioData, $result->audioData);
-        $this->assertEquals('wav', $result->format);
+        $this->assertEquals('mp3', $result->format);
         $this->assertNull($result->requestId);
 
         Http::assertSent(function ($request) {
@@ -219,7 +219,7 @@ class KokoroTtsProviderTest extends TestCase
 
     public function test_it_retries_on_connection_exception_and_eventually_succeeds(): void
     {
-        $audioData = 'fake-wav-audio-data';
+        $audioData = 'fake-mp3-audio-data';
         $providerWithRetry = $this->createProviderWithRetry();
         $attemptCount = 0;
 
@@ -242,7 +242,7 @@ class KokoroTtsProviderTest extends TestCase
         ));
 
         $this->assertEquals($audioData, $result->audioData);
-        $this->assertEquals('wav', $result->format);
+        $this->assertEquals('mp3', $result->format);
         $this->assertEquals(3, $attemptCount);
     }
 
