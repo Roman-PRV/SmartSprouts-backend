@@ -28,6 +28,7 @@ class KokoroTtsProviderTest extends TestCase
         $this->provider = new KokoroTtsProvider(
             baseUrl: 'http://kokoro-tts:8880/tts',
             defaultVoice: 'af_heart',
+            localeVoices: ['en' => 'af_bella', 'es' => 'ef_dora'],
             speed: 1.0,
             timeout: 60,
             connectTimeout: 10,
@@ -74,6 +75,36 @@ class KokoroTtsProviderTest extends TestCase
         ]);
 
         $request = new TtsRequestDTO(text: 'Hello');
+        $this->provider->synthesize($request);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'http://kokoro-tts:8880/tts'
+                && $request['voice'] === 'af_heart';
+        });
+    }
+
+    public function test_it_uses_locale_voice_if_provided(): void
+    {
+        Http::fake([
+            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+        ]);
+
+        $request = new TtsRequestDTO(text: 'Hola', locale: 'es');
+        $this->provider->synthesize($request);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'http://kokoro-tts:8880/tts'
+                && $request['voice'] === 'ef_dora';
+        });
+    }
+
+    public function test_it_falls_back_to_default_voice_if_unknown_locale_provided(): void
+    {
+        Http::fake([
+            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+        ]);
+
+        $request = new TtsRequestDTO(text: 'Bonjour', locale: 'fr');
         $this->provider->synthesize($request);
 
         Http::assertSent(function ($request) {
@@ -301,6 +332,7 @@ class KokoroTtsProviderTest extends TestCase
         return new KokoroTtsProvider(
             baseUrl: 'http://kokoro-tts:8880/tts',
             defaultVoice: 'af_heart',
+            localeVoices: ['en' => 'af_bella', 'es' => 'ef_dora'],
             speed: 1.0,
             timeout: 60,
             connectTimeout: 10,

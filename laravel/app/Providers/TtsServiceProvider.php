@@ -57,6 +57,7 @@ class TtsServiceProvider extends ServiceProvider
             return new KokoroTtsProvider(
                 baseUrl: ConfigHelper::getString('ai.kokoro.base_url', 'http://kokoro-tts:8880/tts'),
                 defaultVoice: ConfigHelper::getString('ai.kokoro.tts.default_voice', 'af_heart'),
+                localeVoices: ConfigHelper::getStringMap('ai.kokoro.tts.locale_voices', []),
                 speed: (float) ConfigHelper::getString('ai.kokoro.tts.speed', '1.0'),
                 timeout: ConfigHelper::getInt('ai.kokoro.tts.request_timeout', 60),
                 connectTimeout: ConfigHelper::getInt('ai.kokoro.tts.connect_timeout', 10),

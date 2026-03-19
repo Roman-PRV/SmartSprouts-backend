@@ -16,9 +16,13 @@ use Illuminate\Support\Facades\Log;
 
 class KokoroTtsProvider implements TtsProviderInterface
 {
+    /**
+     * @param  array<string, string>  $localeVoices
+     */
     public function __construct(
         private readonly string $baseUrl,
         private readonly string $defaultVoice,
+        private readonly array $localeVoices = [],
         private readonly float $speed = 1.0,
         private readonly int $timeout = 60,
         private readonly int $connectTimeout = 10,
@@ -28,11 +32,13 @@ class KokoroTtsProvider implements TtsProviderInterface
 
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {
-        $voice = $request->voiceId ?? $this->defaultVoice;
+        $voice = $request->voiceId
+            ?? ($request->locale ? ($this->localeVoices[$request->locale] ?? $this->defaultVoice) : $this->defaultVoice);
 
         Log::info(TtsLogEventEnum::SYNTHESIS_STARTED->value, [
             'provider' => $this->getName(),
             'voice' => $voice,
+            'locale' => $request->locale,
             'text_length' => mb_strlen($request->text),
         ]);
 
