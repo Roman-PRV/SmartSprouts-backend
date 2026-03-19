@@ -15,6 +15,12 @@ use Tests\TestCase;
 
 class KokoroTtsProviderTest extends TestCase
 {
+    private const BASE_URL = 'http://kokoro-tts:8880/tts';
+
+    private const DEFAULT_VOICE = 'af_heart';
+
+    private const LOCALE_VOICES = ['en' => 'af_bella', 'es' => 'ef_dora'];
+
     private KokoroTtsProvider $provider;
 
     private $logSpy;
@@ -25,15 +31,20 @@ class KokoroTtsProviderTest extends TestCase
 
         $this->logSpy = Log::spy();
 
-        $this->provider = new KokoroTtsProvider(
-            baseUrl: 'http://kokoro-tts:8880/tts',
-            defaultVoice: 'af_heart',
-            localeVoices: ['en' => 'af_bella', 'es' => 'ef_dora'],
+        $this->provider = $this->makeProvider();
+    }
+
+    private function makeProvider(int $retryTimes = 0): KokoroTtsProvider
+    {
+        return new KokoroTtsProvider(
+            baseUrl: self::BASE_URL,
+            defaultVoice: self::DEFAULT_VOICE,
+            localeVoices: self::LOCALE_VOICES,
             speed: 1.0,
             timeout: 60,
             connectTimeout: 10,
-            retryTimes: 0,
-            retrySleep: 100
+            retryTimes: $retryTimes,
+            retrySleep: 100,
         );
     }
 
@@ -46,7 +57,7 @@ class KokoroTtsProviderTest extends TestCase
         $audioData = 'fake-mp3-audio-content';
 
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response($audioData, 200),
+            self::BASE_URL => Http::response($audioData, 200),
         ]);
 
         $request = new TtsRequestDTO(
@@ -61,7 +72,7 @@ class KokoroTtsProviderTest extends TestCase
         $this->assertNull($result->requestId);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'http://kokoro-tts:8880/tts'
+            return $request->url() === self::BASE_URL
                 && $request['text'] === 'Hello, how are you?'
                 && $request['voice'] === 'bf_emma'
                 && $request['speed'] === 1.0;
@@ -71,52 +82,52 @@ class KokoroTtsProviderTest extends TestCase
     public function test_it_uses_default_voice_if_none_provided(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+            self::BASE_URL => Http::response('audio', 200),
         ]);
 
         $request = new TtsRequestDTO(text: 'Hello');
         $this->provider->synthesize($request);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'http://kokoro-tts:8880/tts'
-                && $request['voice'] === 'af_heart';
+            return $request->url() === self::BASE_URL
+                && $request['voice'] === self::DEFAULT_VOICE;
         });
     }
 
     public function test_it_uses_locale_voice_if_provided(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+            self::BASE_URL => Http::response('audio', 200),
         ]);
 
         $request = new TtsRequestDTO(text: 'Hola', locale: 'es');
         $this->provider->synthesize($request);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'http://kokoro-tts:8880/tts'
-                && $request['voice'] === 'ef_dora';
+            return $request->url() === self::BASE_URL
+                && $request['voice'] === self::LOCALE_VOICES['es'];
         });
     }
 
     public function test_it_falls_back_to_default_voice_if_unknown_locale_provided(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+            self::BASE_URL => Http::response('audio', 200),
         ]);
 
         $request = new TtsRequestDTO(text: 'Bonjour', locale: 'fr');
         $this->provider->synthesize($request);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'http://kokoro-tts:8880/tts'
-                && $request['voice'] === 'af_heart';
+            return $request->url() === self::BASE_URL
+                && $request['voice'] === self::DEFAULT_VOICE;
         });
     }
 
     public function test_it_uses_custom_speed_from_request(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+            self::BASE_URL => Http::response('audio', 200),
         ]);
 
         $request = new TtsRequestDTO(text: 'Hello', speed: 1.5);
@@ -130,7 +141,7 @@ class KokoroTtsProviderTest extends TestCase
     public function test_it_uses_default_speed_when_not_provided_in_request(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('audio', 200),
+            self::BASE_URL => Http::response('audio', 200),
         ]);
 
         $request = new TtsRequestDTO(text: 'Hello');
@@ -144,7 +155,7 @@ class KokoroTtsProviderTest extends TestCase
     public function test_it_throws_failed_exception_on_api_error(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response([
+            self::BASE_URL => Http::response([
                 'detail' => 'Voice not found',
             ], 422),
         ]);
@@ -166,7 +177,7 @@ class KokoroTtsProviderTest extends TestCase
     public function test_it_falls_back_to_reason_phrase_when_no_detail_in_error(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('Server Error', 500),
+            self::BASE_URL => Http::response('Server Error', 500),
         ]);
 
         try {
@@ -186,7 +197,7 @@ class KokoroTtsProviderTest extends TestCase
     public function test_it_throws_failed_exception_on_empty_response(): void
     {
         Http::fake([
-            'http://kokoro-tts:8880/tts' => Http::response('', 200),
+            self::BASE_URL => Http::response('', 200),
         ]);
 
         try {
@@ -329,15 +340,6 @@ class KokoroTtsProviderTest extends TestCase
 
     private function createProviderWithRetry(): KokoroTtsProvider
     {
-        return new KokoroTtsProvider(
-            baseUrl: 'http://kokoro-tts:8880/tts',
-            defaultVoice: 'af_heart',
-            localeVoices: ['en' => 'af_bella', 'es' => 'ef_dora'],
-            speed: 1.0,
-            timeout: 60,
-            connectTimeout: 10,
-            retryTimes: 3,
-            retrySleep: 100
-        );
+        return $this->makeProvider(retryTimes: 3);
     }
 }
