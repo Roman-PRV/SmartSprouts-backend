@@ -86,6 +86,12 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
     'tts' => [
         'provider' => env('TTS_PROVIDER', 'elevenlabs'),
 
+        'providers' => [
+            'kokoro' => App\Services\Tts\Providers\KokoroTtsProvider::class,
+            'elevenlabs' => App\Services\Tts\Providers\ElevenLabsProvider::class,
+            'ukrainian_tts' => App\Services\Tts\Providers\UkrainianTtsProvider::class,
+        ],
+
         'locale_dispatch' => [
             'fallback' => env('TTS_LOCALE_DISPATCH_FALLBACK', 'elevenlabs'),
             'locales' => [

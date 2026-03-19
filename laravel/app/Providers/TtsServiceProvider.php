@@ -83,11 +83,7 @@ class TtsServiceProvider extends ServiceProvider
 
             $fallbackKey = ConfigHelper::getString('ai.tts.locale_dispatch.fallback', 'elevenlabs');
 
-            $providerMap = [
-                'kokoro' => KokoroTtsProvider::class,
-                'elevenlabs' => ElevenLabsProvider::class,
-                'ukrainian_tts' => UkrainianTtsProvider::class,
-            ];
+            $providerMap = ConfigHelper::getStringMap('ai.tts.providers', []);
 
             $localeMap = [];
             foreach ($localeConfig as $locale => $providerKey) {
@@ -116,12 +112,10 @@ class TtsServiceProvider extends ServiceProvider
             );
         });
 
-        $providerMap = [
-            'kokoro' => KokoroTtsProvider::class,
-            'elevenlabs' => ElevenLabsProvider::class,
-            'ukrainian_tts' => UkrainianTtsProvider::class,
-            'locale_dispatch' => LocaleDispatchingTtsProvider::class,
-        ];
+        $providerMap = array_merge(
+            ConfigHelper::getStringMap('ai.tts.providers', []),
+            ['locale_dispatch' => LocaleDispatchingTtsProvider::class]
+        );
 
         $providerKey = ConfigHelper::getString('ai.tts.provider', 'elevenlabs');
 

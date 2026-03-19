@@ -32,8 +32,7 @@ class KokoroTtsProvider implements TtsProviderInterface
 
     public function synthesize(TtsRequestDTO $request): TtsResultDTO
     {
-        $voice = $request->voiceId
-            ?? ($request->locale ? ($this->localeVoices[$request->locale] ?? $this->defaultVoice) : $this->defaultVoice);
+        $voice = $this->resolveVoiceId($request);
 
         Log::info(TtsLogEventEnum::SYNTHESIS_STARTED->value, [
             'provider' => $this->getName(),
@@ -147,6 +146,19 @@ class KokoroTtsProvider implements TtsProviderInterface
             __('exceptions.tts.kokoro_failed', ['error' => $errorString]),
             $status
         );
+    }
+
+    private function resolveVoiceId(TtsRequestDTO $request): string
+    {
+        if ($request->voiceId !== null) {
+            return $request->voiceId;
+        }
+
+        if ($request->locale !== null && isset($this->localeVoices[$request->locale])) {
+            return $this->localeVoices[$request->locale];
+        }
+
+        return $this->defaultVoice;
     }
 
     /**
