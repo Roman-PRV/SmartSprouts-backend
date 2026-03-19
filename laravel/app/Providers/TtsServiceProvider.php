@@ -25,12 +25,44 @@ class TtsServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $baseProviderMap = ConfigHelper::getStringMap('ai.tts.providers', []);
+
+        $providerMap = array_merge(
+            $baseProviderMap,
+            ['locale_dispatch' => LocaleDispatchingTtsProvider::class],
+        );
+
+        $this->registerStorageService();
+        $this->registerAudioGeneratorService();
+        $this->registerElevenLabsProvider();
+        $this->registerKokoroProvider();
+        $this->registerUkrainianTtsProvider();
+        $this->registerLocaleDispatchingProvider($baseProviderMap);
+        $this->registerMediaUrlGenerator();
+        $this->registerTtsOrchestrator();
+        $this->bindTtsProviderInterface($providerMap);
+        $this->configureListenerBindings();
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        //
+    }
+
+    private function registerStorageService(): void
+    {
         $this->app->singleton(TtsStorageService::class, function () {
             return new TtsStorageService(
                 disk: ConfigHelper::getString('ai.tts.storage.disk', 'public'),
             );
         });
+    }
 
+    private function registerAudioGeneratorService(): void
+    {
         $this->app->singleton(TtsAudioGeneratorService::class, function ($app) {
             return new TtsAudioGeneratorService(
                 ttsProvider: $app->make(TtsProviderInterface::class),
@@ -38,7 +70,10 @@ class TtsServiceProvider extends ServiceProvider
                 logger: Log::channel('tts'),
             );
         });
+    }
 
+    private function registerElevenLabsProvider(): void
+    {
         $this->app->singleton(ElevenLabsProvider::class, function () {
             return new ElevenLabsProvider(
                 baseUrl: ConfigHelper::getString('ai.elevenlabs.base_url', 'https://api.elevenlabs.io/v1'),
@@ -52,7 +87,10 @@ class TtsServiceProvider extends ServiceProvider
                 retrySleep: ConfigHelper::getInt('ai.elevenlabs.tts.retry_sleep', 1000),
             );
         });
+    }
 
+    private function registerKokoroProvider(): void
+    {
         $this->app->singleton(KokoroTtsProvider::class, function () {
             return new KokoroTtsProvider(
                 baseUrl: ConfigHelper::getString('ai.kokoro.base_url', 'http://kokoro-tts:8880/tts'),
@@ -65,7 +103,10 @@ class TtsServiceProvider extends ServiceProvider
                 retrySleep: ConfigHelper::getInt('ai.kokoro.tts.retry_sleep', 2000),
             );
         });
+    }
 
+    private function registerUkrainianTtsProvider(): void
+    {
         $this->app->singleton(UkrainianTtsProvider::class, function () {
             return new UkrainianTtsProvider(
                 baseUrl: ConfigHelper::getString('ai.ukrainian_tts.base_url', 'http://ukrainian-tts:5001'),
@@ -76,33 +117,44 @@ class TtsServiceProvider extends ServiceProvider
                 retrySleep: ConfigHelper::getInt('ai.ukrainian_tts.tts.retry_sleep', 2000),
             );
         });
+    }
 
-        $this->app->singleton(LocaleDispatchingTtsProvider::class, function ($app) {
+    /**
+     * @param  array<string, string>  $baseProviderMap  Only concrete providers (without locale_dispatch),
+     *                                                  to prevent recursive dispatch configuration.
+     */
+    private function registerLocaleDispatchingProvider(array $baseProviderMap): void
+    {
+        $this->app->singleton(LocaleDispatchingTtsProvider::class, function ($app) use ($baseProviderMap) {
             /** @var array<string, string> $localeConfig */
             $localeConfig = ConfigHelper::getStringMap('ai.tts.locale_dispatch.locales', []);
 
             $fallbackKey = ConfigHelper::getString('ai.tts.locale_dispatch.fallback', 'elevenlabs');
 
-            $providerMap = ConfigHelper::getStringMap('ai.tts.providers', []);
-
             $localeMap = [];
             foreach ($localeConfig as $locale => $providerKey) {
-                $class = $providerMap[$providerKey] ?? null;
+                $class = $baseProviderMap[$providerKey] ?? null;
                 if ($class) {
                     $localeMap[$locale] = $app->make($class);
                 }
             }
 
-            $fallbackClass = $providerMap[$fallbackKey] ?? ElevenLabsProvider::class;
+            $fallbackClass = $baseProviderMap[$fallbackKey] ?? ElevenLabsProvider::class;
 
             return new LocaleDispatchingTtsProvider(
                 localeMap: $localeMap,
                 fallback: $app->make($fallbackClass),
             );
         });
+    }
 
+    private function registerMediaUrlGenerator(): void
+    {
         $this->app->singleton(MediaUrlGeneratorInterface::class, MediaUrlGenerator::class);
+    }
 
+    private function registerTtsOrchestrator(): void
+    {
         $this->app->singleton(TtsOrchestrator::class, function ($app) {
             return new TtsOrchestrator(
                 mediaUrlGenerator: $app->make(MediaUrlGeneratorInterface::class),
@@ -111,12 +163,13 @@ class TtsServiceProvider extends ServiceProvider
                 ttsDisk: ConfigHelper::getString('ai.tts.storage.disk', 'public'),
             );
         });
+    }
 
-        $providerMap = array_merge(
-            ConfigHelper::getStringMap('ai.tts.providers', []),
-            ['locale_dispatch' => LocaleDispatchingTtsProvider::class]
-        );
-
+    /**
+     * @param  array<string, string>  $providerMap  Full provider map including locale_dispatch.
+     */
+    private function bindTtsProviderInterface(array $providerMap): void
+    {
         $providerKey = ConfigHelper::getString('ai.tts.provider', 'elevenlabs');
 
         if (! isset($providerMap[$providerKey])) {
@@ -128,17 +181,12 @@ class TtsServiceProvider extends ServiceProvider
         $providerClass = $providerMap[$providerKey] ?? ElevenLabsProvider::class;
 
         $this->app->bind(TtsProviderInterface::class, $providerClass);
+    }
 
+    private function configureListenerBindings(): void
+    {
         $this->app->when(GenerateMissingAudioListener::class)
             ->needs(LoggerInterface::class)
             ->give(fn () => Log::channel('tts'));
-    }
-
-    /**
-     * Bootstrap services.
-     */
-    public function boot(): void
-    {
-        //
     }
 }
