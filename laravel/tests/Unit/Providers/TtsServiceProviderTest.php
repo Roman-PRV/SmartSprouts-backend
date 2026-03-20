@@ -8,6 +8,8 @@ use App\Events\TtsAudioRequestedEvent;
 use App\Listeners\GenerateMissingAudioListener;
 use App\Services\Media\MediaUrlGenerator;
 use App\Services\Tts\Providers\ElevenLabsProvider;
+use App\Services\Tts\Providers\KokoroTtsProvider;
+use App\Services\Tts\Providers\UkrainianTtsProvider;
 use App\Services\Tts\TtsAudioGeneratorService;
 use App\Services\Tts\TtsOrchestrator;
 use App\Services\Tts\TtsStorageService;
@@ -25,6 +27,16 @@ class TtsServiceProviderTest extends TestCase
         config([
             'ai.elevenlabs.tts.api_key' => 'test-fake-api-key',
         ]);
+    }
+
+    /**
+     * Re-register the TtsServiceProvider after changing the config
+     * so the provider map is re-evaluated.
+     */
+    private function reRegisterWithProvider(string $providerKey): void
+    {
+        config(['ai.tts.provider' => $providerKey]);
+        $this->app->register(\App\Providers\TtsServiceProvider::class, force: true);
     }
 
     // ──────────────────────────────────────────────
@@ -86,11 +98,49 @@ class TtsServiceProviderTest extends TestCase
         $this->assertSame($instanceA, $instanceB, 'TtsOrchestrator must be a singleton');
     }
 
-    public function test_tts_provider_interface_resolves_to_elevenlabs_provider(): void
+    public function test_tts_provider_interface_resolves_to_kokoro_provider_when_configured(): void
     {
+        $this->reRegisterWithProvider('kokoro');
+
+        $provider = $this->app->make(TtsProviderInterface::class);
+
+        $this->assertInstanceOf(KokoroTtsProvider::class, $provider);
+    }
+
+    public function test_tts_provider_interface_resolves_to_elevenlabs_provider_when_configured(): void
+    {
+        $this->reRegisterWithProvider('elevenlabs');
+
         $provider = $this->app->make(TtsProviderInterface::class);
 
         $this->assertInstanceOf(ElevenLabsProvider::class, $provider);
+    }
+
+    public function test_tts_provider_interface_resolves_to_ukrainian_tts_provider_when_configured(): void
+    {
+        $this->reRegisterWithProvider('ukrainian_tts');
+
+        $provider = $this->app->make(TtsProviderInterface::class);
+
+        $this->assertInstanceOf(UkrainianTtsProvider::class, $provider);
+    }
+
+    public function test_tts_provider_interface_falls_back_to_elevenlabs_on_unknown_provider_key(): void
+    {
+        $this->reRegisterWithProvider('nonexistent_provider');
+
+        $provider = $this->app->make(TtsProviderInterface::class);
+
+        $this->assertInstanceOf(ElevenLabsProvider::class, $provider);
+    }
+
+    public function test_kokoro_tts_provider_resolves_as_singleton(): void
+    {
+        $instanceA = $this->app->make(KokoroTtsProvider::class);
+        $instanceB = $this->app->make(KokoroTtsProvider::class);
+
+        $this->assertInstanceOf(KokoroTtsProvider::class, $instanceA);
+        $this->assertSame($instanceA, $instanceB, 'KokoroTtsProvider must be a singleton');
     }
 
     public function test_media_url_generator_interface_resolves_to_concrete_implementation(): void

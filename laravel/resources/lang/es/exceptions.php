@@ -29,6 +29,8 @@ return [
         'elevenlabs_empty_response' => 'ElevenLabs devolvió una respuesta de audio vacía.',
         'ukrainian_tts_failed' => 'La síntesis de Ukrainian TTS falló: :error',
         'ukrainian_tts_empty_response' => 'Ukrainian TTS devolvió una respuesta de audio vacía.',
+        'kokoro_failed' => 'La síntesis de Kokoro TTS falló: :error',
+        'kokoro_empty_response' => 'Kokoro TTS devolvió una respuesta de audio vacía.',
     ],
     'config' => [
         'required_missing' => 'El valor de configuración para la clave [:key] es obligatorio y debe ser una cadena no vacía.',

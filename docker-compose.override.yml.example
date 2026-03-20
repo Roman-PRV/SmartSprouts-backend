@@ -16,6 +16,9 @@ services:
       - vendor_data:/var/www/vendor          # Preserve vendor across rebuilds
     extra_hosts:
       - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
+    networks:
+      - app-network
+      - dev-local-network                    # Connects to Kokoro TTS and other local dev services
 
   mysql:
     ports:
@@ -24,3 +27,9 @@ services:
   redis:
     ports:
       - "${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
+
+networks:
+  dev-local-network:
+    external: true  # Shared with independent dev containers (e.g. kokoro-tts).
+                    # Create once: docker network create dev-local-network
+

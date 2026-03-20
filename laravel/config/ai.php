@@ -1,14 +1,6 @@
 <?php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | OpenAI Service Settings
-    |--------------------------------------------------------------------------
-    |
-    | Here you can configure models, prompts, and other parameters for OpenAI.
-    |
-    */
 
     'openai' => [
         'translation' => [
@@ -66,6 +58,22 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
         ],
     ],
 
+    'kokoro' => [
+        'base_url' => env('KOKORO_TTS_BASE_URL', 'http://kokoro-tts:8880/tts'),
+        'tts' => [
+            'default_voice' => env('KOKORO_TTS_DEFAULT_VOICE', 'af_heart'),
+            'locale_voices' => [
+                'en' => env('KOKORO_TTS_VOICE_EN', 'af_heart'),
+                'es' => env('KOKORO_TTS_VOICE_ES', 'ef_dora'),
+            ],
+            'speed' => (float) env('KOKORO_TTS_SPEED', 1.0),
+            'request_timeout' => (int) env('KOKORO_TTS_REQUEST_TIMEOUT', 60),
+            'connect_timeout' => (int) env('KOKORO_TTS_CONNECT_TIMEOUT', 10),
+            'retry_times' => (int) env('KOKORO_TTS_RETRY_TIMES', 3),
+            'retry_sleep' => (int) env('KOKORO_TTS_RETRY_SLEEP', 2000),
+        ],
+    ],
+
     'translation' => [
 
         'cache' => [
@@ -76,6 +84,23 @@ Example: {"en": "Hello", "uk": "Привіт", "es": "Hola"}',
     ],
 
     'tts' => [
+        'provider' => env('TTS_PROVIDER', 'elevenlabs'),
+
+        'providers' => [
+            'kokoro' => App\Services\Tts\Providers\KokoroTtsProvider::class,
+            'elevenlabs' => App\Services\Tts\Providers\ElevenLabsProvider::class,
+            'ukrainian_tts' => App\Services\Tts\Providers\UkrainianTtsProvider::class,
+        ],
+
+        'locale_dispatch' => [
+            'fallback' => env('TTS_LOCALE_DISPATCH_FALLBACK', 'elevenlabs'),
+            'locales' => [
+                'uk' => env('TTS_PROVIDER_UK', 'ukrainian_tts'),
+                'en' => env('TTS_PROVIDER_EN', 'kokoro'),
+                'es' => env('TTS_PROVIDER_ES', 'kokoro'),
+            ],
+        ],
+
         'auto_generate' => [
             'enabled' => env('TTS_AUTO_GENERATE_ENABLED', true),
             'queue' => env('TTS_QUEUE', 'tts'),
