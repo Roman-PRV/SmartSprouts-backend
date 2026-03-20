@@ -188,6 +188,50 @@ Examples:
 - `feat: add dashboard component ss-45`
 - `fix: update dashboard card size ss-212`
 
+### 8.4 Kokoro TTS (dev only)
+
+For Spanish and English TTS in local development, the project uses a self-hosted [Kokoro-82M](https://github.com/hexgrad/kokoro) container.
+
+It is an **independent** Docker Compose project, not part of this repository.
+
+#### Shared Docker network
+
+Both projects communicate via an external Docker network `dev-local-network`.
+This network is declared in `docker-compose.override.yml` (dev only) and **does not affect production**.
+
+Create it **once** before the first run:
+
+```bash
+docker network create dev-local-network
+```
+
+#### Starting Kokoro
+
+```bash
+cd D:/Coding/pet-project/Kokoro/docker/kokoro
+docker compose up -d --build
+```
+
+After start, the service is available inside the Docker network at:
+```
+http://kokoro-tts:8880
+```
+
+#### Environment variables
+
+Ensure the following are set in `.env` (see `.env.example`):
+
+```ini
+KOKORO_TTS_BASE_URL=http://kokoro-tts:8880/tts
+KOKORO_TTS_DEFAULT_VOICE=af_heart
+KOKORO_TTS_VOICE_EN=af_heart
+KOKORO_TTS_VOICE_ES=ef_dora
+```
+
+> Kokoro provider is active **only** in `APP_ENV=local`. Production uses ElevenLabs.
+
+---
+
 ## 9. Contributors:
 
 - **Prokopenko Roman** github: _roman-prv_, discord: _@roman_27794_

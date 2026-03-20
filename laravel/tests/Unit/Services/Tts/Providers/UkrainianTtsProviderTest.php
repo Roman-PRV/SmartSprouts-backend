@@ -37,7 +37,7 @@ class UkrainianTtsProviderTest extends TestCase
 
     public function test_it_synthesizes_speech_successfully(): void
     {
-        $audioData = 'fake-wav-audio-content';
+        $audioData = 'fake-mp3-audio-content';
 
         Http::fake([
             'http://ukrainian-tts:5001/synthesize' => Http::response($audioData, 200),
