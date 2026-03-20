@@ -29,6 +29,8 @@ return [
         'elevenlabs_empty_response' => 'ElevenLabs повернув порожню аудіо-відповідь.',
         'ukrainian_tts_failed' => 'Помилка синтезу Ukrainian TTS: :error',
         'ukrainian_tts_empty_response' => 'Ukrainian TTS повернув порожню аудіо-відповідь.',
+        'kokoro_failed' => 'Синтез Kokoro TTS не вдався: :error',
+        'kokoro_empty_response' => 'Kokoro TTS повернув порожню аудіо-відповідь.',
     ],
     'config' => [
         'required_missing' => 'Параметр конфігурації [:key] є обов\'язковим і повинен бути непорожнім рядком.',
