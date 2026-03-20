@@ -18,6 +18,13 @@ services:
     # No bind-mount: code is baked into the image at build time via COPY in Dockerfile.
     # public/ is served via the laravel_public named volume (populated by entrypoint.sh).
 
+  queue-worker:
+    build:
+      target: prod         # Optimised OPcache, no Xdebug
+    restart: always
+    env_file:
+      - ./laravel/.env
+
   mysql:
     restart: always
     # No port exposure: only accessible inside the app-network

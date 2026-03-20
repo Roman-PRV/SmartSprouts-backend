@@ -36,6 +36,27 @@ services:
       retries: 3
       start_period: 30s
 
+  queue-worker:
+    build:
+      context: ./laravel
+      dockerfile: docker/Dockerfile
+    container_name: pp_queue_worker
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work --queue=tts,default --tries=3 --sleep=3 --timeout=120
+    volumes:
+      - laravel_public:/var/www/public
+      - ./laravel/storage:/var/www/storage
+    networks:
+      - app-network
+    depends_on:
+      laravel:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   mysql:
     image: mysql:8.0
     container_name: pp_mysql_db
