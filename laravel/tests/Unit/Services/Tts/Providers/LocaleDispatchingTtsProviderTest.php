@@ -75,21 +75,6 @@ class LocaleDispatchingTtsProviderTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
-    // public function test_it_falls_back_to_fallback_provider_for_unknown_locale(): void
-    // {
-    //     $logSpy = Log::spy();
-    //     $provider = $this->makeDispatcher();
-    //     $request = new TtsRequestDTO(text: 'Bonjour', locale: 'fr');
-    //     $expected = $this->makeFakeResult();
-
-    //     $this->elevenlabs->expects('synthesize')->with($request)->andReturn($expected);
-
-    //     $result = $provider->synthesize($request);
-
-    //     $this->assertSame($expected, $result);
-    //     $logSpy->shouldHaveReceived('warning')->once();
-    // }
-
     public function test_it_falls_back_to_fallback_provider_for_unknown_locale(): void
     {
         Log::shouldReceive('warning')->once();
