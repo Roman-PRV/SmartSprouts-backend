@@ -190,7 +190,7 @@ Examples:
 
 ### 8.4 Kokoro TTS (dev only)
 
-For Spanish and English TTS in local development, the project uses a self-hosted [Kokoro-82M](https://github.com/hexgrad/kokoro) container located at `D:\Coding\pet-project\Kokoro\docker\kokoro`.
+For Spanish and English TTS in local development, the project uses a self-hosted [Kokoro-82M](https://github.com/hexgrad/kokoro) container.
 
 It is an **independent** Docker Compose project, not part of this repository.
 
@@ -222,7 +222,7 @@ http://kokoro-tts:8880
 Ensure the following are set in `.env` (see `.env.example`):
 
 ```ini
-KOKORO_TTS_BASE_URL=http://kokoro-tts:8880
+KOKORO_TTS_BASE_URL=http://kokoro-tts:8880/tts
 KOKORO_TTS_DEFAULT_VOICE=af_heart
 KOKORO_TTS_VOICE_EN=af_heart
 KOKORO_TTS_VOICE_ES=ef_dora
