@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Trait HasTtsAudio
@@ -61,8 +62,10 @@ trait HasTtsAudio
     public function setAudioPath(string $attribute, string $locale, string $path): void
     {
         if (method_exists($this, 'setTranslation')) {
-            $this->setAudioPathJson($attribute, $locale, $path);
-            $this->touch();
+            DB::transaction(function () use ($attribute, $locale, $path) {
+                $this->setAudioPathJson($attribute, $locale, $path);
+                $this->touch();
+            });
         } else {
             $this->forceFill([$attribute => $path])->save();
         }
