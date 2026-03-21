@@ -72,23 +72,14 @@ trait HasTtsAudio
 
     /**
      * Atomically patch one locale key inside a Spatie Translatable JSON column.
-     *
-     * Equivalent SQL (example):
-     *   UPDATE true_false_image_statements
-     *   SET statement_audio_url = JSON_SET(statement_audio_url, '$.uk', 'path/to/file.mp3')
-     *   WHERE id = 42
      */
     private function setAudioPathJson(string $attribute, string $locale, string $path): void
     {
-        $db = $this->getConnection();
-        $grammar = $db->getQueryGrammar();
 
-        $table = $grammar->wrapTable($this->getTable());
-        $column = $grammar->wrap($attribute);
-        $key = $grammar->wrap($this->getKeyName());
-        $db->update(
-            "UPDATE {$table} SET {$column} = JSON_SET(COALESCE({$column}, '{}'), ?, ?) WHERE {$key} = ?",
-            ['$.'.$locale, $path, $this->getKey()]
-        );
+        $this->newQuery()
+            ->where($this->getKeyName(), $this->getKey())
+            ->update([
+                "{$attribute}->{$locale}" => $path,
+            ]);
     }
 }

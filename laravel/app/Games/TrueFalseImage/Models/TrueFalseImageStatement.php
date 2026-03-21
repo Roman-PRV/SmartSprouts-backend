@@ -37,6 +37,13 @@ class TrueFalseImageStatement extends Model implements TtsAudioInterface
         'is_true' => 'boolean',
     ];
 
+    protected $attributes = [
+        'statement' => '{}',
+        'explanation' => '{}',
+        'statement_audio_url' => '{}',
+        'explanation_audio_url' => '{}',
+    ];
+
     /** @var array<int, string> */
     public $translatable = ['statement', 'explanation', 'statement_audio_url', 'explanation_audio_url'];
 
