@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Trait HasTtsAudio
@@ -63,6 +62,7 @@ trait HasTtsAudio
     {
         if (method_exists($this, 'setTranslation')) {
             $this->setAudioPathJson($attribute, $locale, $path);
+            $this->touch();
         } else {
             $this->forceFill([$attribute => $path])->save();
         }
@@ -78,8 +78,14 @@ trait HasTtsAudio
      */
     private function setAudioPathJson(string $attribute, string $locale, string $path): void
     {
-        DB::update(
-            "UPDATE `{$this->getTable()}` SET `{$attribute}` = JSON_SET(COALESCE(`{$attribute}`, '{}'), ?, ?) WHERE `{$this->getKeyName()}` = ?",
+        $db = $this->getConnection();
+        $grammar = $db->getQueryGrammar();
+
+        $table = $grammar->wrapTable($this->getTable());
+        $column = $grammar->wrap($attribute);
+        $key = $grammar->wrap($this->getKeyName());
+        $db->update(
+            "UPDATE {$table} SET {$column} = JSON_SET(COALESCE({$column}, '{}'), ?, ?) WHERE {$key} = ?",
             ['$.'.$locale, $path, $this->getKey()]
         );
     }

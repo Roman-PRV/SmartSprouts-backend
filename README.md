@@ -41,6 +41,7 @@ See the instructions in the corresponding repository.
 - `test` Runs Laravel's PHPUnit test suite inside the container to validate application logic and ensure everything works as expected.
 - `quality` Aggregates all quality checks: formatting (pint), static analysis (phpstan), and tests (phpunit). Ideal for pre-commit or CI pipelines.
 - `prepare` Initializes Husky Git hooks. Required once after installing dependencies to enable commit message and pre-commit checks.
+- `queue:restart` Restarts the Laravel queue worker inside the container. Required to apply PHP code changes to daemonized queue workers.
 
 ## 5. Database Schema
 ```mermaid
