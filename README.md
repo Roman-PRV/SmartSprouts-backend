@@ -150,6 +150,47 @@ php artisan l5-swagger:generate
 
 ## 7. Folder Structure
 
+```
+SmartSprouts-backend/
+├── laravel/                        # Laravel application root
+│   ├── app/
+│   │   ├── Console/                # Artisan commands
+│   │   ├── Contracts/              # Interfaces / abstractions
+│   │   ├── DTO/                    # Data Transfer Objects
+│   │   ├── Enums/                  # PHP Enums
+│   │   ├── Events/                 # Domain events
+│   │   ├── Exceptions/             # Custom exception classes
+│   │   ├── Facades/                # Laravel facades
+│   │   ├── Games/                  # Game-specific logic (TrueFalseImage, TrueFalseText, …)
+│   │   ├── Helpers/                # Global helper functions
+│   │   ├── Http/                   # Controllers, Requests, Resources, Middleware
+│   │   ├── Jobs/                   # Queue jobs (e.g. TTS generation)
+│   │   ├── Listeners/              # Event listeners
+│   │   ├── Models/                 # Eloquent models
+│   │   ├── Providers/              # Service providers
+│   │   ├── Services/               # Application services
+│   │   │   ├── Media/              # Media processing
+│   │   │   ├── Translation/        # Translation helpers
+│   │   │   └── Tts/                # TTS orchestration, storage, providers
+│   │   └── Traits/                 # Shared model traits (e.g. HasTtsAudio)
+│   ├── config/                     # Laravel & custom config files (ai.php, games.php, …)
+│   ├── database/                   # Migrations, seeders, factories
+│   ├── docker/                     # Dockerfile, entrypoint.sh, PHP/OPcache config
+│   ├── resources/                  # Views, lang files
+│   ├── routes/                     # api.php, web.php, console.php
+│   ├── storage/                    # Logs, cache, uploaded files
+│   └── tests/
+│       ├── Feature/                # Feature (HTTP-level) tests
+│       └── Unit/                   # Unit tests
+├── nginx/                          # Nginx virtual host config
+├── python-services/
+│   └── ukrainian-tts/              # Self-hosted Ukrainian TTS microservice
+├── docker-compose.yml              # Base services (all environments)
+├── docker-compose.override.yml     # Dev overrides (auto-loaded by Docker Compose)
+├── docker-compose.prod.yml         # Production overrides
+└── package.json                    # Root NPM scripts (lint, test, queue:restart, …)
+```
+
 ## 8. Development Flow
 
 ### 8.1 Pull Request Flow
