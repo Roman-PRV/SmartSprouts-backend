@@ -8,9 +8,6 @@ services:
   laravel:
     build:
       target: dev          # Builds the 'dev' stage (includes Xdebug)
-    environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
     volumes:
       - ./laravel:/var/www                   # Hot-reload: source code from host
       - vendor_data:/var/www/vendor          # Preserve vendor across rebuilds

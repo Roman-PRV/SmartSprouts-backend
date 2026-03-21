@@ -12,9 +12,6 @@ services:
     restart: always
     env_file:
       - ./laravel/.env     # No bind-mount in prod — credentials must be injected via env_file
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
     # No bind-mount: code is baked into the image at build time via COPY in Dockerfile.
     # public/ is served via the laravel_public named volume (populated by entrypoint.sh).
 
