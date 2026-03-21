@@ -43,6 +43,7 @@ services:
     container_name: pp_queue_worker
     restart: unless-stopped
     working_dir: /var/www
+    user: "33:33"
     entrypoint: ["php", "artisan", "queue:work", "--queue=tts,default", "--tries=3", "--sleep=3", "--timeout=120"]
     volumes:
       - laravel_public:/var/www/public
