@@ -46,7 +46,7 @@ services:
     user: "33:33"
     env_file:
       - ./laravel/.env
-    entrypoint: ["sh", "-c", "php artisan queue:work --queue=tts,default --tries=3 --sleep=3 --timeout=$${QUEUE_WORKER_TIMEOUT:-120}"]
+    entrypoint: ["sh", "-c", "php artisan queue:work --queue=$${QUEUE_WORKER_QUEUES:-$${TTS_QUEUE:-tts},default} --tries=3 --sleep=3 --timeout=$${QUEUE_WORKER_TIMEOUT:-120}"]
     volumes:
       - laravel_public:/var/www/public
       - ./laravel/storage:/var/www/storage
