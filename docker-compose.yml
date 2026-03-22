@@ -44,7 +44,9 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     user: "33:33"
-    entrypoint: ["php", "artisan", "queue:work", "--queue=tts,default", "--tries=3", "--sleep=3", "--timeout=120"]
+    env_file:
+      - ./laravel/.env
+    entrypoint: ["sh", "-c", "php artisan queue:work --queue=tts,default --tries=3 --sleep=3 --timeout=$${QUEUE_WORKER_TIMEOUT:-120}"]
     volumes:
       - laravel_public:/var/www/public
       - ./laravel/storage:/var/www/storage

@@ -82,11 +82,12 @@ class TtsTestModel extends Model
     use HasTtsAudio;
 
     protected $table = 'tts_test_models';
+
     protected $guarded = [];
 
     // Defining translatable makes Spatie package cast the column correctly automatically for the test
     public $translatable = ['audio_paths'];
-    
+
     // Explicit array cast for Spatie < v6 / Laravel contexts
     protected $casts = [
         'audio_paths' => 'array',
@@ -98,5 +99,6 @@ class TtsTestModelNonTranslatable extends Model
     use HasTtsAudio;
 
     protected $table = 'tts_test_models'; // reuse the same test table
+
     protected $guarded = [];
 }
