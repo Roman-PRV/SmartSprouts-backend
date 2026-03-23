@@ -50,14 +50,36 @@ trait HasTtsAudio
         return $this->{$attribute} ?? null;
     }
 
+    /**
+     * Atomically update a single locale's audio path.
+     *
+     * For Spatie Translatable models (JSON column): uses a single atomic
+     * JSON_SET SQL statement instead of read-modify-write, which eliminates
+     * the lost-update race condition when multiple queue jobs write different
+     * locales to the same JSON column concurrently.
+     */
     public function setAudioPath(string $attribute, string $locale, string $path): void
     {
         if (method_exists($this, 'setTranslation')) {
-            $this->setTranslation($attribute, $locale, $path);
+            $this->getConnection()->transaction(function () use ($attribute, $locale, $path) {
+                $this->setAudioPathJson($attribute, $locale, $path);
+                $this->touch();
+            });
         } else {
-            $this->{$attribute} = $path;
+            $this->forceFill([$attribute => $path])->save();
         }
+    }
 
-        $this->save();
+    /**
+     * Atomically patch one locale key inside a Spatie Translatable JSON column.
+     */
+    private function setAudioPathJson(string $attribute, string $locale, string $path): void
+    {
+
+        $this->newQuery()
+            ->where($this->getKeyName(), $this->getKey())
+            ->update([
+                "{$attribute}->{$locale}" => $path,
+            ]);
     }
 }

@@ -24,6 +24,12 @@ class TrueFalseTextLevel extends Level implements TtsAudioInterface
         'text_audio_url',
     ];
 
+    protected $attributes = [
+        'title' => '{}',
+        'text' => '{}',
+        'text_audio_url' => '{}',
+    ];
+
     /** @var array<int, string> */
     public $translatable = ['title', 'text', 'text_audio_url'];
 

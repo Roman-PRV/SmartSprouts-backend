@@ -8,9 +8,6 @@ services:
   laravel:
     build:
       target: dev          # Builds the 'dev' stage (includes Xdebug)
-    environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
     volumes:
       - ./laravel:/var/www                   # Hot-reload: source code from host
       - vendor_data:/var/www/vendor          # Preserve vendor across rebuilds
@@ -20,7 +17,18 @@ services:
       - app-network
       - dev-local-network                    # Connects to Kokoro TTS and other local dev services
 
+  queue-worker:
+    build:
+      target: dev
+    volumes:
+      - ./laravel:/var/www
+      - vendor_data:/var/www/vendor
+    networks:
+      - app-network
+      - dev-local-network
+
   mysql:
+
     ports:
       - "3306:3306"   # Expose to host for local DB clients (TablePlus, DBeaver)
 
