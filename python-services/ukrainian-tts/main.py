@@ -9,6 +9,7 @@ import asyncio
 import io
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class SynthesizeRequest(BaseModel):
     """Request model for text synthesis."""
-    text: str = Field(..., min_length=1, max_length=500, description="Text to synthesize")
+    text: str = Field(..., min_length=1, description="Text to synthesize")
     speaker: str = Field(default="lada", description="Speaker name")
 
 
@@ -139,6 +140,15 @@ async def synthesize_speech(request: Request, body: SynthesizeRequest):
         try:
             # Run synthesis in thread pool to avoid blocking event loop
             loop = asyncio.get_event_loop()
+            max_total_length = int(os.environ.get("TTS_MAX_TEXT_LENGTH", "500"))
+            
+            if len(body.text) > max_total_length:
+                 logger.warning(f"Text too long: {len(body.text)} > {max_total_length}")
+                 raise HTTPException(
+                     status_code=400, 
+                     detail=f"Text is too long. Maximum allowed length is {max_total_length} characters."
+                 )
+
             mp3_data = await loop.run_in_executor(
                 None,
                 _synthesize_sync,
@@ -186,30 +196,90 @@ def _synthesize_sync(tts_model: TTS, text: str, speaker: str) -> bytes:
             voice = v.value
             break
     
-    # Use io.BytesIO for in-memory WAV generation via context manager
+    # Define max chunk size for stable processing (e.g., 200 characters)
+    max_chunk_size = int(os.environ.get("TTS_CHUNK_SIZE", "200"))
+    
+    if len(text) <= max_chunk_size:
+        return _process_chunk_to_mp3(tts_model, text, voice)
+    
+    # Split text into chunks
+    final_chunks = _split_text_into_chunks(text, max_chunk_size)
+
+    logger.info(f"Synthesizing in {len(final_chunks)} chunks")
+    
+    audio_segments = []
+    for chunk in final_chunks:
+        if not chunk.strip():
+            continue
+        segment = _process_chunk_to_segment(tts_model, chunk, voice)
+        audio_segments.append(segment)
+    
+    if not audio_segments:
+        raise ValueError("No audio segments generated")
+        
+    # Combine segments
+    combined_audio = audio_segments[0]
+    for next_segment in audio_segments[1:]:
+        combined_audio += next_segment
+        
+    with io.BytesIO() as mp3_buffer:
+        combined_audio.export(mp3_buffer, format="mp3", bitrate="128k")
+        return mp3_buffer.getvalue()
+
+
+def _split_text_into_chunks(text: str, max_chunk_size: int) -> list[str]:
+    """Split text into manageable chunks by punctuation and length."""
+    # Split by '.', '!', '?', or newline, keeping the delimiter
+    chunks_raw = re.split(r'([.!?\n]+)', text)
+    
+    processed_chunks = []
+    current_chunk = ""
+    
+    for i in range(0, len(chunks_raw), 2):
+        sentence = chunks_raw[i]
+        delimiter = chunks_raw[i+1] if i+1 < len(chunks_raw) else ""
+        combined = sentence + delimiter
+        
+        if len(current_chunk) + len(combined) > max_chunk_size and current_chunk:
+            processed_chunks.append(current_chunk.strip())
+            current_chunk = combined
+        else:
+            current_chunk += combined
+            
+    if current_chunk:
+        processed_chunks.append(current_chunk.strip())
+    
+    # If a single chunk is still too long (no punctuation), force split it
+    final_chunks = []
+    for chunk in processed_chunks:
+        if len(chunk) > max_chunk_size:
+            for i in range(0, len(chunk), max_chunk_size):
+                final_chunks.append(chunk[i:i+max_chunk_size])
+        else:
+            final_chunks.append(chunk)
+            
+    return final_chunks
+
+
+def _process_chunk_to_segment(tts_model: TTS, text: str, voice: str) -> AudioSegment:
+    """Helper to process a single chunk and return AudioSegment."""
     with io.BytesIO() as buffer:
         try:
-            # Generate speech - tts() writes to file-like object
-            _, output_text = tts_model.tts(text, voice, Stress.Dictionary.value, buffer)
-            
-            # Use debug level for potentially sensitive text
-            logger.debug(f"Generated speech with stressed text: {output_text}")
-            logger.info(f"Generated speech: text_length={len(text)} characters")
-            
-            # Get bytes from buffer
+            # Generate speech
+            tts_model.tts(text, voice, Stress.Dictionary.value, buffer)
             buffer.seek(0)
-            
-            # Convert WAV to MP3 using pydub
-            logger.info("Converting WAV to MP3...")
-            audio = AudioSegment.from_wav(buffer)
-            
-            with io.BytesIO() as mp3_buffer:
-                audio.export(mp3_buffer, format="mp3", bitrate="128k")
-                return mp3_buffer.getvalue()
-                
+            return AudioSegment.from_wav(buffer)
         except Exception as e:
-            logger.error(f"Error in synchronous synthesis: {e}")
+            logger.error(f"Error in chunk synthesis: {e}")
             raise
+
+
+def _process_chunk_to_mp3(tts_model: TTS, text: str, voice: str) -> bytes:
+    """Helper to process a single chunk and return MP3 bytes."""
+    audio = _process_chunk_to_segment(tts_model, text, voice)
+    with io.BytesIO() as mp3_buffer:
+        audio.export(mp3_buffer, format="mp3", bitrate="128k")
+        return mp3_buffer.getvalue()
 
 
 if __name__ == "__main__":
