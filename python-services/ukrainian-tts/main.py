@@ -52,7 +52,7 @@ CHUNK_SIZE = get_env_int("TTS_CHUNK_SIZE", 200)
 class SynthesizeRequest(BaseModel):
     """Request model for text synthesis."""
     text: str = Field(..., min_length=1, description="Text to synthesize")
-    speaker: str = Field(default="tetiana", description="Speaker name")
+    speaker: str = Field(default="lada", description="Speaker name")
 
 
 class HealthResponse(BaseModel):

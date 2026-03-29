@@ -282,7 +282,7 @@ Microservice for Ukrainian speech synthesis. Uses the [robinhad/ukrainian-tts](h
 
 1. Open `laravel/.env`.
 2. Change the value of `UKRAINIAN_TTS_SPEAKER` to one of the speakers available below.
-3. Restart the queue worker to apply the changes:
+3. Restart the queue worker inside the Laravel container (or use the `queue:restart` script described in the Scripts section) to apply the changes:
    ```bash
    php artisan queue:restart
    ```
