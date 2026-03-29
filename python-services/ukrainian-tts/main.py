@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import Response, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydub import AudioSegment
 from ukrainian_tts.tts import TTS, Voices, Stress
 
@@ -24,6 +24,11 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+class EmptyAudioError(Exception):
+    """Raised when synthesis produces no audio segments (e.g. whitespace-only input that passed schema)."""
+    pass
 
 
 def get_env_int(name: str, default: int, min_value: int = 1) -> int:
@@ -51,8 +56,15 @@ CHUNK_SIZE = get_env_int("TTS_CHUNK_SIZE", 200)
 
 class SynthesizeRequest(BaseModel):
     """Request model for text synthesis."""
-    text: str = Field(..., min_length=1, description="Text to synthesize")
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_LENGTH, description="Text to synthesize")
     speaker: str = Field(default="lada", description="Speaker name")
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def text_must_not_be_blank(cls, v: str) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Text must not be blank")
+        return v
 
 
 class HealthResponse(BaseModel):
@@ -186,10 +198,15 @@ async def synthesize_speech(request: Request, body: SynthesizeRequest):
                 }
             )
 
+        except EmptyAudioError:
+            # Defense-in-depth: whitespace-only text that bypassed schema validation
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Text must not be blank"
+            )
         except MemoryError:
             logger.exception("OOM during synthesis")
             raise HTTPException(
-                # Fix #3: 507 is WebDAV disk-storage status; 503 is correct for OOM
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Server is temporarily unavailable due to high load"
             )
@@ -216,7 +233,7 @@ def _synthesize_sync(tts_model: TTS, text: str, speaker: str) -> bytes:
         MP3 audio data as bytes
     """
     # Dynamic speaker mapping: search for speaker in Voices enum
-    voice = Voices.Tetiana.value  # Default
+    voice = Voices.Lada.value  # Default
     speaker_clean = speaker.strip().lower()
 
     for v in Voices:
@@ -240,7 +257,7 @@ def _synthesize_sync(tts_model: TTS, text: str, speaker: str) -> bytes:
         audio_segments.append(segment)
 
     if not audio_segments:
-        raise ValueError("No audio segments generated")
+        raise EmptyAudioError("No audio segments generated")
 
     # Combine segments
     combined_audio = audio_segments[0]
