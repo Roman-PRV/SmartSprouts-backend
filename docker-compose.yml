@@ -115,6 +115,9 @@ services:
       dockerfile: Dockerfile
     container_name: pp_ukrainian_tts
     restart: unless-stopped
+    environment:
+      - TTS_MAX_TEXT_LENGTH=${TTS_MAX_TEXT_LENGTH:-2000}
+      - TTS_CHUNK_SIZE=${TTS_CHUNK_SIZE:-200}
     networks:
       - app-network
 

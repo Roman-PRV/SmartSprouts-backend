@@ -274,6 +274,31 @@ KOKORO_TTS_VOICE_ES=ef_dora
 
 ---
 
+### 8.5 Ukrainian TTS
+
+Microservice for Ukrainian speech synthesis. Uses the [robinhad/ukrainian-tts](https://github.com/robinhad/ukrainian-tts) model.
+
+#### How to change the voice
+
+1. Open `laravel/.env`.
+2. Change the value of `UKRAINIAN_TTS_SPEAKER` to one of the speakers available below.
+3. Restart the queue worker inside the Laravel container (or use the `queue:restart` script described in the Scripts section) to apply the changes:
+   ```bash
+   php artisan queue:restart
+   ```
+
+#### Available voices
+
+| Voice | Gender | Example |
+| :--- | :--- | :--- |
+| **Oleksa** | Male | Deep, announcer-like |
+| **Tetiana** | Female | Gentle, natural |
+| **Dmytro** | Male | Neutral, universal |
+| **Lada** | Female | Emotional, expressive |
+| **Mykyta** | Male | Young timbre |
+
+---
+
 ## 9. Contributors:
 
 - **Prokopenko Roman** github: _roman-prv_, discord: _@roman_27794_
