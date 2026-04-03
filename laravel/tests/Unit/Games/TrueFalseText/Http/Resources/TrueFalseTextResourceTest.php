@@ -41,6 +41,7 @@ class TrueFalseTextResourceTest extends TestCase
     {
         $level = new TrueFalseTextLevel;
         $level->setTranslation('title', 'en', 'English Title');
+        $level->setTranslation('title_audio_url', 'en', 'en_title_audio.mp3');
         $level->setTranslation('text_audio_url', 'en', 'en_text_audio.mp3');
 
         $resource = new TrueFalseTextLevelResource($level);
@@ -50,6 +51,7 @@ class TrueFalseTextResourceTest extends TestCase
         $this->assertEquals('English Title', $data['title']);
 
         // Audio SHOULD NOT fallback
+        $this->assertNull($data['title_audio_url']);
         $this->assertNull($data['text_audio_url']);
     }
 }
