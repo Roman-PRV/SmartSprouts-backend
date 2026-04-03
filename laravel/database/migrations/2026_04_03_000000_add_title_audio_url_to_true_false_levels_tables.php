@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,6 +19,9 @@ return new class extends Migration
         Schema::table('true_false_text_levels', function (Blueprint $table) {
             $table->json('title_audio_url')->nullable()->after('title');
         });
+
+        DB::table('true_false_image_levels')->whereNull('title_audio_url')->update(['title_audio_url' => '{}']);
+        DB::table('true_false_text_levels')->whereNull('title_audio_url')->update(['title_audio_url' => '{}']);
     }
 
     /**
