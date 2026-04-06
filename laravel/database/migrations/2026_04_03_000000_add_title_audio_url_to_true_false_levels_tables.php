@@ -12,6 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Note: MySQL/MariaDB does not support transactional DDL — any Schema::table
+        // call causes an implicit commit and cannot be rolled back automatically.
         Schema::table('true_false_image_levels', function (Blueprint $table) {
             $table->json('title_audio_url')->nullable()->after('title');
         });
