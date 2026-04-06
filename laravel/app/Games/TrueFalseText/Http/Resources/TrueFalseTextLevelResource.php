@@ -34,7 +34,6 @@ class TrueFalseTextLevelResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-
         /** @var TrueFalseTextLevel $level */
         $level = $this->resource;
         $locale = app()->getLocale();

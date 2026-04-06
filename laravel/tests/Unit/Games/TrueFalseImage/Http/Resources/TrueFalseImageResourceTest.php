@@ -6,12 +6,10 @@ use App\Games\TrueFalseImage\Http\Resources\TrueFalseImageLevelResource;
 use App\Games\TrueFalseImage\Http\Resources\TrueFalseImageStatementResource;
 use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class TrueFalseImageResourceTest extends TestCase
 {
-    use RefreshDatabase;
 
     protected function setUp(): void
     {

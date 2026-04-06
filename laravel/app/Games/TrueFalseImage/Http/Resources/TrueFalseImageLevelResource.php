@@ -5,6 +5,7 @@ namespace App\Games\TrueFalseImage\Http\Resources;
 use App\Facades\Tts;
 use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Services\Tts\DTO\TtsAudioContext;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TrueFalseImageLevelResource extends JsonResource
@@ -47,10 +48,9 @@ class TrueFalseImageLevelResource extends JsonResource
      *     )
      * )
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array<string,mixed>
      */
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         /** @var TrueFalseImageLevel $level */
         $level = $this->resource;
