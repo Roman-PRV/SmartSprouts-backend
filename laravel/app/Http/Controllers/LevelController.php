@@ -201,13 +201,17 @@ class LevelController extends Controller
      *                         "statement_id": 10,
      *                         "correct": true,
      *                         "is_true": true,
-     *                         "explanation": "Because of Rayleigh scattering"
+     *                         "explanation": "Because of Rayleigh scattering",
+     *                         "statement_audio_url": "https://example.com/storage/audio/uk.mp3",
+     *                         "explanation_audio_url": null
      *                     },
      *                     {
      *                         "statement_id": 11,
      *                         "correct": false,
      *                         "is_true": false,
-     *                         "explanation": "Cats cannot fly naturally"
+     *                         "explanation": "Cats cannot fly naturally",
+     *                         "statement_audio_url": null,
+     *                         "explanation_audio_url": null
      *                     }
      *                 }
      *             }

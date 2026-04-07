@@ -1,0 +1,29 @@
+[pr_reviewer]
+# Specific instructions for Laravel 10 environment
+extra_instructions = """
+1. Follow Laravel 10 best practices and conventions.
+2. Check for N+1 query problems in Eloquent relationships and suggest 'eager loading' where needed.
+3. Ensure strict adherence to PSR-12 and Laravel Pint formatting rules.
+4. Security: Check for mass assignment vulnerabilities in models, SQL injections, and proper XSS protection.
+5. Verify that validation logic is placed in Request classes or handled properly.
+6. Look for hardcoded strings or configurations; suggest using lang files or 'config()'/'env()' helpers.
+7. Ensure that sensitive data is not being logged or exposed.
+8. Check if new migrations are reversible (down() method) and follow proper indexing.
+"""
+enable_score = true
+num_code_suggestions = 5
+
+[pr_description]
+publish_description_as_comment = true
+
+[ignore]
+# Ignore system and vendor files
+files = [
+    "vendor/*",
+    "storage/*",
+    "public/build/*",
+    "public/vendor/*",
+    "composer.lock",
+    "*.log",
+    ".env.example"
+]

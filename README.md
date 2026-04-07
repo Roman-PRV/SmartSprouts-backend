@@ -41,6 +41,7 @@ See the instructions in the corresponding repository.
 - `test` Runs Laravel's PHPUnit test suite inside the container to validate application logic and ensure everything works as expected.
 - `quality` Aggregates all quality checks: formatting (pint), static analysis (phpstan), and tests (phpunit). Ideal for pre-commit or CI pipelines.
 - `prepare` Initializes Husky Git hooks. Required once after installing dependencies to enable commit message and pre-commit checks.
+- `queue:restart` Restarts the Laravel queue worker inside the container. Required to apply PHP code changes to daemonized queue workers.
 
 ## 5. Database Schema
 ```mermaid
@@ -145,11 +146,50 @@ To regenerate the local spec if it is out of date:
 ```bash
 # inside the Laravel container
 php artisan l5-swagger:generate
-# make the spec public (if your setup requires it)
-mkdir -p public/docs && cp storage/api-docs/api-docs.json public/docs/api-docs.json
 ```
 
 ## 7. Folder Structure
+
+```
+SmartSprouts-backend/
+├── laravel/                        # Laravel application root
+│   ├── app/
+│   │   ├── Console/                # Artisan commands
+│   │   ├── Contracts/              # Interfaces / abstractions
+│   │   ├── DTO/                    # Data Transfer Objects
+│   │   ├── Enums/                  # PHP Enums
+│   │   ├── Events/                 # Domain events
+│   │   ├── Exceptions/             # Custom exception classes
+│   │   ├── Facades/                # Laravel facades
+│   │   ├── Games/                  # Game-specific logic (TrueFalseImage, TrueFalseText, …)
+│   │   ├── Helpers/                # Global helper functions
+│   │   ├── Http/                   # Controllers, Requests, Resources, Middleware
+│   │   ├── Jobs/                   # Queue jobs (e.g. TTS generation)
+│   │   ├── Listeners/              # Event listeners
+│   │   ├── Models/                 # Eloquent models
+│   │   ├── Providers/              # Service providers
+│   │   ├── Services/               # Application services
+│   │   │   ├── Media/              # Media processing
+│   │   │   ├── Translation/        # Translation helpers
+│   │   │   └── Tts/                # TTS orchestration, storage, providers
+│   │   └── Traits/                 # Shared model traits (e.g. HasTtsAudio)
+│   ├── config/                     # Laravel & custom config files (ai.php, games.php, …)
+│   ├── database/                   # Migrations, seeders, factories
+│   ├── docker/                     # Dockerfile, entrypoint.sh, PHP/OPcache config
+│   ├── resources/                  # Views, lang files
+│   ├── routes/                     # api.php, web.php, console.php
+│   ├── storage/                    # Logs, cache, uploaded files
+│   └── tests/
+│       ├── Feature/                # Feature (HTTP-level) tests
+│       └── Unit/                   # Unit tests
+├── nginx/                          # Nginx virtual host config
+├── python-services/
+│   └── ukrainian-tts/              # Self-hosted Ukrainian TTS microservice
+├── docker-compose.yml              # Base services (all environments)
+├── docker-compose.override.yml     # Dev overrides (auto-loaded by Docker Compose)
+├── docker-compose.prod.yml         # Production overrides
+└── package.json                    # Root NPM scripts (lint, test, queue:restart, …)
+```
 
 ## 8. Development Flow
 
@@ -189,6 +229,75 @@ Examples:
 
 - `feat: add dashboard component ss-45`
 - `fix: update dashboard card size ss-212`
+
+### 8.4 Kokoro TTS (dev only)
+
+For Spanish and English TTS in local development, the project uses a self-hosted [Kokoro-82M](https://github.com/hexgrad/kokoro) container.
+
+It is an **independent** Docker Compose project, not part of this repository.
+
+#### Shared Docker network
+
+Both projects communicate via an external Docker network `dev-local-network`.
+This network is declared in `docker-compose.override.yml` (dev only) and **does not affect production**.
+
+Create it **once** before the first run:
+
+```bash
+docker network create dev-local-network
+```
+
+#### Starting Kokoro
+
+```bash
+cd D:/Coding/pet-project/Kokoro/docker/kokoro
+docker compose up -d --build
+```
+
+After start, the service is available inside the Docker network at:
+```
+http://kokoro-tts:8880
+```
+
+#### Environment variables
+
+Ensure the following are set in `.env` (see `.env.example`):
+
+```ini
+KOKORO_TTS_BASE_URL=http://kokoro-tts:8880/tts
+KOKORO_TTS_DEFAULT_VOICE=af_heart
+KOKORO_TTS_VOICE_EN=af_heart
+KOKORO_TTS_VOICE_ES=ef_dora
+```
+
+> Kokoro provider is active **only** in `APP_ENV=local`. Production uses ElevenLabs.
+
+---
+
+### 8.5 Ukrainian TTS
+
+Microservice for Ukrainian speech synthesis. Uses the [robinhad/ukrainian-tts](https://github.com/robinhad/ukrainian-tts) model.
+
+#### How to change the voice
+
+1. Open `laravel/.env`.
+2. Change the value of `UKRAINIAN_TTS_SPEAKER` to one of the speakers available below.
+3. Restart the queue worker inside the Laravel container (or use the `queue:restart` script described in the Scripts section) to apply the changes:
+   ```bash
+   php artisan queue:restart
+   ```
+
+#### Available voices
+
+| Voice | Gender | Example |
+| :--- | :--- | :--- |
+| **Oleksa** | Male | Deep, announcer-like |
+| **Tetiana** | Female | Gentle, natural |
+| **Dmytro** | Male | Neutral, universal |
+| **Lada** | Female | Emotional, expressive |
+| **Mykyta** | Male | Young timbre |
+
+---
 
 ## 9. Contributors:
 

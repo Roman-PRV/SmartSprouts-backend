@@ -10,6 +10,7 @@ use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TrueFalseImageServiceTest extends TestCase
@@ -22,6 +23,11 @@ class TrueFalseImageServiceTest extends TestCase
     {
         parent::setUp();
         $this->service = new TrueFalseImageService;
+        $this->app->setLocale('uk');
+
+        // Isolate storage for tests
+        config(['ai.tts.storage.disk' => 'public']);
+        Storage::fake('public');
     }
 
     /** @test */
@@ -37,6 +43,8 @@ class TrueFalseImageServiceTest extends TestCase
             'statement' => 'Statement 1',
             'is_true' => true,
             'explanation' => 'Explanation 1',
+            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
         ]);
 
         $statement2 = TrueFalseImageStatement::create([
@@ -44,6 +52,8 @@ class TrueFalseImageServiceTest extends TestCase
             'statement' => 'Statement 2',
             'is_true' => false,
             'explanation' => 'Explanation 2',
+            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
         ]);
 
         $answers = [
@@ -59,6 +69,8 @@ class TrueFalseImageServiceTest extends TestCase
         $this->assertArrayHasKey('results', $result);
         $this->assertCount(2, $result['results']);
         $this->assertTrue($result['results'][0]['correct']);
+        $this->assertEquals(url('/storage/stmt1_uk.mp3'), $result['results'][0]['statement_audio_url']);
+        $this->assertEquals(url('/storage/expl1_uk.mp3'), $result['results'][0]['explanation_audio_url']);
         $this->assertTrue($result['results'][1]['correct']);
     }
 
@@ -75,6 +87,8 @@ class TrueFalseImageServiceTest extends TestCase
             'statement' => 'Statement',
             'is_true' => true,
             'explanation' => 'Explanation',
+            'statement_audio_url' => ['uk' => 'stmt_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl_uk.mp3'],
         ]);
 
         $game = Game::factory()->create();
@@ -168,6 +182,8 @@ class TrueFalseImageServiceTest extends TestCase
             'statement' => 'Statement 1',
             'is_true' => true,
             'explanation' => 'Explanation 1',
+            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
         ]);
 
         $statement2 = TrueFalseImageStatement::create([
@@ -175,6 +191,8 @@ class TrueFalseImageServiceTest extends TestCase
             'statement' => 'Statement 2',
             'is_true' => false,
             'explanation' => 'Explanation 2',
+            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
         ]);
 
         $game = Game::factory()->create();
@@ -205,6 +223,8 @@ class TrueFalseImageServiceTest extends TestCase
             'statement' => 'Statement',
             'is_true' => true,
             'explanation' => 'Explanation text',
+            'statement_audio_url' => ['uk' => 'stmt_uk.mp3'],
+            'explanation_audio_url' => ['uk' => 'expl_uk.mp3'],
         ]);
 
         $game = Game::factory()->create();
@@ -220,10 +240,47 @@ class TrueFalseImageServiceTest extends TestCase
         $this->assertArrayHasKey('correct', $firstResult);
         $this->assertArrayHasKey('is_true', $firstResult);
         $this->assertArrayHasKey('explanation', $firstResult);
+        $this->assertArrayHasKey('statement_audio_url', $firstResult);
+        $this->assertArrayHasKey('explanation_audio_url', $firstResult);
 
         $this->assertEquals($statement->id, $firstResult['statement_id']);
         $this->assertTrue($firstResult['correct']);
         $this->assertTrue($firstResult['is_true']);
         $this->assertEquals('Explanation text', $firstResult['explanation']);
+    }
+
+    /** @test */
+    public function it_disables_audio_fallback_in_check_result(): void
+    {
+        $level = TrueFalseImageLevel::create([
+            'title' => ['en' => 'English Level'],
+            'image_url' => 'test.jpg',
+        ]);
+
+        $statement = TrueFalseImageStatement::create([
+            'level_id' => $level->id,
+            'statement' => ['en' => 'English Statement'],
+            'is_true' => true,
+            'explanation' => ['en' => 'English Explanation'],
+            'statement_audio_url' => ['en' => 'en_audio.mp3'],
+            'explanation_audio_url' => ['en' => 'en_expl.mp3'],
+        ]);
+
+        $game = Game::factory()->create();
+        $user = User::factory()->create();
+        $dto = new CheckAnswersDTO($user->id, $game, $level->id, [
+            ['statement_id' => $statement->id, 'answer' => true],
+        ]);
+
+        // Current locale is 'uk' (set in setUp)
+        $result = $this->service->check($dto);
+        $firstResult = $result['results'][0];
+
+        // Text SHOULD fallback (default behavior)
+        $this->assertEquals('English Explanation', $firstResult['explanation']);
+
+        // Audio SHOULD NOT fallback
+        $this->assertNull($firstResult['statement_audio_url']);
+        $this->assertNull($firstResult['explanation_audio_url']);
     }
 }

@@ -1,6 +1,6 @@
 # Laravel
 /vendor/
-/storage/
+**/storage/
 /bootstrap/cache/
 .env
 **/.env
@@ -42,3 +42,6 @@ lerna-debug.log*
 Thumbs.db
 ehthumbs.db
 *.iml
+
+# Swagger
+/public/docs/api-docs.json

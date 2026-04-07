@@ -7,6 +7,7 @@ use App\DTO\CheckAnswersDTO;
 use App\Exceptions\TableMissingException;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
+use App\Helpers\MediaHelper;
 use App\Models\Level;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
@@ -135,6 +136,8 @@ class TrueFalseTextService implements GameServiceInterface
                 'correct' => $correct,
                 'is_true' => $statement->is_true,
                 'explanation' => $statement->explanation,
+                'statement_audio_url' => MediaHelper::getAttributeUrl($statement, 'statement_audio_url'),
+                'explanation_audio_url' => MediaHelper::getAttributeUrl($statement, 'explanation_audio_url'),
             ];
         }
 

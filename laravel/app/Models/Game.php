@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @OA\Property(property="key", type="string", example="find_the_wrong"),
  * @OA\Property(property="title", type="string", description="Full title of the game.", example="Find The Wrong"),
  * @OA\Property(property="description", type="string", description="Short description of the game.", example="Find the incorrect statement among the options."),
- * @OA\Property(property="icon_url", type="string", format="url", example="https://example.com/storage/icons/game1.png"),
+ * @OA\Property(property="icon_url", type="string", format="uri", example="https://example.com/storage/icons/game1.png"),
  * @OA\Property(property="is_active", type="boolean", example=true)
  * )
  */

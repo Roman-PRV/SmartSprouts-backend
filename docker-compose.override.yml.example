@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Copy or rename this file to docker-compose.override.yml to have it
+# automatically merged by Docker Compose when running: docker compose up
+# Do NOT use this file in production as-is.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  laravel:
+    build:
+      target: dev          # Builds the 'dev' stage (includes Xdebug)
+    volumes:
+      - ./laravel:/var/www                   # Hot-reload: source code from host
+      - vendor_data:/var/www/vendor          # Preserve vendor across rebuilds
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
+    networks:
+      - app-network
+      - dev-local-network                    # Connects to Kokoro TTS and other local dev services
+
+  queue-worker:
+    build:
+      target: dev
+    volumes:
+      - ./laravel:/var/www
+      - vendor_data:/var/www/vendor
+    networks:
+      - app-network
+      - dev-local-network
+
+  mysql:
+
+    ports:
+      - "3306:3306"   # Expose to host for local DB clients (TablePlus, DBeaver)
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
+
+networks:
+  dev-local-network:
+    external: true  # Shared with independent dev containers (e.g. kokoro-tts).
+                    # Create once: docker network create dev-local-network
+
