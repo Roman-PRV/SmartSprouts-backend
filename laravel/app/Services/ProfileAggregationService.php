@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\ConfigHelper;
 use App\Models\Game;
+use App\Models\GameResult;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -30,37 +31,33 @@ class ProfileAggregationService
      */
     public function aggregate(User $user): array
     {
-        $latestResults = $user->gameResults()
-            ->latest()
-            ->get()
-            ->unique(fn ($result) => "{$result->game_id}-{$result->level_id}");
+        $sub = GameResult::select('score', 'total_questions', DB::raw('ROW_NUMBER() OVER (PARTITION BY game_id, level_id ORDER BY created_at DESC) as rn'))
+            ->where('user_id', $user->id);
 
-        $completedLevels = $latestResults->count();
+        $aggregates = GameResult::fromSub($sub, 'sub')
+            ->where('rn', 1)
+            ->selectRaw('COUNT(*) as completed_levels, SUM(score) as total_xp, SUM(total_questions) as total_questions')
+            ->first();
 
-        $totalXp = $latestResults->sum('score');
-        $totalXp = is_numeric($totalXp) ? (int) $totalXp : 0;
-
-        $totalQuestions = $latestResults->sum('total_questions');
-        $totalQuestions = is_numeric($totalQuestions) ? (int) $totalQuestions : 0;
+        $totalXp = (int) ($aggregates?->total_xp ?? 0);
+        $completedLevels = (int) ($aggregates?->completed_levels ?? 0);
+        $totalQuestions = (int) ($aggregates?->total_questions ?? 0);
 
         $allowedMap = ConfigHelper::getStringMap('game_services.map', []);
 
-        $totalLevels = Game::query()
+        $prefixes = Game::query()
             ->where('is_active', true)
-            ->get(['table_prefix'])
-            ->reduce(
-                function (int $carry, Game $game) use ($allowedMap): int {
-                    $prefix = $game->table_prefix;
+            ->pluck('table_prefix')
+            ->filter(fn ($prefix) => is_string($prefix) && isset($allowedMap[$prefix]));
 
-                    // Validate prefix against known game services map before using in DB table name (Hardening)
-                    if (! $prefix || ! isset($allowedMap[$prefix])) {
-                        return $carry;
-                    }
+        $totalLevels = 0;
+        if ($prefixes->isNotEmpty()) {
+            $subQueries = $prefixes->map(function ($prefix) {
+                return 'SELECT COUNT(*) as cnt FROM '.$prefix.'_levels';
+            })->implode(' UNION ALL ');
 
-                    return $carry + (int) DB::table("{$prefix}_levels")->count();
-                },
-                0
-            );
+            $totalLevels = (int) DB::table(DB::raw("($subQueries) as sub"))->sum('cnt');
+        }
 
         return [
             'total_xp' => $totalXp,
