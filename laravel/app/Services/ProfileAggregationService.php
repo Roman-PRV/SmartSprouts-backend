@@ -23,7 +23,7 @@ class ProfileAggregationService
      * unified levels table in this architecture.
      *
      * @return array{
-     *     total_xp: int,
+     *     total_score: int,
      *     completed_levels: int,
      *     total_levels: int,
      *     correct_answers_percentage: float,
@@ -36,10 +36,10 @@ class ProfileAggregationService
 
         $aggregates = GameResult::fromSub($sub, 'sub')
             ->where('rn', 1)
-            ->selectRaw('COUNT(*) as completed_levels, SUM(score) as total_xp, SUM(total_questions) as total_questions')
+            ->selectRaw('COUNT(*) as completed_levels, SUM(score) as total_score, SUM(total_questions) as total_questions')
             ->first();
 
-        $totalXp = (int) ($aggregates?->total_xp ?? 0);
+        $totalScore = (int) ($aggregates?->total_score ?? 0);
         $completedLevels = (int) ($aggregates?->completed_levels ?? 0);
         $totalQuestions = (int) ($aggregates?->total_questions ?? 0);
 
@@ -60,11 +60,11 @@ class ProfileAggregationService
         }
 
         return [
-            'total_xp' => $totalXp,
+            'total_score' => $totalScore,
             'completed_levels' => $completedLevels,
             'total_levels' => $totalLevels,
             'correct_answers_percentage' => $totalQuestions > 0
-                ? round($totalXp / $totalQuestions * 100, 2)
+                ? round($totalScore / $totalQuestions * 100, 2)
                 : 0.0,
         ];
     }
