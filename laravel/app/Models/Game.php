@@ -26,7 +26,19 @@ class Game extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'id',
+        'title',
+        'key',
+        'description',
+        'table_prefix',
+        'icon_url',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function getIconUrlAttribute(): string
     {

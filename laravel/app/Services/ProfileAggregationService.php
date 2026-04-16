@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -42,11 +43,22 @@ class ProfileAggregationService
         $totalQuestions = $latestResults->sum('total_questions');
         $totalQuestions = is_numeric($totalQuestions) ? (int) $totalQuestions : 0;
 
+        $allowedMap = ConfigHelper::getStringMap('game_services.map', []);
+
         $totalLevels = Game::query()
             ->where('is_active', true)
             ->get(['table_prefix'])
             ->reduce(
-                fn (int $carry, Game $game): int => $carry + (int) DB::table("{$game->table_prefix}_levels")->count(),
+                function (int $carry, Game $game) use ($allowedMap): int {
+                    $prefix = $game->table_prefix;
+
+                    // Validate prefix against known game services map before using in DB table name (Hardening)
+                    if (! $prefix || ! isset($allowedMap[$prefix])) {
+                        return $carry;
+                    }
+
+                    return $carry + (int) DB::table("{$prefix}_levels")->count();
+                },
                 0
             );
 
