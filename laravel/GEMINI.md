@@ -121,6 +121,11 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - If you're creating a generic PHP class, use `php artisan make:class`.
 - Pass `--no-interaction` to all Artisan commands to ensure they work without user input. You should also pass the correct `--options` to ensure correct behavior.
 
+### ⚠️ CRITICAL: Database Migrations
+- **NEVER run `migrate`, `migrate:fresh`, `migrate:rollback`, or any destructive database commands without an explicit, direct command from the user.**
+- This includes `php artisan migrate`, `php artisan migrate:fresh`, `php artisan migrate:rollback`, `php artisan db:wipe`, and any equivalent Docker-wrapped variants.
+- Violating this rule can destroy production or development data irreversibly.
+
 ### Database
 - Always use proper Eloquent relationship methods with return type hints. Prefer relationship methods over raw queries or manual joins.
 - Use Eloquent models and relationships before suggesting raw database queries.
