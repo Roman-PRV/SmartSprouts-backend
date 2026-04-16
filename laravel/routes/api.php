@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,6 +23,8 @@ Route::post('auth/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('auth/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+
     Route::apiResource('games', GameController::class)->only(['index', 'show']);
 
     Route::apiResource('games.levels', LevelController::class)
