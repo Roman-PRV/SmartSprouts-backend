@@ -15,7 +15,7 @@ class ProfileAggregationService
      *
      * Statistics are calculated based on the LATEST attempt for each unique level:
      * - completed_levels: count of unique levels played (game_id + level_id)
-     * - total_xp:         sum of scores from the latest attempt of each level
+     * - total_score:         sum of scores from the latest attempt of each level
      * - total_questions:  sum of total questions from the latest attempt of each level
      *
      * total_levels is computed by summing counts across each game's dynamic

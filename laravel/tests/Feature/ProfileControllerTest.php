@@ -44,10 +44,8 @@ class ProfileControllerTest extends TestCase
             ->getJson('/api/profile')
             ->assertOk()
             ->assertJson([
-                'data' => [
-                    'name' => 'John Doe',
-                    'email' => 'john@example.com',
-                ],
+                'name' => 'John Doe',
+                'email' => 'john@example.com',
             ]);
 
         $this->assertArrayNotHasKey('password', $response->json());
@@ -62,15 +60,13 @@ class ProfileControllerTest extends TestCase
             ->getJson('/api/profile')
             ->assertOk()
             ->assertJsonStructure([
-                'data' => [
-                    'name',
-                    'email',
-                    'stats' => [
-                        'totalScore',
-                        'totalLevels',
-                        'completedLevels',
-                        'correctAnswersPercentage',
-                    ],
+                'name',
+                'email',
+                'stats' => [
+                    'totalScore',
+                    'totalLevels',
+                    'completedLevels',
+                    'correctAnswersPercentage',
                 ],
             ]);
     }
@@ -86,13 +82,11 @@ class ProfileControllerTest extends TestCase
             ->getJson('/api/profile')
             ->assertOk()
             ->assertJson([
-                'data' => [
-                    'stats' => [
-                        'totalScore' => 0,
-                        'totalLevels' => 0,
-                        'completedLevels' => 0,
-                        'correctAnswersPercentage' => 0.0,
-                    ],
+                'stats' => [
+                    'totalScore' => 0,
+                    'totalLevels' => 0,
+                    'completedLevels' => 0,
+                    'correctAnswersPercentage' => 0.0,
                 ],
             ]);
     }
@@ -125,13 +119,11 @@ class ProfileControllerTest extends TestCase
             ->getJson('/api/profile')
             ->assertOk()
             ->assertJson([
-                'data' => [
-                    'stats' => [
-                        'totalScore' => 4,
-                        'totalLevels' => 2,
-                        'completedLevels' => 2,
-                        'correctAnswersPercentage' => round(4 / 7 * 100, 2),
-                    ],
+                'stats' => [
+                    'totalScore' => 4,
+                    'totalLevels' => 2,
+                    'completedLevels' => 2,
+                    'correctAnswersPercentage' => round(4 / 7 * 100, 2),
                 ],
             ]);
     }
@@ -161,12 +153,10 @@ class ProfileControllerTest extends TestCase
             ->getJson('/api/profile')
             ->assertOk()
             ->assertJson([
-                'data' => [
-                    'stats' => [
-                        'completedLevels' => 1,
-                        'totalScore' => 5,
-                        'correctAnswersPercentage' => 100.0,
-                    ],
+                'stats' => [
+                    'completedLevels' => 1,
+                    'totalScore' => 5,
+                    'correctAnswersPercentage' => 100.0,
                 ],
             ]);
     }
@@ -192,10 +182,8 @@ class ProfileControllerTest extends TestCase
             ->getJson('/api/profile')
             ->assertOk()
             ->assertJson([
-                'data' => [
-                    'stats' => [
-                        'totalLevels' => 2,
-                    ],
+                'stats' => [
+                    'totalLevels' => 2,
                 ],
             ]);
     }

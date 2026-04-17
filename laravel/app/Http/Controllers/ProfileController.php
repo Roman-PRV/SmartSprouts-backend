@@ -44,6 +44,6 @@ class ProfileController extends Controller
 
         $stats = $this->profileAggregationService->aggregate($user);
 
-        return (new ProfileResource($user, $stats))->response();
+        return response()->json((new ProfileResource($user, $stats))->resolve($request));
     }
 }
