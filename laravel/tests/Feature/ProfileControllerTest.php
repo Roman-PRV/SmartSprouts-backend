@@ -187,4 +187,35 @@ class ProfileControllerTest extends TestCase
                 ],
             ]);
     }
+
+    /** @test */
+    public function it_gracefully_handles_missing_game_tables_without_returning_error(): void
+    {
+        $user = User::factory()->create();
+
+        // Valid game with tables
+        Game::factory()->withPrefix('true_false_image')->create(['is_active' => true]);
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'Level 1']), 'image_url' => 'img1.jpg'],
+        ]);
+
+        // Invalid game without tables
+        $invalidPrefix = 'missing_game_prefix';
+        Game::factory()->create(['table_prefix' => $invalidPrefix, 'is_active' => true]);
+
+        // Mock the configuration so it thinks this prefix is allowed
+        \Illuminate\Support\Facades\Config::set("game_services.map.$invalidPrefix", 'App\Services\MissingGameService');
+
+        // Clear cache just in case since the service uses it
+        \Illuminate\Support\Facades\Cache::flush();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/profile')
+            ->assertOk()
+            ->assertJson([
+                'stats' => [
+                    'totalLevels' => 1,
+                ],
+            ]);
+    }
 }

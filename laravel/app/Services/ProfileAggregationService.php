@@ -6,7 +6,10 @@ use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class ProfileAggregationService
 {
@@ -52,11 +55,32 @@ class ProfileAggregationService
 
         $totalLevels = 0;
         if ($prefixes->isNotEmpty()) {
-            $subQueries = $prefixes->map(function ($prefix) {
-                return 'SELECT COUNT(*) as cnt FROM '.$prefix.'_levels';
-            })->implode(' UNION ALL ');
+            $cacheKey = 'global_total_levels_'.md5($prefixes->implode('-'));
 
-            $totalLevels = (int) DB::table(DB::raw("($subQueries) as sub"))->sum('cnt');
+            /** @var int|string $cachedLevels */
+            $cachedLevels = Cache::remember($cacheKey, 3600, function () use ($prefixes): int {
+                $validPrefixes = [];
+                foreach ($prefixes as $prefix) {
+                    $tableName = "{$prefix}_levels";
+                    if (Schema::hasTable($tableName)) {
+                        $validPrefixes[] = $prefix;
+                    } else {
+                        Log::warning("Game table missing for active game prefix: {$prefix}. Aggregation will skip this table.");
+                    }
+                }
+
+                if (empty($validPrefixes)) {
+                    return 0;
+                }
+
+                $subQueries = collect($validPrefixes)->map(function ($prefix) {
+                    return 'SELECT COUNT(*) as cnt FROM '.$prefix.'_levels';
+                })->implode(' UNION ALL ');
+
+                return (int) DB::table(DB::raw("($subQueries) as sub"))->sum('cnt');
+            });
+
+            $totalLevels = (int) $cachedLevels;
         }
 
         return [
