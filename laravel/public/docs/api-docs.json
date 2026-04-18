@@ -334,6 +334,36 @@
                     }
                 }
             }
+        },
+        "/api/profile": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get authenticated user profile",
+                "description": "Returns user profile data with aggregated gameplay statistics.",
+                "operationId": "getUserProfile",
+                "responses": {
+                    "200": {
+                        "description": "Successful response with profile data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Profile"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -349,6 +379,12 @@
                     "title": {
                         "description": "The level title",
                         "type": "string"
+                    },
+                    "title_audio_url": {
+                        "description": "Audio URL for the level title",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
                     },
                     "image_url": {
                         "description": "The level image URL",
@@ -457,6 +493,13 @@
                         "description": "Level title",
                         "type": "string",
                         "example": "Level 1"
+                    },
+                    "title_audio_url": {
+                        "description": "Title audio URL",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/audio/title_uk.mp3",
+                        "nullable": true
                     },
                     "image_url": {
                         "description": "Level image URL",
@@ -615,6 +658,52 @@
                     ]
                 }
             },
+            "ProfileStats": {
+                "title": "Profile Statistics",
+                "properties": {
+                    "totalScore": {
+                        "type": "integer",
+                        "example": 1250
+                    },
+                    "totalLevels": {
+                        "type": "integer",
+                        "example": 45
+                    },
+                    "completedLevels": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "correctAnswersPercentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 88.5
+                    }
+                },
+                "type": "object"
+            },
+            "Profile": {
+                "title": "User Profile",
+                "required": [
+                    "name",
+                    "email",
+                    "stats"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john@example.com"
+                    },
+                    "stats": {
+                        "$ref": "#/components/schemas/ProfileStats"
+                    }
+                },
+                "type": "object"
+            },
             "Game": {
                 "title": "Game",
                 "required": [
@@ -705,6 +794,10 @@
         {
             "name": "Games",
             "description": "Games"
+        },
+        {
+            "name": "Profile",
+            "description": "Profile"
         }
     ]
 }

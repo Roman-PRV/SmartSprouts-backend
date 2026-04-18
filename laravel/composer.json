@@ -23,6 +23,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
         "larastan/larastan": "^2.11",
+        "laravel/boost": "^1.8",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",
@@ -78,4 +79,3 @@
     "minimum-stability": "stable",
     "prefer-stable": true
 }
-
