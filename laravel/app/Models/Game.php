@@ -27,10 +27,7 @@ class Game extends Model
     use HasFactory;
 
     protected $fillable = [
-        'id',
-        'title',
         'key',
-        'description',
         'table_prefix',
         'icon_url',
         'is_active',
