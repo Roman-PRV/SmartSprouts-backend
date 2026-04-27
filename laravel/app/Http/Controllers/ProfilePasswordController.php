@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Services\PasswordService;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class ProfilePasswordController extends Controller
 {
+    public function __construct(private readonly PasswordService $passwordService) {}
+
     /**
      * Update the authenticated user's password.
      *
@@ -31,7 +32,7 @@ class ProfilePasswordController extends Controller
      *             required={"current_password", "new_password", "new_password_confirmation"},
      *
      *             @OA\Property(property="current_password", type="string", example="secret123"),
-     *             @OA\Property(property="new_password", type="string", minLength=6, example="newSecret456"),
+     *             @OA\Property(property="new_password", type="string", minLength=8, example="newSecret456"),
      *             @OA\Property(property="new_password_confirmation", type="string", example="newSecret456")
      *         )
      *     ),
@@ -55,17 +56,7 @@ class ProfilePasswordController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
 
-        $user->password = Hash::make($request->new_password);
-        $user->save();
-
-        /** @var \Laravel\Sanctum\PersonalAccessToken $currentToken */
-        $currentToken = $user->currentAccessToken();
-        $currentTokenId = $currentToken->id;
-        $user->tokens()->where('id', '!=', $currentTokenId)->delete();
-
-        DB::table('password_reset_tokens')
-            ->where('email', $user->email)
-            ->delete();
+        $this->passwordService->update($user, $request->new_password);
 
         return response()->noContent();
     }
