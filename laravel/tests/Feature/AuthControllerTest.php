@@ -25,8 +25,8 @@ class AuthControllerTest extends TestCase
         $response = $this->withMiddleware()->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
         ]);
 
         $response->assertCreated();
@@ -38,12 +38,12 @@ class AuthControllerTest extends TestCase
     {
         $user = \App\Models\User::factory()->create([
             'email' => 'login@example.com',
-            'password' => bcrypt('password123'),
+            'password' => bcrypt('Password123!'),
         ]);
 
         $response = $this->postJson('/api/auth/login', [
             'email' => 'login@example.com',
-            'password' => 'password123',
+            'password' => 'Password123!',
         ]);
 
         $response->assertOk();
@@ -55,7 +55,7 @@ class AuthControllerTest extends TestCase
     {
         $user = \App\Models\User::factory()->create([
             'email' => 'wrong@example.com',
-            'password' => bcrypt('password123'),
+            'password' => bcrypt('Password123!'),
         ]);
 
         $response = $this->postJson('/api/auth/login', [
