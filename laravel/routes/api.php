@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfilePasswordController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,7 @@ Route::middleware('auth:sanctum')->post('auth/logout', [AuthController::class, '
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile/password', [ProfilePasswordController::class, 'update'])->name('profile.password.update');
 
     Route::apiResource('games', GameController::class)->only(['index', 'show']);
 
