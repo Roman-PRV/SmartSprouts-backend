@@ -8,11 +8,10 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * @property string $name
- * @property string $email
- * @property string $password
+ * @property string $current_password
+ * @property string $new_password
  */
-class RegisterRequest extends FormRequest
+class UpdatePasswordRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -30,20 +29,16 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
-            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'current_password' => ['required', 'string', 'current_password'],
+            'new_password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ];
     }
 
     /**
      * Handle a failed validation attempt.
      *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator
-     *                                                                 The validator instance containing the failed validation rules.
      *
      * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     *                                                           Thrown to immediately return a JSON response with validation errors and a 422 status code.
      */
     protected function failedValidation(Validator $validator): void
     {
