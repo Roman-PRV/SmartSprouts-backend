@@ -47,6 +47,9 @@ services:
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
 
+volumes:
+  vendor_data:
+
 networks:
   dev-local-network:
     external: true  # Shared with independent dev containers (e.g. kokoro-tts).

@@ -17,8 +17,6 @@ parameters:
 
   inferPrivatePropertyTypeFromConstructor: true
   treatPhpDocTypesAsCertain: true
-  checkGenericClassInNonGenericObjectType: false
-  checkMissingIterableValueType: false
   reportUnmatchedIgnoredErrors: false
 
   scanFiles:
@@ -30,7 +28,8 @@ parameters:
     - vendor/laravel/framework/src/Illuminate/Foundation/helpers.php
 
   ignoreErrors:
-    - '#Call to an undefined method Illuminate\\Support\\Collection::someLaravelMacro#'
+    - identifier: missingType.iterableValue
+    - identifier: missingType.generics
     - '#Call to an undefined method .*::json\\(\\)#'
     - '#Call to an undefined method .*::createToken\\(\\)#'
     - '#Access to an undefined property .+\\Request\\..*::\\\$[A-Za-z0-9_]+#'
