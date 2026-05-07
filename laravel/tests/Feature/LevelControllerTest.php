@@ -543,6 +543,28 @@ class LevelControllerTest extends TestCase
         }
     }
 
+    public function test_non_numeric_level_id_returns_404(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson("/api/games/{$game->id}/levels/abc")->assertStatus(404);
+        $this->actingAs($user)->postJson("/api/games/{$game->id}/levels/abc/check", [
+            'answers' => [['statement_id' => 1, 'answer' => true]],
+        ])->assertStatus(404);
+    }
+
+    public function test_non_numeric_game_id_returns_404_for_level_routes(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson('/api/games/abc/levels')->assertStatus(404);
+        $this->actingAs($user)->getJson('/api/games/abc/levels/1')->assertStatus(404);
+        $this->actingAs($user)->postJson('/api/games/abc/levels/1/check', [
+            'answers' => [['statement_id' => 1, 'answer' => true]],
+        ])->assertStatus(404);
+    }
+
     public function test_unauthenticated_user_cannot_access_game_routes(): void
     {
         $game = Game::factory()->create();
