@@ -543,13 +543,18 @@ class LevelControllerTest extends TestCase
         }
     }
 
-    public function test_non_numeric_level_id_returns_404(): void
+    public function test_non_numeric_level_id_on_show_returns_404(): void
     {
-        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
         $user = User::factory()->create();
 
-        $this->actingAs($user)->getJson("/api/games/{$game->id}/levels/abc")->assertStatus(404);
-        $this->actingAs($user)->postJson("/api/games/{$game->id}/levels/abc/check", [
+        $this->actingAs($user)->getJson('/api/games/1/levels/abc')->assertStatus(404);
+    }
+
+    public function test_non_numeric_level_id_on_check_returns_404(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/api/games/1/levels/abc/check', [
             'answers' => [['statement_id' => 1, 'answer' => true]],
         ])->assertStatus(404);
     }

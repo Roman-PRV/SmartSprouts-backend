@@ -130,11 +130,11 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function show(Game $game, int $levelId): JsonResponse
+    public function show(Game $game, int $level): JsonResponse
     {
         try {
             $service = $this->factory->for($game);
-            $level = $service->fetchLevel($levelId);
+            $level = $service->fetchLevel($level);
         } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
