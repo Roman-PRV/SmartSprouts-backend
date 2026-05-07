@@ -125,14 +125,14 @@
                 }
             }
         },
-        "/api/games/{game}/levels/{levelId}": {
+        "/api/games/{game}/levels/{level}": {
             "get": {
                 "tags": [
                     "Levels"
                 ],
                 "summary": "Get a level",
                 "description": "Returns single level data for the specified game and level id. Returns a 404 response when the level or levels table is missing.",
-                "operationId": "4ca0478b229d137747917ad7f59da69f",
+                "operationId": "7fdc660383a6c79d80b46fe46dfffb6e",
                 "parameters": [
                     {
                         "name": "game",
@@ -146,7 +146,7 @@
                         }
                     },
                     {
-                        "name": "levelId",
+                        "name": "level",
                         "in": "path",
                         "description": "Level id",
                         "required": true,
@@ -191,14 +191,14 @@
                 }
             }
         },
-        "/api/games/{game}/levels/{levelId}/check": {
+        "/api/games/{game}/levels/{level}/check": {
             "post": {
                 "tags": [
                     "Levels"
                 ],
                 "summary": "Check player answers for a level",
                 "description": "Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
-                "operationId": "ea2a7e9a47d694b2be8ca370b8ac2722",
+                "operationId": "fec3cc50167f799271d0d3c1003ee102",
                 "parameters": [
                     {
                         "name": "game",
@@ -212,7 +212,7 @@
                         }
                     },
                     {
-                        "name": "levelId",
+                        "name": "level",
                         "in": "path",
                         "description": "Level id",
                         "required": true,
@@ -356,6 +356,78 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/profile/password": {
+            "put": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Update authenticated user password",
+                "description": "Validates the current password, updates it with a new hash, revokes all existing tokens, clears pending password reset tokens, and returns a fresh Bearer token.",
+                "operationId": "updateUserPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "example": "secret123"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "newSecret456"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "example": "newSecret456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated — fresh token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation failed"
                     }
                 },
                 "security": [

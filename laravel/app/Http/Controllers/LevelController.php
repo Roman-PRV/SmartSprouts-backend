@@ -28,7 +28,10 @@ class LevelController extends Controller
     ) {}
 
     /**
-     * List levels for a game
+     * List levels for a game.
+     *
+     * @param Game $game
+     * @return JsonResponse
      *
      * @OA\Get(
      *     path="/api/games/{game}/levels",
@@ -82,10 +85,14 @@ class LevelController extends Controller
     }
 
     /**
-     * Get single level by id
+     * Get single level by id.
+     *
+     * @param Game $game
+     * @param int $levelId
+     * @return JsonResponse
      *
      * @OA\Get(
-     *     path="/api/games/{game}/levels/{levelId}",
+     *     path="/api/games/{game}/levels/{level}",
      *     tags={"Levels"},
      *     summary="Get a level",
      *     description="Returns single level data for the specified game and level id. Returns a 404 response when the level or levels table is missing.",
@@ -100,7 +107,7 @@ class LevelController extends Controller
      *     ),
      *
      *     @OA\Parameter(
-     *         name="levelId",
+     *         name="level",
      *         in="path",
      *         description="Level id",
      *         required=true,
@@ -130,11 +137,11 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function show(Game $game, int $level): JsonResponse
+    public function show(Game $game, int $levelId): JsonResponse
     {
         try {
             $service = $this->factory->for($game);
-            $level = $service->fetchLevel($level);
+            $level = $service->fetchLevel($levelId);
         } catch (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         } catch (InvalidArgumentException $e) {
@@ -149,10 +156,13 @@ class LevelController extends Controller
     }
 
     /**
-     * Check player answers for a level
+     * Check player answers for a level.
+     *
+     * @param CheckAnswersRequest $request
+     * @return JsonResponse
      *
      * @OA\Post(
-     *     path="/api/games/{game}/levels/{levelId}/check",
+     *     path="/api/games/{game}/levels/{level}/check",
      *     tags={"Levels"},
      *     summary="Check player answers for a level",
      *     description="Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
@@ -167,7 +177,7 @@ class LevelController extends Controller
      *     ),
      *
      *     @OA\Parameter(
-     *         name="levelId",
+     *         name="level",
      *         in="path",
      *         description="Level id",
      *         required=true,
