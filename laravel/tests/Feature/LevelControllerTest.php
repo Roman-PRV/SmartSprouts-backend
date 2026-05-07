@@ -546,15 +546,17 @@ class LevelControllerTest extends TestCase
     public function test_non_numeric_level_id_on_show_returns_404(): void
     {
         $user = User::factory()->create();
+        $game = Game::factory()->create();
 
-        $this->actingAs($user)->getJson('/api/games/1/levels/abc')->assertStatus(404);
+        $this->actingAs($user)->getJson("/api/games/{$game->id}/levels/abc")->assertStatus(404);
     }
 
     public function test_non_numeric_level_id_on_check_returns_404(): void
     {
         $user = User::factory()->create();
+        $game = Game::factory()->create();
 
-        $this->actingAs($user)->postJson('/api/games/1/levels/abc/check', [
+        $this->actingAs($user)->postJson("/api/games/{$game->id}/levels/abc/check", [
             'answers' => [['statement_id' => 1, 'answer' => true]],
         ])->assertStatus(404);
     }
