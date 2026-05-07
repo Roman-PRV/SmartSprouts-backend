@@ -87,7 +87,7 @@ class CheckAnswersRequest extends FormRequest
         $this->merge([
             'user_id' => auth()->id(),
             'game' => $game,
-            'level_id' => $this->route('levelId'),
+            'level_id' => $this->route('level'),
         ]);
     }
 

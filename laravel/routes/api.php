@@ -27,12 +27,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile/password', [ProfilePasswordController::class, 'update'])->name('profile.password.update');
 
-    Route::apiResource('games', GameController::class)->only(['index', 'show']);
+    Route::apiResource('games', GameController::class)->only(['index', 'show'])
+        ->whereNumber('game');
 
     Route::apiResource('games.levels', LevelController::class)
-        ->only(['index', 'show']);
+        ->only(['index', 'show'])
+        ->whereNumber(['game', 'level']);
 
-    Route::post('games/{game}/levels/{levelId}/check', [LevelController::class, 'check'])
-        ->name('games.levels.check');
+    Route::post('games/{game}/levels/{level}/check', [LevelController::class, 'check'])
+        ->name('games.levels.check')
+        ->whereNumber(['game', 'level']);
 
 });
