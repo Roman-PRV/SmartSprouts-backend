@@ -21,7 +21,7 @@ class GameControllerTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->getJson('/api/games')
             ->assertStatus(200)
-            ->assertJsonStructure([]);
+            ->assertJsonIsArray();
     }
 
     public function test_show_missing_game_returns_404(): void

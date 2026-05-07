@@ -30,8 +30,6 @@ class LevelController extends Controller
     /**
      * List levels for a game.
      *
-     * @param Game $game
-     * @return JsonResponse
      *
      * @OA\Get(
      *     path="/api/games/{game}/levels",
@@ -87,9 +85,6 @@ class LevelController extends Controller
     /**
      * Get single level by id.
      *
-     * @param Game $game
-     * @param int $levelId
-     * @return JsonResponse
      *
      * @OA\Get(
      *     path="/api/games/{game}/levels/{level}",
@@ -158,8 +153,6 @@ class LevelController extends Controller
     /**
      * Check player answers for a level.
      *
-     * @param CheckAnswersRequest $request
-     * @return JsonResponse
      *
      * @OA\Post(
      *     path="/api/games/{game}/levels/{level}/check",
