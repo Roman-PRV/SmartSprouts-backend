@@ -5,9 +5,10 @@ namespace Tests\Feature;
 use App\Models\User;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Testing\TestResponse;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
-use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -17,15 +18,27 @@ class GoogleAuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const STATE_COOKIE = 'google_oauth_state';
+
+    private const VALID_STATE = 'valid-test-state-value-32-chars-1234';
+
     /** @test */
-    public function redirect_returns_google_authorization_url(): void
+    public function redirect_returns_google_authorization_url_and_sets_state_cookie(): void
     {
         $redirectResponse = Mockery::mock(RedirectResponse::class);
         $redirectResponse->shouldReceive('getTargetUrl')
-            ->andReturn('https://accounts.google.com/o/oauth2/auth?client_id=test');
+            ->andReturn('https://accounts.google.com/o/oauth2/auth?client_id=test&state=generated');
 
         $provider = Mockery::mock(AbstractProvider::class);
         $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('with')
+            ->with(Mockery::on(function ($params): bool {
+                return is_array($params)
+                    && isset($params['state'])
+                    && is_string($params['state'])
+                    && strlen($params['state']) >= 32;
+            }))
+            ->andReturnSelf();
         $provider->shouldReceive('redirect')->andReturn($redirectResponse);
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
@@ -34,7 +47,7 @@ class GoogleAuthControllerTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure(['url'])
-            ->assertJson(['url' => 'https://accounts.google.com/o/oauth2/auth?client_id=test']);
+            ->assertCookie(self::STATE_COOKIE);
     }
 
     /** @test */
@@ -43,7 +56,7 @@ class GoogleAuthControllerTest extends TestCase
         $googleUser = $this->mockGoogleUser('google-id-123', 'newuser@gmail.com', 'New User', 'https://avatar.url');
         $this->mockSocialiteCallback($googleUser);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertOk()
             ->assertJsonStructure(['access_token', 'token_type', 'user']);
@@ -68,7 +81,7 @@ class GoogleAuthControllerTest extends TestCase
         $googleUser = $this->mockGoogleUser('google-id-456', 'existing@gmail.com', $user->name, null);
         $this->mockSocialiteCallback($googleUser);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertOk()
             ->assertJsonPath('user.id', $user->id);
@@ -87,7 +100,7 @@ class GoogleAuthControllerTest extends TestCase
         $googleUser = $this->mockGoogleUser('google-id-789', 'linked@gmail.com', $user->name, 'https://avatar.url');
         $this->mockSocialiteCallback($googleUser);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertOk()
             ->assertJsonPath('user.id', $user->id);
@@ -102,15 +115,43 @@ class GoogleAuthControllerTest extends TestCase
     }
 
     /** @test */
-    public function callback_returns_401_on_invalid_state_exception(): void
+    public function callback_returns_401_when_state_query_parameter_is_missing(): void
     {
-        $provider = Mockery::mock(AbstractProvider::class);
-        $provider->shouldReceive('stateless')->andReturnSelf();
-        $provider->shouldReceive('user')->andThrow(new InvalidStateException);
+        $response = $this->withCredentials()
+            ->withUnencryptedCookie(self::STATE_COOKIE, Crypt::encryptString(self::VALID_STATE))
+            ->getJson('/api/auth/google/callback');
 
-        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+        $response->assertUnauthorized()
+            ->assertJson(['message' => 'Invalid OAuth state.']);
+    }
 
-        $response = $this->getJson('/api/auth/google/callback');
+    /** @test */
+    public function callback_returns_401_when_state_cookie_is_missing(): void
+    {
+        $response = $this->withCredentials()
+            ->getJson('/api/auth/google/callback?state='.self::VALID_STATE);
+
+        $response->assertUnauthorized()
+            ->assertJson(['message' => 'Invalid OAuth state.']);
+    }
+
+    /** @test */
+    public function callback_returns_401_when_state_cookie_cannot_be_decrypted(): void
+    {
+        $response = $this->withCredentials()
+            ->withUnencryptedCookie(self::STATE_COOKIE, 'not-a-valid-encrypted-payload')
+            ->getJson('/api/auth/google/callback?state='.self::VALID_STATE);
+
+        $response->assertUnauthorized()
+            ->assertJson(['message' => 'Invalid OAuth state.']);
+    }
+
+    /** @test */
+    public function callback_returns_401_when_state_query_does_not_match_cookie(): void
+    {
+        $response = $this->withCredentials()
+            ->withUnencryptedCookie(self::STATE_COOKIE, Crypt::encryptString(self::VALID_STATE))
+            ->getJson('/api/auth/google/callback?state=tampered-state-value');
 
         $response->assertUnauthorized()
             ->assertJson(['message' => 'Invalid OAuth state.']);
@@ -125,7 +166,7 @@ class GoogleAuthControllerTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertUnauthorized()
             ->assertJson(['message' => 'Google authentication failed.']);
@@ -137,7 +178,7 @@ class GoogleAuthControllerTest extends TestCase
         $googleUser = $this->mockGoogleUser('', 'user@gmail.com', 'User', null);
         $this->mockSocialiteCallback($googleUser);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertStatus(422)
             ->assertJson(['message' => 'Google account data is incomplete or invalid.']);
@@ -149,7 +190,7 @@ class GoogleAuthControllerTest extends TestCase
         $googleUser = $this->mockGoogleUser('google-id-999', 'not-an-email', 'User', null);
         $this->mockSocialiteCallback($googleUser);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertStatus(422)
             ->assertJson(['message' => 'Google account data is incomplete or invalid.']);
@@ -158,17 +199,26 @@ class GoogleAuthControllerTest extends TestCase
     /** @test */
     public function callback_uses_email_local_part_when_name_is_missing(): void
     {
-        // Name is an empty string
         $googleUser = $this->mockGoogleUser('google-id-000', 'johndoe@gmail.com', '', null);
         $this->mockSocialiteCallback($googleUser);
 
-        $response = $this->getJson('/api/auth/google/callback');
+        $response = $this->callbackWithValidState();
 
         $response->assertOk();
         $this->assertDatabaseHas('users', [
             'email' => 'johndoe@gmail.com',
             'name' => 'johndoe',
         ]);
+    }
+
+    /**
+     * Send a callback request with a matching state cookie and query parameter.
+     */
+    private function callbackWithValidState(): TestResponse
+    {
+        return $this->withCredentials()
+            ->withUnencryptedCookie(self::STATE_COOKIE, Crypt::encryptString(self::VALID_STATE))
+            ->getJson('/api/auth/google/callback?state='.self::VALID_STATE);
     }
 
     /**

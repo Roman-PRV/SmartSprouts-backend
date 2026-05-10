@@ -4,64 +4,72 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
 use App\Services\GoogleAuthService;
+use App\Services\GoogleOAuthStateGuard;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use InvalidArgumentException;
-use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\AbstractProvider;
-use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleAuthController extends Controller
 {
     /**
      * Redirect the user to the Google OAuth consent page.
      *
-     * Returns the authorization URL for the frontend to redirect the user to.
+     * Returns the authorization URL for the frontend to redirect the user to,
+     * along with a signed HttpOnly cookie that binds the callback to this
+     * client (CSRF protection via the OAuth `state` parameter).
      */
-    public function redirect(): JsonResponse
+    public function redirect(GoogleOAuthStateGuard $guard): JsonResponse
     {
-        /** @var AbstractProvider $driver */
-        $driver = Socialite::driver('google');
-        $url = $driver->stateless()->redirect()->getTargetUrl();
+        ['url' => $url, 'cookie' => $cookie] = $guard->start();
 
-        return new JsonResponse(['url' => $url]);
+        return (new JsonResponse(['url' => $url]))->withCookie($cookie);
     }
 
     /**
      * Handle the callback from Google after user authorization.
      *
-     * Finds or creates a user based on Google account data,
-     * then issues a Sanctum token.
+     * Validates the OAuth state, exchanges the authorization code for the
+     * Google user, finds or creates the corresponding local user, and
+     * issues a Sanctum token.
      */
-    public function callback(GoogleAuthService $service): JsonResponse
-    {
-        try {
-            /** @var AbstractProvider $driver */
-            $driver = Socialite::driver('google');
-            $googleUser = $driver->stateless()->user();
-        } catch (InvalidStateException $e) {
-            report($e);
+    public function callback(
+        Request $request,
+        GoogleAuthService $authService,
+        GoogleOAuthStateGuard $guard,
+    ): JsonResponse {
+        if (! $guard->validate($request)) {
+            return $this->respondAndForgetState($guard, 'Invalid OAuth state.', 401);
+        }
 
-            return new JsonResponse(['message' => 'Invalid OAuth state.'], 401);
+        try {
+            $googleUser = $guard->retrieveGoogleUser();
         } catch (Exception $e) {
             report($e);
 
-            return new JsonResponse(['message' => 'Google authentication failed.'], 401);
+            return $this->respondAndForgetState($guard, 'Google authentication failed.', 401);
         }
 
         try {
-            $user = $service->findOrCreateUser($googleUser);
+            $user = $authService->findOrCreateUser($googleUser);
         } catch (InvalidArgumentException $e) {
             report($e);
 
-            return new JsonResponse(['message' => 'Google account data is incomplete or invalid.'], 422);
+            return $this->respondAndForgetState($guard, 'Google account data is incomplete or invalid.', 422);
         }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return new JsonResponse([
+        return (new JsonResponse([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
-        ]);
+        ]))->withCookie($guard->forgetCookie());
+    }
+
+    private function respondAndForgetState(GoogleOAuthStateGuard $guard, string $message, int $status): JsonResponse
+    {
+        return (new JsonResponse(['message' => $message], $status))
+            ->withCookie($guard->forgetCookie());
     }
 }
