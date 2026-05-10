@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 
 /**
  * Issues and verifies the cryptographic `state` parameter that protects the
- * Google OAuth flow from CSRF. The state is stored in a signed, HttpOnly
+ * Google OAuth flow from CSRF. The state is stored in an encrypted, HttpOnly
  * cookie so the API can stay session-less.
  */
 class GoogleOAuthStateGuard

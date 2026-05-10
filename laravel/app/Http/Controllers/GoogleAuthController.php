@@ -16,7 +16,7 @@ class GoogleAuthController extends Controller
      * Redirect the user to the Google OAuth consent page.
      *
      * Returns the authorization URL for the frontend to redirect the user to,
-     * along with a signed HttpOnly cookie that binds the callback to this
+     * along with an encrypted HttpOnly cookie that binds the callback to this
      * client (CSRF protection via the OAuth `state` parameter).
      */
     public function redirect(GoogleOAuthStateGuard $guard): JsonResponse
