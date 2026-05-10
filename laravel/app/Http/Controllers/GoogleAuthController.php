@@ -41,8 +41,12 @@ class GoogleAuthController extends Controller
             $driver = Socialite::driver('google');
             $googleUser = $driver->stateless()->user();
         } catch (InvalidStateException $e) {
+            report($e);
+
             return new JsonResponse(['message' => 'Invalid OAuth state.'], 401);
         } catch (Throwable $e) {
+            report($e);
+
             return new JsonResponse(['message' => 'Google authentication failed.'], 401);
         }
 
@@ -66,6 +70,7 @@ class GoogleAuthController extends Controller
                 'email' => $googleUser->getEmail(),
                 'google_id' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
+                'email_verified_at' => now(),
             ]);
         }
 

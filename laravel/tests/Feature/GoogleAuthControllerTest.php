@@ -53,6 +53,8 @@ class GoogleAuthControllerTest extends TestCase
             'google_id' => 'google-id-123',
             'avatar' => 'https://avatar.url',
         ]);
+
+        $this->assertNotNull(User::query()->where('email', 'newuser@gmail.com')->value('email_verified_at'));
     }
 
     /** @test */
