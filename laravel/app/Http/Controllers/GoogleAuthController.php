@@ -6,6 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Services\GoogleAuthService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use InvalidArgumentException;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -48,7 +49,13 @@ class GoogleAuthController extends Controller
             return new JsonResponse(['message' => 'Google authentication failed.'], 401);
         }
 
-        $user = $service->findOrCreateUser($googleUser);
+        try {
+            $user = $service->findOrCreateUser($googleUser);
+        } catch (InvalidArgumentException $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Google account data is incomplete or invalid.'], 422);
+        }
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return new JsonResponse([

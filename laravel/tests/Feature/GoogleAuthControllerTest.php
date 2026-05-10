@@ -131,6 +131,46 @@ class GoogleAuthControllerTest extends TestCase
             ->assertJson(['message' => 'Google authentication failed.']);
     }
 
+    /** @test */
+    public function callback_returns_422_on_missing_google_id(): void
+    {
+        $googleUser = $this->mockGoogleUser('', 'user@gmail.com', 'User', null);
+        $this->mockSocialiteCallback($googleUser);
+
+        $response = $this->getJson('/api/auth/google/callback');
+
+        $response->assertStatus(422)
+            ->assertJson(['message' => 'Google account data is incomplete or invalid.']);
+    }
+
+    /** @test */
+    public function callback_returns_422_on_invalid_email(): void
+    {
+        $googleUser = $this->mockGoogleUser('google-id-999', 'not-an-email', 'User', null);
+        $this->mockSocialiteCallback($googleUser);
+
+        $response = $this->getJson('/api/auth/google/callback');
+
+        $response->assertStatus(422)
+            ->assertJson(['message' => 'Google account data is incomplete or invalid.']);
+    }
+
+    /** @test */
+    public function callback_uses_email_local_part_when_name_is_missing(): void
+    {
+        // Name is an empty string
+        $googleUser = $this->mockGoogleUser('google-id-000', 'johndoe@gmail.com', '', null);
+        $this->mockSocialiteCallback($googleUser);
+
+        $response = $this->getJson('/api/auth/google/callback');
+
+        $response->assertOk();
+        $this->assertDatabaseHas('users', [
+            'email' => 'johndoe@gmail.com',
+            'name' => 'johndoe',
+        ]);
+    }
+
     /**
      * Create a mock of a Socialite Google user.
      */
