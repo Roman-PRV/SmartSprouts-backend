@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
-use App\Models\User;
+use App\Services\GoogleAuthService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
-use Throwable;
 
 class GoogleAuthController extends Controller
 {
@@ -31,10 +31,8 @@ class GoogleAuthController extends Controller
      *
      * Finds or creates a user based on Google account data,
      * then issues a Sanctum token.
-     *
-     * @throws InvalidStateException
      */
-    public function callback(): JsonResponse
+    public function callback(GoogleAuthService $service): JsonResponse
     {
         try {
             /** @var AbstractProvider $driver */
@@ -44,36 +42,13 @@ class GoogleAuthController extends Controller
             report($e);
 
             return new JsonResponse(['message' => 'Invalid OAuth state.'], 401);
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             report($e);
 
             return new JsonResponse(['message' => 'Google authentication failed.'], 401);
         }
 
-        $user = User::query()->where('google_id', $googleUser->getId())->first();
-
-        if ($user === null) {
-            $user = User::query()->where('email', $googleUser->getEmail())->first();
-
-            if ($user !== null) {
-                $user->update([
-                    'google_id' => $googleUser->getId(),
-                    'avatar' => $googleUser->getAvatar(),
-                ]);
-            }
-        }
-
-        if ($user === null) {
-            /** @var User $user */
-            $user = User::query()->create([
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'google_id' => $googleUser->getId(),
-                'avatar' => $googleUser->getAvatar(),
-                'email_verified_at' => now(),
-            ]);
-        }
-
+        $user = $service->findOrCreateUser($googleUser);
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return new JsonResponse([
