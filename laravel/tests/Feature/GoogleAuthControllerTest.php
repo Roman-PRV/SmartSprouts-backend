@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Testing\TestResponse;
+use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -21,6 +22,8 @@ class GoogleAuthControllerTest extends TestCase
     private const STATE_COOKIE = 'google_oauth_state';
 
     private const VALID_STATE = 'valid-test-state-value-32-chars-1234';
+
+    private const FRONTEND_CALLBACK = 'http://localhost:3001/auth/google/callback';
 
     /** @test */
     public function redirect_returns_google_authorization_url_and_sets_state_cookie(): void
@@ -51,15 +54,14 @@ class GoogleAuthControllerTest extends TestCase
     }
 
     /** @test */
-    public function callback_creates_new_user_and_returns_token(): void
+    public function callback_creates_new_user_and_redirects_with_token(): void
     {
         $googleUser = $this->mockGoogleUser('google-id-123', 'newuser@gmail.com', 'New User', 'https://avatar.url');
         $this->mockSocialiteCallback($googleUser);
 
         $response = $this->callbackWithValidState();
 
-        $response->assertOk()
-            ->assertJsonStructure(['access_token', 'token_type', 'user']);
+        $this->assertRedirectsToFrontendCallbackWithToken($response);
 
         $this->assertDatabaseHas('users', [
             'email' => 'newuser@gmail.com',
@@ -83,9 +85,8 @@ class GoogleAuthControllerTest extends TestCase
 
         $response = $this->callbackWithValidState();
 
-        $response->assertOk()
-            ->assertJsonPath('user.id', $user->id);
-
+        $this->assertRedirectsToFrontendCallbackWithToken($response);
+        $this->assertTokenBelongsToUser($user);
         $this->assertDatabaseCount('users', 1);
     }
 
@@ -102,8 +103,8 @@ class GoogleAuthControllerTest extends TestCase
 
         $response = $this->callbackWithValidState();
 
-        $response->assertOk()
-            ->assertJsonPath('user.id', $user->id);
+        $this->assertRedirectsToFrontendCallbackWithToken($response);
+        $this->assertTokenBelongsToUser($user);
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
@@ -115,50 +116,46 @@ class GoogleAuthControllerTest extends TestCase
     }
 
     /** @test */
-    public function callback_returns_401_when_state_query_parameter_is_missing(): void
+    public function callback_redirects_with_invalid_state_error_when_state_query_is_missing(): void
     {
         $response = $this->withCredentials()
             ->withUnencryptedCookie(self::STATE_COOKIE, Crypt::encryptString(self::VALID_STATE))
-            ->getJson('/api/auth/google/callback');
+            ->get('/api/auth/google/callback');
 
-        $response->assertUnauthorized()
-            ->assertJson(['message' => 'Invalid OAuth state.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'invalid_state');
     }
 
     /** @test */
-    public function callback_returns_401_when_state_cookie_is_missing(): void
+    public function callback_redirects_with_invalid_state_error_when_state_cookie_is_missing(): void
     {
         $response = $this->withCredentials()
-            ->getJson('/api/auth/google/callback?state='.self::VALID_STATE);
+            ->get('/api/auth/google/callback?state='.self::VALID_STATE);
 
-        $response->assertUnauthorized()
-            ->assertJson(['message' => 'Invalid OAuth state.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'invalid_state');
     }
 
     /** @test */
-    public function callback_returns_401_when_state_cookie_cannot_be_decrypted(): void
+    public function callback_redirects_with_invalid_state_error_when_state_cookie_cannot_be_decrypted(): void
     {
         $response = $this->withCredentials()
             ->withUnencryptedCookie(self::STATE_COOKIE, 'not-a-valid-encrypted-payload')
-            ->getJson('/api/auth/google/callback?state='.self::VALID_STATE);
+            ->get('/api/auth/google/callback?state='.self::VALID_STATE);
 
-        $response->assertUnauthorized()
-            ->assertJson(['message' => 'Invalid OAuth state.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'invalid_state');
     }
 
     /** @test */
-    public function callback_returns_401_when_state_query_does_not_match_cookie(): void
+    public function callback_redirects_with_invalid_state_error_when_state_query_does_not_match_cookie(): void
     {
         $response = $this->withCredentials()
             ->withUnencryptedCookie(self::STATE_COOKIE, Crypt::encryptString(self::VALID_STATE))
-            ->getJson('/api/auth/google/callback?state=tampered-state-value');
+            ->get('/api/auth/google/callback?state=tampered-state-value');
 
-        $response->assertUnauthorized()
-            ->assertJson(['message' => 'Invalid OAuth state.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'invalid_state');
     }
 
     /** @test */
-    public function callback_returns_401_on_general_google_exception(): void
+    public function callback_redirects_with_auth_failed_error_on_general_google_exception(): void
     {
         $provider = Mockery::mock(AbstractProvider::class);
         $provider->shouldReceive('stateless')->andReturnSelf();
@@ -168,32 +165,29 @@ class GoogleAuthControllerTest extends TestCase
 
         $response = $this->callbackWithValidState();
 
-        $response->assertUnauthorized()
-            ->assertJson(['message' => 'Google authentication failed.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'auth_failed');
     }
 
     /** @test */
-    public function callback_returns_422_on_missing_google_id(): void
+    public function callback_redirects_with_invalid_account_error_on_missing_google_id(): void
     {
         $googleUser = $this->mockGoogleUser('', 'user@gmail.com', 'User', null);
         $this->mockSocialiteCallback($googleUser);
 
         $response = $this->callbackWithValidState();
 
-        $response->assertStatus(422)
-            ->assertJson(['message' => 'Google account data is incomplete or invalid.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'invalid_account');
     }
 
     /** @test */
-    public function callback_returns_422_on_invalid_email(): void
+    public function callback_redirects_with_invalid_account_error_on_invalid_email(): void
     {
         $googleUser = $this->mockGoogleUser('google-id-999', 'not-an-email', 'User', null);
         $this->mockSocialiteCallback($googleUser);
 
         $response = $this->callbackWithValidState();
 
-        $response->assertStatus(422)
-            ->assertJson(['message' => 'Google account data is incomplete or invalid.']);
+        $this->assertRedirectsToFrontendCallbackWithError($response, 'invalid_account');
     }
 
     /** @test */
@@ -204,7 +198,7 @@ class GoogleAuthControllerTest extends TestCase
 
         $response = $this->callbackWithValidState();
 
-        $response->assertOk();
+        $this->assertRedirectsToFrontendCallbackWithToken($response);
         $this->assertDatabaseHas('users', [
             'email' => 'johndoe@gmail.com',
             'name' => 'johndoe',
@@ -218,7 +212,69 @@ class GoogleAuthControllerTest extends TestCase
     {
         return $this->withCredentials()
             ->withUnencryptedCookie(self::STATE_COOKIE, Crypt::encryptString(self::VALID_STATE))
-            ->getJson('/api/auth/google/callback?state='.self::VALID_STATE);
+            ->get('/api/auth/google/callback?state='.self::VALID_STATE);
+    }
+
+    /**
+     * Assert the response is a 302 redirect to the SPA callback URL whose
+     * fragment carries an `access_token` and `Bearer` token type, that the
+     * state cookie is cleared, and that caching is disabled.
+     */
+    private function assertRedirectsToFrontendCallbackWithToken(TestResponse $response): void
+    {
+        $fragment = $this->assertRedirectsToFrontendCallback($response);
+
+        $this->assertArrayHasKey('access_token', $fragment);
+        $this->assertNotEmpty($fragment['access_token']);
+        $this->assertSame('Bearer', $fragment['token_type'] ?? null);
+        $this->assertArrayNotHasKey('error', $fragment);
+    }
+
+    /**
+     * Assert the response is a 302 redirect to the SPA callback URL whose
+     * fragment carries the expected `error` code (and no token).
+     */
+    private function assertRedirectsToFrontendCallbackWithError(TestResponse $response, string $expectedError): void
+    {
+        $fragment = $this->assertRedirectsToFrontendCallback($response);
+
+        $this->assertSame($expectedError, $fragment['error'] ?? null);
+        $this->assertArrayNotHasKey('access_token', $fragment);
+    }
+
+    /**
+     * Common assertions for the redirect: status, base URL, security headers,
+     * and cleared state cookie. Returns the parsed fragment for further checks.
+     *
+     * @return array<string, string>
+     */
+    private function assertRedirectsToFrontendCallback(TestResponse $response): array
+    {
+        $response->assertStatus(302);
+        $response->assertHeader('Cache-Control', 'no-store, private');
+        $response->assertCookieExpired(self::STATE_COOKIE);
+
+        $location = $response->headers->get('Location');
+        $this->assertIsString($location);
+        $this->assertStringStartsWith(self::FRONTEND_CALLBACK.'#', $location);
+
+        $fragment = substr($location, strlen(self::FRONTEND_CALLBACK) + 1);
+        parse_str($fragment, $params);
+
+        /** @var array<string, string> $params */
+        return $params;
+    }
+
+    /**
+     * Verify the most recently issued personal access token belongs to the
+     * given user — replaces the previous `assertJsonPath('user.id', ...)`
+     * check now that the response no longer carries a user payload.
+     */
+    private function assertTokenBelongsToUser(User $user): void
+    {
+        $token = PersonalAccessToken::query()->latest('id')->first();
+        $this->assertNotNull($token);
+        $this->assertSame($user->id, $token->tokenable_id);
     }
 
     /**

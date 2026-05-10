@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\UserResource;
 use App\Services\GoogleAuthService;
 use App\Services\GoogleOAuthStateGuard;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
@@ -30,16 +30,21 @@ class GoogleAuthController extends Controller
      * Handle the callback from Google after user authorization.
      *
      * Validates the OAuth state, exchanges the authorization code for the
-     * Google user, finds or creates the corresponding local user, and
-     * issues a Sanctum token.
+     * Google user, finds or creates the corresponding local user, issues a
+     * Sanctum token, and redirects the browser to the SPA with the token
+     * (or error code) delivered in the URL fragment.
+     *
+     * The fragment is never sent to the server, never appears in referrer
+     * headers, and never lands in access logs — making it the standard
+     * carrier for tokens in browser-driven OAuth flows.
      */
     public function callback(
         Request $request,
         GoogleAuthService $authService,
         GoogleOAuthStateGuard $guard,
-    ): JsonResponse {
+    ): RedirectResponse {
         if (! $guard->validate($request)) {
-            return $this->respondAndForgetState($guard, 'Invalid OAuth state.', 401);
+            return $this->redirectWithError($guard, 'invalid_state');
         }
 
         try {
@@ -47,7 +52,7 @@ class GoogleAuthController extends Controller
         } catch (Exception $e) {
             report($e);
 
-            return $this->respondAndForgetState($guard, 'Google authentication failed.', 401);
+            return $this->redirectWithError($guard, 'auth_failed');
         }
 
         try {
@@ -55,21 +60,40 @@ class GoogleAuthController extends Controller
         } catch (InvalidArgumentException $e) {
             report($e);
 
-            return $this->respondAndForgetState($guard, 'Google account data is incomplete or invalid.', 422);
+            return $this->redirectWithError($guard, 'invalid_account');
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return (new JsonResponse([
+        return $this->redirectToFrontend([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => new UserResource($user),
-        ]))->withCookie($guard->forgetCookie());
+        ])->withCookie($guard->forgetCookie());
     }
 
-    private function respondAndForgetState(GoogleOAuthStateGuard $guard, string $message, int $status): JsonResponse
+    /**
+     * Redirect to the SPA callback URL with an error code in the fragment
+     * and clear the OAuth state cookie.
+     */
+    private function redirectWithError(GoogleOAuthStateGuard $guard, string $error): RedirectResponse
     {
-        return (new JsonResponse(['message' => $message], $status))
+        return $this->redirectToFrontend(['error' => $error])
             ->withCookie($guard->forgetCookie());
+    }
+
+    /**
+     * Build a redirect to the SPA callback URL with the given parameters
+     * encoded as a URL fragment (`#key=value&...`).
+     *
+     * @param  array<string, string>  $fragmentParams
+     */
+    private function redirectToFrontend(array $fragmentParams): RedirectResponse
+    {
+        $base = rtrim((string) config('services.frontend.url'), '/');
+        $target = $base.'/auth/google/callback#'.http_build_query($fragmentParams);
+
+        return redirect()->away($target)
+            ->header('Cache-Control', 'no-store')
+            ->header('Pragma', 'no-cache');
     }
 }
