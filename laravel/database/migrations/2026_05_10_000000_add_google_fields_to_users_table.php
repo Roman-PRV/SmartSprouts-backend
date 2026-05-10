@@ -20,13 +20,18 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     *
+     * NOTE: password is intentionally left nullable after rollback.
+     * Google-authenticated users have password = NULL, so restoring NOT NULL
+     * would violate the constraint on any existing rows. Removing that nullability
+     * requires manual intervention (e.g., deleting Google-only accounts) before
+     * the constraint can be safely re-applied.
      */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropUnique(['google_id']);
             $table->dropColumn(['google_id', 'avatar']);
-            $table->string('password')->nullable(false)->change();
         });
     }
 };
