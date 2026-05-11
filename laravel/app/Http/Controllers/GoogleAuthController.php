@@ -93,7 +93,7 @@ class GoogleAuthController extends Controller
         $target = $base.'/auth/google/callback#'.http_build_query($fragmentParams);
 
         return redirect()->away($target)
-            ->header('Cache-Control', 'no-store')
+            ->header('Cache-Control', 'no-store, private')
             ->header('Pragma', 'no-cache');
     }
 }

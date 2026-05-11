@@ -22,7 +22,7 @@ class GoogleOAuthStateGuard
 
     private const COOKIE_TTL_MINUTES = 10;
 
-    private const STATE_BYTES = 32;
+    private const STATE_LENGTH = 32;
 
     /**
      * Begin the OAuth flow: generate state, build the Google authorization
@@ -32,7 +32,7 @@ class GoogleOAuthStateGuard
      */
     public function start(): array
     {
-        $state = Str::random(self::STATE_BYTES);
+        $state = Str::random(self::STATE_LENGTH);
 
         /** @var AbstractProvider $driver */
         $driver = Socialite::driver('google');

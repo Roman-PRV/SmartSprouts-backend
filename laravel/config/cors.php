@@ -19,12 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [],
+    'allowed_origins' => array_filter([env('FRONTEND_URL')]),
 
     'allowed_origins_patterns' => [
         '/^http:\/\/localhost(:\d+)?$/',
         '/^http:\/\/127\.0\.0\.1(:\d+)?$/',
-        // TODO add production domain
     ],
 
     'allowed_headers' => ['*'],
