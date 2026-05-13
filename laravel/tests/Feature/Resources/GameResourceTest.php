@@ -32,11 +32,11 @@ class GameResourceTest extends TestCase
             ]);
 
         $game = new Game([
-            'id' => 1,
             'key' => 'find_the_wrong',
             'icon_url' => $filePath,
             'is_active' => true,
         ]);
+        $game->id = 1;
 
         $resource = GameResource::make($game)->resolve();
 

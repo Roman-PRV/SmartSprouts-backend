@@ -8,9 +8,13 @@ services:
   laravel:
     build:
       target: dev          # Builds the 'dev' stage (includes Xdebug)
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
     volumes:
-      - ./laravel:/var/www                   # Hot-reload: source code from host
-      - vendor_data:/var/www/vendor          # Preserve vendor across rebuilds
+      - ./laravel:/var/www # Hot-reload: source code from host
+      - vendor_data:/var/www/vendor # Preserve vendor across rebuilds
+      - ./laravel/public:/var/www/public # Override named volume → bind-mount for dev hot-reload (mirrors nginx override)
     extra_hosts:
       - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
     networks:
@@ -23,18 +27,28 @@ services:
     volumes:
       - ./laravel:/var/www
       - vendor_data:/var/www/vendor
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
     networks:
       - app-network
       - dev-local-network
 
   mysql:
-
     ports:
-      - "3306:3306"   # Expose to host for local DB clients (TablePlus, DBeaver)
+      - "127.0.0.1:3306:3306"  # Expose to host for local DB clients (TablePlus, DBeaver)
+
+  nginx:
+    ports:
+      - "3000:80" # Expose to host for local development
+    volumes:
+      - ./laravel/public:/var/www/public:ro # override named volume for dev hot-reload
 
   redis:
     ports:
-      - "${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
+
+volumes:
+  vendor_data:
 
 networks:
   dev-local-network:

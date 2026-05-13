@@ -15,6 +15,7 @@
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.3",
+        "laravel/socialite": "^5.27",
         "laravel/tinker": "^2.8",
         "openai-php/client": "^0.18.0",
         "predis/predis": "^3.3",
@@ -23,6 +24,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
         "larastan/larastan": "^2.11",
+        "laravel/boost": "^1.8",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",
@@ -78,4 +80,3 @@
     "minimum-stability": "stable",
     "prefer-stable": true
 }
-
