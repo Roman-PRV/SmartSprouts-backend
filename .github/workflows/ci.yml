@@ -46,10 +46,18 @@ jobs:
           restore-keys: |
             composer-${{ runner.os }}-php8.2-
 
+      - name: Cache vendor directory
+        id: vendor-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: laravel/vendor
+          key: vendor-${{ runner.os }}-php8.2-${{ hashFiles('laravel/composer.lock') }}
+
       - name: Prepare .env
         run: cp .env.testing .env
 
       - name: Install Composer dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Run PHPUnit tests
