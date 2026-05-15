@@ -53,7 +53,11 @@ jobs:
           path: laravel/vendor
           key: vendor-${{ runner.os }}-php8.2-${{ hashFiles('laravel/composer.lock') }}
 
-      - name: Prepare .env
+      # `.env` is required by artisan commands that boot the Laravel framework:
+      # composer's post-autoload-dump hook runs `artisan package:discover`, and
+      # Larastan boots the container for type inference during PHPStan analysis.
+      # The actual test suite reads env vars from phpunit.xml, not from .env.
+      - name: Prepare .env for ancillary artisan calls
         run: cp .env.testing .env
 
       - name: Install Composer dependencies
