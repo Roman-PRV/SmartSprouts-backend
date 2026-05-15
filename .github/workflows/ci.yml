@@ -64,6 +64,13 @@ jobs:
         if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      # On cache hit composer install is skipped, so its post-autoload-dump hook
+      # (which runs `artisan package:discover` and writes bootstrap/cache/packages.php)
+      # doesn't fire. Run it explicitly to keep the manifest in sync with vendor/.
+      - name: Refresh Laravel package manifest on vendor cache hit
+        if: steps.vendor-cache.outputs.cache-hit == 'true'
+        run: php artisan package:discover --ansi
+
       - name: Run PHPUnit tests
         run: php artisan test
 
