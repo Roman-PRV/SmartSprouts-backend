@@ -4,13 +4,13 @@
   "description": "## Description",
   "main": "index.js",
   "scripts": {
-    "lint": "docker exec -i pp_laravel_app php vendor/bin/phpstan analyse app --memory-limit=512M",
-    "format": "docker exec -i pp_laravel_app php vendor/bin/pint",
+    "lint": "docker compose exec -T laravel php vendor/bin/phpstan analyse app --memory-limit=512M",
+    "format": "docker compose exec -T laravel php vendor/bin/pint",
     "prepare": "husky install",
     "quality": "npm run format && npm run lint && npm run test",
-    "test": "docker exec -i pp_laravel_app php artisan test",
-    "docs": "docker exec -i pp_laravel_app php artisan l5-swagger:generate",
-    "queue:restart": "docker exec -i pp_laravel_app php artisan queue:restart"
+    "test": "docker compose exec -T laravel php artisan test",
+    "docs": "docker compose exec -T laravel php artisan l5-swagger:generate",
+    "queue:restart": "docker compose exec -T laravel php artisan queue:restart"
   },
   "repository": {
     "type": "git",

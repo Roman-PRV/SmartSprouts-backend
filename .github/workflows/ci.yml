@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Tests, static analysis, code style
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: laravel
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, curl, fileinfo, openssl, pdo, pdo_sqlite, tokenizer, zip, gd, intl
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        shell: bash
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer downloads
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php8.2-${{ hashFiles('laravel/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php8.2-
+
+      - name: Cache vendor directory
+        id: vendor-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: laravel/vendor
+          key: vendor-${{ runner.os }}-php8.2-${{ hashFiles('laravel/composer.lock') }}
+
+      # `.env` is required by artisan commands that boot the Laravel framework:
+      # composer's post-autoload-dump hook runs `artisan package:discover`, and
+      # Larastan boots the container for type inference during PHPStan analysis.
+      # The actual test suite reads env vars from phpunit.xml, not from .env.
+      - name: Prepare .env for ancillary artisan calls
+        run: cp .env.testing .env
+
+      - name: Install Composer dependencies
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      # On cache hit composer install is skipped, so its post-autoload-dump hook
+      # (which runs `artisan package:discover` and writes bootstrap/cache/packages.php)
+      # doesn't fire. Run it explicitly to keep the manifest in sync with vendor/.
+      - name: Refresh Laravel package manifest on vendor cache hit
+        if: steps.vendor-cache.outputs.cache-hit == 'true'
+        run: php artisan package:discover --ansi
+
+      - name: Run PHPUnit tests
+        run: php artisan test
+
+      - name: Run PHPStan
+        run: ./vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+      - name: Check code style (Pint)
+        run: ./vendor/bin/pint --test
