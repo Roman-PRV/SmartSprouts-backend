@@ -16,9 +16,10 @@ services:
     build:
       context: ./laravel
       dockerfile: docker/Dockerfile
-    container_name: pp_laravel_app
     restart: unless-stopped
     working_dir: /var/www
+    expose:
+      - "9000"  # PHP-FPM, internal only (consumed by nginx via Docker DNS)
     volumes:
       - laravel_public:/var/www/public  # written by entrypoint.sh from public-src
       - ./laravel/storage:/var/www/storage
@@ -40,7 +41,6 @@ services:
     build:
       context: ./laravel
       dockerfile: docker/Dockerfile
-    container_name: pp_queue_worker
     restart: unless-stopped
     working_dir: /var/www
     user: "33:33"
@@ -62,8 +62,9 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: pp_mysql_db
     restart: unless-stopped
+    expose:
+      - "3306"  # internal only (host port mapping is added by dev override)
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD?}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-laravel}
@@ -82,8 +83,9 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: pp_nginx_server
     restart: unless-stopped
+    expose:
+      - "80"  # consumed by Coolify Traefik in prod (and by host port mapping in dev override)
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - laravel_public:/var/www/public:ro  # populated by laravel entrypoint from image
@@ -95,8 +97,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: pp_redis_cache
     restart: unless-stopped
+    expose:
+      - "6379"  # internal only (host port mapping is added by dev override)
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD?}
     volumes:
       - redis_data:/data
@@ -113,8 +116,9 @@ services:
     build:
       context: ./python-services/ukrainian-tts
       dockerfile: Dockerfile
-    container_name: pp_ukrainian_tts
     restart: unless-stopped
+    expose:
+      - "5001"
     environment:
       - TTS_MAX_TEXT_LENGTH=${TTS_MAX_TEXT_LENGTH:-2000}
       - TTS_CHUNK_SIZE=${TTS_CHUNK_SIZE:-200}

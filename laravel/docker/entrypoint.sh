@@ -26,7 +26,9 @@ if [ "${APP_ENV}" = "production" ]; then
   php artisan route:cache
   php artisan view:cache
   echo "[entrypoint] Running migrations..."
-  php artisan migrate --force
+  # --isolated prevents concurrent migrations on rolling restart (multiple containers
+  # acquire an advisory lock; only the first proceeds, others wait/no-op).
+  php artisan migrate --force --isolated
 fi
 
 exec "$@"
