@@ -9,7 +9,6 @@ services:
   laravel:
     build:
       target: prod         # Builds the 'prod' stage (no Xdebug, optimised OPcache)
-    restart: always
     env_file:
       - ./laravel/.env     # No bind-mount in prod — credentials must be injected via env_file
     # No bind-mount: code is baked into the image at build time via COPY in Dockerfile.
@@ -18,23 +17,11 @@ services:
   queue-worker:
     build:
       target: prod         # Optimised OPcache, no Xdebug
-    restart: always
     env_file:
       - ./laravel/.env
 
-  mysql:
-    restart: always
-    # No port exposure: only accessible inside the app-network
-
-  nginx:
-    restart: always
-    ports:
-      - "80:80"    # HTTP — publicly exposed
-      - "443:443"  # HTTPS — publicly exposed (requires SSL config in nginx)
-
-  redis:
-    restart: always
-    # No port exposure: only accessible inside the app-network
-
-  ukrainian-tts:
-    restart: always
+  # nginx, mysql, redis, ukrainian-tts — no prod-specific overrides needed.
+  # Base docker-compose.yml already provides:
+  #   - restart: unless-stopped (Coolify-friendly; honours intentional shutdowns)
+  #   - expose: <port> (internal only, no host port mapping)
+  # In Coolify deployment, Traefik routes ${APP_DOMAIN} → nginx:80 via Docker network.
