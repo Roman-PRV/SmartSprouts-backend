@@ -6,33 +6,39 @@
 
 services:
   laravel:
+    image: smartsprouts-backend:dev
     build:
-      target: dev          # Builds the 'dev' stage (includes Xdebug)
+      context: ./laravel
+      dockerfile: docker/Dockerfile
+      target: dev
     environment:
       APP_ENV: local
       APP_DEBUG: true
     volumes:
-      - ./laravel:/var/www                      # Hot-reload: source code from host
-      - vendor_data:/var/www/vendor             # Preserve vendor across rebuilds
-      - ./laravel/public:/var/www/public        # Override named volume → bind-mount for dev hot-reload (mirrors nginx override)
-      - ./laravel/storage:/var/www/storage      # Override named volume → bind-mount for dev (logs visible on host)
+      - ./laravel:/var/www
+      - vendor_data:/var/www/vendor
+      - ./laravel/public:/var/www/public
+      - ./laravel/storage:/var/www/storage
     extra_hosts:
-      - "host.docker.internal:host-gateway"     # Required for Xdebug client_host
+      - "host.docker.internal:host-gateway"
     networks:
       - app-network
-      - dev-local-network                       # Connects to Kokoro TTS and other local dev services
+      - dev-local-network
 
   queue-worker:
+    image: smartsprouts-backend:dev
     build:
+      context: ./laravel
+      dockerfile: docker/Dockerfile
       target: dev
     env_file:
-      - ./laravel/.env  # dev only — prod injects vars via Coolify
+      - ./laravel/.env
     volumes:
       - ./laravel:/var/www
       - vendor_data:/var/www/vendor
-      - ./laravel/storage:/var/www/storage      # Override named volume → bind-mount for dev
+      - ./laravel/storage:/var/www/storage
     extra_hosts:
-      - "host.docker.internal:host-gateway"     # Required for Xdebug client_host
+      - "host.docker.internal:host-gateway"
     networks:
       - app-network
       - dev-local-network
