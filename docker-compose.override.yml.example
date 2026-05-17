@@ -12,14 +12,15 @@ services:
       APP_ENV: local
       APP_DEBUG: true
     volumes:
-      - ./laravel:/var/www # Hot-reload: source code from host
-      - vendor_data:/var/www/vendor # Preserve vendor across rebuilds
-      - ./laravel/public:/var/www/public # Override named volume → bind-mount for dev hot-reload (mirrors nginx override)
+      - ./laravel:/var/www                      # Hot-reload: source code from host
+      - vendor_data:/var/www/vendor             # Preserve vendor across rebuilds
+      - ./laravel/public:/var/www/public        # Override named volume → bind-mount for dev hot-reload (mirrors nginx override)
+      - ./laravel/storage:/var/www/storage      # Override named volume → bind-mount for dev (logs visible on host)
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
+      - "host.docker.internal:host-gateway"     # Required for Xdebug client_host
     networks:
       - app-network
-      - dev-local-network                    # Connects to Kokoro TTS and other local dev services
+      - dev-local-network                       # Connects to Kokoro TTS and other local dev services
 
   queue-worker:
     build:
@@ -29,8 +30,9 @@ services:
     volumes:
       - ./laravel:/var/www
       - vendor_data:/var/www/vendor
+      - ./laravel/storage:/var/www/storage      # Override named volume → bind-mount for dev
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # Required for Xdebug client_host
+      - "host.docker.internal:host-gateway"     # Required for Xdebug client_host
     networks:
       - app-network
       - dev-local-network
@@ -41,9 +43,10 @@ services:
 
   nginx:
     ports:
-      - "3000:80" # Expose to host for local development
+      - "3000:80"                              # Expose to host for local development
     volumes:
-      - ./laravel/public:/var/www/public:ro # override named volume for dev hot-reload
+      - ./laravel/public:/var/www/public:ro    # override named volume for dev hot-reload
+      - ./laravel/storage:/var/www/storage:ro  # override named volume for dev
 
   redis:
     ports:
