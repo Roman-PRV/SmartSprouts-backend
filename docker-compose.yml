@@ -14,16 +14,14 @@
 
 services:
   laravel:
-    build:
-      context: ./laravel
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/roman-prv/smartsprouts-backend:latest
     restart: unless-stopped
     working_dir: /var/www
     expose:
-      - "9000"  # PHP-FPM, internal only (consumed by nginx via Docker DNS)
+      - "9000"
     volumes:
-      - laravel_public:/var/www/public    # written by entrypoint.sh from public-src
-      - laravel_storage:/var/www/storage  # named volume in prod; bind-mounted in dev (override)
+      - laravel_public:/var/www/public
+      - laravel_storage:/var/www/storage
     networks:
       - app-network
     depends_on:
@@ -39,9 +37,7 @@ services:
       start_period: 30s
 
   queue-worker:
-    build:
-      context: ./laravel
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/roman-prv/smartsprouts-backend:latest
     restart: unless-stopped
     working_dir: /var/www
     user: "33:33"
