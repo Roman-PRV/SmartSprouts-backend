@@ -53,6 +53,23 @@ services:
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
 
+  # Self-hosted Ukrainian TTS — dev only. Enable via:
+  #   docker compose --profile tts up
+  # Production uses TTS_PROVIDER=elevenlabs and does not include this service.
+  ukrainian-tts:
+    profiles: ["tts"]
+    build:
+      context: ./python-services/ukrainian-tts
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - TTS_MAX_TEXT_LENGTH=${TTS_MAX_TEXT_LENGTH:-2000}
+      - TTS_CHUNK_SIZE=${TTS_CHUNK_SIZE:-200}
+    networks:
+      - app-network
+
 volumes:
   vendor_data:
 
