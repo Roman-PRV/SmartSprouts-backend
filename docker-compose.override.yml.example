@@ -24,6 +24,8 @@ services:
   queue-worker:
     build:
       target: dev
+    env_file:
+      - ./laravel/.env  # dev only — prod injects vars via Coolify
     volumes:
       - ./laravel:/var/www
       - vendor_data:/var/www/vendor
