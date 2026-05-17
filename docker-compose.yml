@@ -85,18 +85,13 @@ services:
 
   nginx:
     build:
-      context: ./nginx     # default.conf is baked into the image via Dockerfile
+      context: ./nginx
     restart: unless-stopped
     expose:
-      - "80"  # consumed by Coolify Traefik in prod (and by host port mapping in dev override)
-    # SERVICE_FQDN_NGINX is a Coolify magic var: tells Coolify nginx is the public HTTP
-    # entry point. Coolify auto-generates Traefik labels + Let's Encrypt cert when a
-    # domain is set in the UI. Inert in dev (nginx itself ignores it).
-    environment:
-      - SERVICE_FQDN_NGINX=/
+      - "80"
     volumes:
-      - laravel_public:/var/www/public:ro     # populated by laravel entrypoint from image
-      - laravel_storage:/var/www/storage:ro   # named volume in prod; bind-mounted in dev (override)
+      - laravel_public:/var/www/public:ro
+      - laravel_storage:/var/www/storage:ro
     depends_on:
       - laravel
     networks:
