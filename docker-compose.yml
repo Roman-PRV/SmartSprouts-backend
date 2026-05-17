@@ -1,14 +1,15 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# BASE DOCKER-COMPOSE CONFIGURATION
-# Shared across all environments (dev & prod).
+# DOCKER-COMPOSE CONFIGURATION
+#
+# This file is the canonical, prod-ready compose. It is the SOLE file read by
+# Coolify in production deploys.
 #
 # Development:
-#   docker compose up                        (auto-loads override.yml)
-#   docker compose --profile tts up         (+ ukrainian-tts service)
+#   docker compose up                  (auto-merges docker-compose.override.yml)
+#   docker compose --profile tts up    (also starts ukrainian-tts; defined in override)
 #
-# Production:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tts up -d
+# Production (Coolify):
+#   reads only this file. Env vars and domain are injected via the Coolify UI.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -117,19 +118,8 @@ services:
       timeout: 3s
       retries: 5
 
-  ukrainian-tts:
-    profiles: ["tts"]
-    build:
-      context: ./python-services/ukrainian-tts
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    expose:
-      - "5001"
-    environment:
-      - TTS_MAX_TEXT_LENGTH=${TTS_MAX_TEXT_LENGTH:-2000}
-      - TTS_CHUNK_SIZE=${TTS_CHUNK_SIZE:-200}
-    networks:
-      - app-network
+  # ukrainian-tts is dev-only — defined in docker-compose.override.yml.
+  # Production uses TTS_PROVIDER=elevenlabs and does not need a self-hosted TTS service.
 
 volumes:
   mysql_data:
