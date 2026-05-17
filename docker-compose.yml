@@ -83,7 +83,8 @@ services:
       start_period: 30s
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./nginx     # default.conf is baked into the image via Dockerfile
     restart: unless-stopped
     expose:
       - "80"  # consumed by Coolify Traefik in prod (and by host port mapping in dev override)
@@ -93,7 +94,6 @@ services:
     environment:
       - SERVICE_FQDN_NGINX=/
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - laravel_public:/var/www/public:ro     # populated by laravel entrypoint from image
       - laravel_storage:/var/www/storage:ro   # named volume in prod; bind-mounted in dev (override)
     depends_on:
