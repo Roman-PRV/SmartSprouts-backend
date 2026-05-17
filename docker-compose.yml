@@ -44,8 +44,9 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     user: "33:33"
-    env_file:
-      - ./laravel/.env
+    # Env vars are loaded per-environment:
+    #   - dev: env_file: ./laravel/.env (set in docker-compose.override.yml)
+    #   - prod: injected directly by Coolify into container environment
     entrypoint: ["sh", "-c", "php artisan queue:work --queue=$${QUEUE_WORKER_QUEUES:-$${TTS_QUEUE:-tts},default} --tries=3 --sleep=3 --timeout=$${QUEUE_WORKER_TIMEOUT:-120}"]
     volumes:
       - laravel_public:/var/www/public

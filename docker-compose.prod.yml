@@ -9,16 +9,13 @@ services:
   laravel:
     build:
       target: prod         # Builds the 'prod' stage (no Xdebug, optimised OPcache)
-    env_file:
-      - ./laravel/.env     # No bind-mount in prod — credentials must be injected via env_file
+    # Env vars are injected directly by Coolify into container environment.
     # No bind-mount: code is baked into the image at build time via COPY in Dockerfile.
     # public/ is served via the laravel_public named volume (populated by entrypoint.sh).
 
   queue-worker:
     build:
       target: prod         # Optimised OPcache, no Xdebug
-    env_file:
-      - ./laravel/.env
 
   # nginx, mysql, redis, ukrainian-tts — no prod-specific overrides needed.
   # Base docker-compose.yml already provides:
