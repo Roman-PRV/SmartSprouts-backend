@@ -17,7 +17,15 @@ services:
     build:
       target: prod         # Optimised OPcache, no Xdebug
 
-  # nginx, mysql, redis, ukrainian-tts — no prod-specific overrides needed.
+  nginx:
+    # SERVICE_FQDN_NGINX tells Coolify this service is the public HTTP entry point.
+    # Coolify then exposes a "Domains for nginx" field in the UI, auto-generates
+    # Traefik labels and SSL cert when a domain is set, and attaches nginx to the
+    # Coolify proxy network.
+    environment:
+      - SERVICE_FQDN_NGINX=/
+
+  # mysql, redis, ukrainian-tts — no prod-specific overrides needed.
   # Base docker-compose.yml already provides:
   #   - restart: unless-stopped (Coolify-friendly; honours intentional shutdowns)
   #   - expose: <port> (internal only, no host port mapping)
