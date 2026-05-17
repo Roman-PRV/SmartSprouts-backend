@@ -45,6 +45,7 @@ services:
     ports:
       - "3000:80"                              # Expose to host for local development
     volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # hot-reload of nginx config in dev
       - ./laravel/public:/var/www/public:ro    # override named volume for dev hot-reload
       - ./laravel/storage:/var/www/storage:ro  # override named volume for dev
 
