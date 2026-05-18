@@ -14,19 +14,19 @@ class GameTest extends TestCase
      */
     public function test_icon_url_returns_valid_path_when_set(): void
     {
-        Storage::fake('public');
+        Storage::fake('static', ['url' => config('app.url')]);
 
         $filePath = 'icons/game1.png';
-        $expectedUrl = '/storage/icons/game1.png';
+        $expectedUrl = '/icons/game1.png';
 
-        Storage::disk('public')->put($filePath, 'fake-content');
+        Storage::disk('static')->put($filePath, 'fake-content');
 
         $game = new Game([
             'icon_url' => $filePath,
         ]);
 
         $this->assertStringContainsString($expectedUrl, $game->icon_url);
-        $this->assertTrue(Storage::disk('public')->exists($filePath));
+        $this->assertTrue(Storage::disk('static')->exists($filePath));
     }
 
     /**
@@ -36,7 +36,7 @@ class GameTest extends TestCase
     public function test_icon_url_returns_default_when_missing(): void
     {
         $defaultPath = 'icons/default-icon.png';
-        $expectedUrl = '/storage/'.$defaultPath;
+        $expectedUrl = '/'.$defaultPath;
 
         $game = new Game([
             'icon_url' => null,

@@ -44,6 +44,17 @@ return [
             'throw' => false,
         ],
 
+        // Static assets baked into the image and served by nginx directly
+        // from /var/www/public. Use this for icons, game illustrations, any
+        // git-committed media.
+        'static' => [
+            'driver' => 'local',
+            'root' => public_path(),
+            'url' => env('APP_URL'),
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

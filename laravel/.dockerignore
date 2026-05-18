@@ -9,3 +9,17 @@ phpunit_error.log
 .vscode
 .agent
 public/storage
+
+storage/app/public/games
+storage/app/*.wav
+storage/app/*.mp3
+storage/app/test*
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/data
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/testing/*
+!storage/framework/testing/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
