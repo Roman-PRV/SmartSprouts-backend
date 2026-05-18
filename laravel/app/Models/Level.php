@@ -44,7 +44,7 @@ class Level extends Model
 
     public function getImageUrlAttribute(): string
     {
-        $diskName = ConfigHelper::getString('games.default_icon_disk', 'public');
+        $diskName = ConfigHelper::getString('games.default_icon_disk', 'static');
 
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
@@ -52,12 +52,14 @@ class Level extends Model
         $raw = $this->attributes['image_url'] ?? null;
         $path = is_string($raw) ? ltrim($raw, '/') : '';
 
-        if ($path !== '' && $disk->exists($path)) {
-            return url($disk->url($path));
-        }
+        $key = $path !== '' && $disk->exists($path)
+            ? $path
+            : ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
 
-        $cfgDefaultIcon = ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
+        $url = $disk->url($key);
 
-        return url($disk->url($cfgDefaultIcon));
+        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
+            ? $url
+            : url($url);
     }
 }
