@@ -16,12 +16,12 @@ class GameResourceTest extends TestCase
      */
     public function test_game_resource_returns_expected_structure(): void
     {
-        Storage::fake('public');
+        Storage::fake('static', ['url' => config('app.url')]);
 
         $filePath = 'icons/game1.png';
-        $expectedUrl = url('/storage/'.$filePath);
+        $expectedUrl = url('/'.$filePath);
 
-        Storage::disk('public')->put($filePath, 'fake-content');
+        Storage::disk('static')->put($filePath, 'fake-content');
 
         Lang::shouldReceive('get')
             ->once()

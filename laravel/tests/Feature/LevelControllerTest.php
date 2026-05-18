@@ -82,8 +82,8 @@ class LevelControllerTest extends TestCase
 
     public function test_show_returns_single_level_with_file_url_and_statements(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('levels/first.png', 'dummy');
+        Storage::fake('static', ['url' => config('app.url')]);
+        Storage::disk('static')->put('levels/first.png', 'dummy');
 
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
@@ -142,7 +142,7 @@ class LevelControllerTest extends TestCase
             ->assertJson([
                 'id' => 1,
                 'title' => 'First level',
-                'image_url' => 'http://localhost/storage/levels/first.png',
+                'image_url' => 'http://localhost/levels/first.png',
             ]);
 
         $response->assertJsonFragment([
@@ -475,8 +475,8 @@ class LevelControllerTest extends TestCase
      */
     public function test_show_returns_level_in_requested_locale(string $locale, string $expectedTitle): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('levels/first.png', 'dummy');
+        Storage::fake('static', ['url' => config('app.url')]);
+        Storage::disk('static')->put('levels/first.png', 'dummy');
 
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
