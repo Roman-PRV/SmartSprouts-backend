@@ -16,6 +16,11 @@ class MediaUrlGenerator implements MediaUrlGeneratorInterface
             return null;
         }
 
-        return url(Storage::disk($diskName)->url($path));
+        $url = Storage::disk($diskName)->url($path);
+
+        // Cloud disks (s3/R2) return absolute URLs already; only prefix relative paths.
+        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
+            ? $url
+            : url($url);
     }
 }
