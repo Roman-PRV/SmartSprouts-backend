@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*'],
 
     'allowed_methods' => ['*'],
 
@@ -24,6 +24,8 @@ return [
     'allowed_origins_patterns' => [
         '/^http:\/\/localhost(:\d+)?$/',
         '/^http:\/\/127\.0\.0\.1(:\d+)?$/',
+        '/^https:\/\/smart-sprouts-frontend\.vercel\.app$/',
+        '/^https:\/\/smart-sprouts-frontend-[a-z0-9-]+-smart-sprouts\.vercel\.app$/',
     ],
 
     'allowed_headers' => ['*'],
@@ -32,6 +34,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 
 ];
