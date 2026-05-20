@@ -15,6 +15,7 @@
 services:
   laravel:
     image: ghcr.io/roman-prv/smartsprouts-backend:latest
+    pull_policy: always
     restart: unless-stopped
     working_dir: /var/www
     expose:
@@ -38,6 +39,7 @@ services:
 
   queue-worker:
     image: ghcr.io/roman-prv/smartsprouts-backend:latest
+    pull_policy: always
     restart: unless-stopped
     working_dir: /var/www
     user: "33:33"
