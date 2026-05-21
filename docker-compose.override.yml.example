@@ -43,9 +43,8 @@ services:
       - app-network
       - dev-local-network
 
-  mysql:
-    ports:
-      - "127.0.0.1:3306:3306"  # Expose to host for local DB clients (TablePlus, DBeaver)
+  # mysql host port binding (127.0.0.1:3306:3306) is now defined in base
+  # docker-compose.yml — no need to duplicate here.
 
   nginx:
     ports:
