@@ -38,7 +38,6 @@ class TtsAudioGeneratorServiceTest extends TestCase
 
         config([
             'ai.tts.output_format' => 'mp3',
-            'ai.tts.storage.path_prefix' => 'games',
         ]);
     }
 
