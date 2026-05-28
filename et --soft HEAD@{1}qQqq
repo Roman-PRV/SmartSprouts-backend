@@ -1,0 +1,328 @@
+[33mbc54b31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32m118-add-find_the_wrong-db-schema-and-models[m[33m)[m HEAD@{0}: commit (amend): feat(games): add find_the_wrong DB schema, models, and factories ss-118
+[33m2943ec2[m[33m ([m[1;31morigin/118-add-find_the_wrong-db-schema-and-models[m[33m)[m HEAD@{1}: commit (amend): feat(games): add find_the_wrong DB schema, models, and factories ss-118
+[33ma644e3f[m HEAD@{2}: commit: feat(games): add find_the_wrong DB schema, models, and factories ss-118
+[33m7ac5e33[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m HEAD@{3}: checkout: moving from develop to 118-add-find_the_wrong-db-schema-and-models
+[33m7ac5e33[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m HEAD@{4}: checkout: moving from main to develop
+[33m9910cfe[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{5}: checkout: moving from develop to main
+[33m7ac5e33[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m HEAD@{6}: merge main: Merge made by the 'ort' strategy.
+[33m2a0675a[m HEAD@{7}: checkout: moving from main to develop
+[33m9910cfe[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{8}: pull: Fast-forward
+[33m7c080b2[m HEAD@{9}: checkout: moving from develop to main
+[33m2a0675a[m HEAD@{10}: pull: Merge made by the 'ort' strategy.
+[33m5598771[m HEAD@{11}: checkout: moving from main to develop
+[33m7c080b2[m HEAD@{12}: checkout: moving from 115-align-tts-storage-path-prefix-with-code-default to main
+[33mcd1a439[m[33m ([m[1;31morigin/115-align-tts-storage-path-prefix-with-code-default[m[33m, [m[1;32m115-align-tts-storage-path-prefix-with-code-default[m[33m)[m HEAD@{13}: merge develop: Merge made by the 'ort' strategy.
+[33m498c8e2[m HEAD@{14}: checkout: moving from develop to 115-align-tts-storage-path-prefix-with-code-default
+[33m5598771[m HEAD@{15}: pull: Merge made by the 'ort' strategy.
+[33mf49b0ea[m HEAD@{16}: checkout: moving from 115-align-tts-storage-path-prefix-with-code-default to develop
+[33m498c8e2[m HEAD@{17}: merge develop: Merge made by the 'ort' strategy.
+[33ma8245cd[m HEAD@{18}: checkout: moving from develop to 115-align-tts-storage-path-prefix-with-code-default
+[33mf49b0ea[m HEAD@{19}: merge main: Merge made by the 'ort' strategy.
+[33m508a6c7[m HEAD@{20}: checkout: moving from main to develop
+[33m7c080b2[m HEAD@{21}: pull: Fast-forward
+[33mfd8963e[m HEAD@{22}: checkout: moving from develop to main
+[33m508a6c7[m HEAD@{23}: checkout: moving from 115-align-tts-storage-path-prefix-with-code-default to develop
+[33ma8245cd[m HEAD@{24}: commit (amend): fix(tts): hardcode storage path prefix to 'games', drop env override ss-115
+[33m020a1a9[m HEAD@{25}: commit: fix(tts): hardcode storage path prefix to 'games', drop env override ss-115
+[33md5dda10[m HEAD@{26}: commit: feat: add new levels ss-115
+[33m293aaa5[m[33m ([m[1;31morigin/112-bind-mysql-to-host-for-ssh-access[m[33m, [m[1;32m112-bind-mysql-to-host-for-ssh-access[m[33m)[m HEAD@{27}: checkout: moving from 112-bind-mysql-to-host-for-ssh-access to 115-align-tts-storage-path-prefix-with-code-default
+[33m293aaa5[m[33m ([m[1;31morigin/112-bind-mysql-to-host-for-ssh-access[m[33m, [m[1;32m112-bind-mysql-to-host-for-ssh-access[m[33m)[m HEAD@{28}: commit: feat(db): bind MySQL to host loopback for SSH-tunneled admin access ss-112
+[33m508a6c7[m HEAD@{29}: checkout: moving from develop to 112-bind-mysql-to-host-for-ssh-access
+[33m508a6c7[m HEAD@{30}: merge main: Merge made by the 'ort' strategy.
+[33m0aeeda1[m HEAD@{31}: checkout: moving from main to develop
+[33mfd8963e[m HEAD@{32}: pull: Fast-forward
+[33m89e82d6[m HEAD@{33}: checkout: moving from develop to main
+[33m0aeeda1[m HEAD@{34}: checkout: moving from main to develop
+[33m89e82d6[m HEAD@{35}: checkout: moving from develop to main
+[33m0aeeda1[m HEAD@{36}: merge main: Merge made by the 'ort' strategy.
+[33m3ab3b15[m HEAD@{37}: checkout: moving from main to develop
+[33m89e82d6[m HEAD@{38}: pull: Fast-forward
+[33m6c4597f[m HEAD@{39}: checkout: moving from develop to main
+[33m3ab3b15[m HEAD@{40}: merge main: Merge made by the 'ort' strategy.
+[33mc4dd5bf[m HEAD@{41}: checkout: moving from main to develop
+[33m6c4597f[m HEAD@{42}: pull: Fast-forward
+[33m90583c6[m HEAD@{43}: checkout: moving from develop to main
+[33mc4dd5bf[m HEAD@{44}: commit: fix(nginx): re-resolve laravel upstream DNS to survive container recreate ss-106
+[33mdcf5f4f[m HEAD@{45}: commit: feat(cors): allow Vercel preview and production frontend origins ss-106
+[33mce4ff6d[m HEAD@{46}: merge main: Merge made by the 'ort' strategy.
+[33m5bb9cd1[m HEAD@{47}: checkout: moving from main to develop
+[33m90583c6[m HEAD@{48}: pull: Fast-forward
+[33mfcc9a0a[m HEAD@{49}: checkout: moving from develop to main
+[33m5bb9cd1[m HEAD@{50}: pull: Merge made by the 'ort' strategy.
+[33m9e0561c[m HEAD@{51}: checkout: moving from main to develop
+[33mfcc9a0a[m HEAD@{52}: checkout: moving from 106-allow-production-frontend-origins to main
+[33m0be9b90[m[33m ([m[1;31morigin/106-allow-production-frontend-origins[m[33m, [m[1;32m106-allow-production-frontend-origins[m[33m)[m HEAD@{53}: commit: feat(cors): allow Vercel preview and production frontend origins ss-106
+[33m9e0561c[m HEAD@{54}: checkout: moving from develop to 106-allow-production-frontend-origins
+[33m9e0561c[m HEAD@{55}: merge main: Merge made by the 'ort' strategy.
+[33mb158b00[m HEAD@{56}: pull: Fast-forward
+[33me6a965c[m HEAD@{57}: checkout: moving from main to develop
+[33mfcc9a0a[m HEAD@{58}: pull: Fast-forward
+[33m82429b4[m HEAD@{59}: checkout: moving from 102-integrate-cloudflare-r2 to main
+[33mcba9e6b[m[33m ([m[1;31morigin/102-integrate-cloudflare-r2[m[33m, [m[1;32m102-integrate-cloudflare-r2[m[33m)[m HEAD@{60}: commit: feat: integrate Cloudflare R2 + reorganize static assets ss-102
+[33m1092fa4[m HEAD@{61}: commit: feat: integrate Cloudflare R2 via S3-compatible filesystem ss-102
+[33me6a965c[m HEAD@{62}: checkout: moving from develop to 102-integrate-cloudflare-r2
+[33me6a965c[m HEAD@{63}: merge main: Merge made by the 'ort' strategy.
+[33m06ad107[m HEAD@{64}: pull: Fast-forward
+[33m69c3707[m HEAD@{65}: checkout: moving from main to develop
+[33m82429b4[m HEAD@{66}: pull: Fast-forward
+[33m8a2a8df[m HEAD@{67}: checkout: moving from 099-build-pprod-image-to-ghcr to main
+[33mcda4bd7[m[33m ([m[1;31morigin/099-build-pprod-image-to-ghcr[m[33m, [m[1;32m099-build-pprod-image-to-ghcr[m[33m)[m HEAD@{68}: merge develop: Merge made by the 'ort' strategy.
+[33m654ae2d[m HEAD@{69}: checkout: moving from develop to 099-build-pprod-image-to-ghcr
+[33m69c3707[m HEAD@{70}: merge main: Merge made by the 'ort' strategy.
+[33m7a55220[m HEAD@{71}: checkout: moving from main to develop
+[33m8a2a8df[m HEAD@{72}: pull: Fast-forward
+[33mdb549f4[m HEAD@{73}: checkout: moving from 099-build-pprod-image-to-ghcr to main
+[33m654ae2d[m HEAD@{74}: commit: feat: build prod image to GHCR + auto-deploy via Coolify webhook ss-099
+[33m7a55220[m HEAD@{75}: checkout: moving from develop to 099-build-pprod-image-to-ghcr
+[33m7a55220[m HEAD@{76}: merge main: Merge made by the 'ort' strategy.
+[33m40533ba[m HEAD@{77}: checkout: moving from main to develop
+[33mdb549f4[m HEAD@{78}: pull: Fast-forward
+[33mefca784[m HEAD@{79}: checkout: moving from develop to main
+[33m40533ba[m HEAD@{80}: commit: fix: trust X-Forwarded-* headers from Coolify Traefik ss-097
+[33me026b41[m HEAD@{81}: merge main: Merge made by the 'ort' strategy.
+[33m8661c40[m HEAD@{82}: checkout: moving from main to develop
+[33mefca784[m HEAD@{83}: pull: Fast-forward
+[33mb1ce989[m HEAD@{84}: checkout: moving from develop to main
+[33m8661c40[m HEAD@{85}: commit: fix: remove redundant SERVICE_FQDN_NGINX magic var ss-096
+[33m9affaa0[m HEAD@{86}: merge main: Merge made by the 'ort' strategy.
+[33m34d5c6c[m HEAD@{87}: checkout: moving from main to develop
+[33mb1ce989[m HEAD@{88}: pull: Fast-forward
+[33mff75fd3[m HEAD@{89}: checkout: moving from develop to main
+[33m34d5c6c[m HEAD@{90}: commit: fix: bake nginx config, drop ukrainian-tts from prod, refresh header ss-094
+[33m53026e3[m HEAD@{91}: commit (merge): Merge branch 'main' into develop
+[33ma66c146[m HEAD@{92}: checkout: moving from main to develop
+[33mff75fd3[m HEAD@{93}: pull: Fast-forward
+[33md15727e[m HEAD@{94}: checkout: moving from develop to main
+[33ma66c146[m HEAD@{95}: commit: fix: bake nginx config into image for Coolify deploy ss-094
+[33mb117129[m HEAD@{96}: commit (merge): Merge branch 'main' into develop
+[33m62b30aa[m HEAD@{97}: checkout: moving from main to develop
+[33md15727e[m HEAD@{98}: pull: Fast-forward
+[33m9e4cf62[m HEAD@{99}: checkout: moving from develop to main
+[33m62b30aa[m HEAD@{100}: commit: refactor: make base compose prod-ready, drop prod compose ss-093
+[33m97d6ef2[m HEAD@{101}: pull: Merge made by the 'ort' strategy.
+[33mdd48840[m HEAD@{102}: commit: feat: expose nginx as public service for Coolify ss-092
+[33m352b0c8[m HEAD@{103}: merge main: Merge made by the 'ort' strategy.
+[33mce36810[m HEAD@{104}: checkout: moving from main to develop
+[33m9e4cf62[m HEAD@{105}: pull: Fast-forward
+[33m8b9dded[m HEAD@{106}: checkout: moving from develop to main
+[33mce36810[m HEAD@{107}: commit: refactor: drop env_file from base/prod compose for Coolify ss-091
+[33m1967af2[m HEAD@{108}: checkout: moving from main to develop
+[33m8b9dded[m HEAD@{109}: pull: Fast-forward
+[33m1d84b19[m HEAD@{110}: checkout: moving from develop to main
+[33m1967af2[m HEAD@{111}: commit (merge): Merge branch 'main' into develop
+[33m2a9dca5[m HEAD@{112}: checkout: moving from main to develop
+[33m1d84b19[m HEAD@{113}: checkout: moving from develop to main
+[33m2a9dca5[m HEAD@{114}: pull: Fast-forward
+[33m9ba2ce8[m HEAD@{115}: checkout: moving from 089-refactor-adapt-prod-compose-for-coolify to develop
+[33m9dcd136[m[33m ([m[1;31morigin/089-refactor-adapt-prod-compose-for-coolify[m[33m, [m[1;32m089-refactor-adapt-prod-compose-for-coolify[m[33m)[m HEAD@{116}: commit (amend): refactor: prepare docker-compose for Coolify deployment ss-087
+[33me15e682[m HEAD@{117}: commit: refactor: prepare docker-compose for Coolify deployment ss-087
+[33m9ba2ce8[m HEAD@{118}: checkout: moving from develop to 089-refactor-adapt-prod-compose-for-coolify
+[33m9ba2ce8[m HEAD@{119}: checkout: moving from 089-refactor-adapt-prod-compose-for-coolify to develop
+[33m9ba2ce8[m HEAD@{120}: checkout: moving from develop to 089-refactor-adapt-prod-compose-for-coolify
+[33m9ba2ce8[m HEAD@{121}: pull: Fast-forward
+[33m6fa80a6[m HEAD@{122}: checkout: moving from 086-add-ci-workflow to develop
+[33m8bc9cc9[m[33m ([m[1;31morigin/086-add-ci-workflow[m[33m, [m[1;32m086-add-ci-workflow[m[33m)[m HEAD@{123}: commit: fix: regenerate Laravel package manifest when composer install is skipped ss-086
+[33mc21c3f0[m HEAD@{124}: commit: docs: explain why .env copy is needed in CI workflow ss-086
+[33mc1c79a9[m HEAD@{125}: commit: chore: limit concurrency cancellation to pull requests ss-086
+[33m348cd5d[m HEAD@{126}: commit: chore: cache vendor directory to skip composer install on cache hit ss-086
+[33m52685c8[m HEAD@{127}: commit: chore: pin actions by SHA and enable Dependabot updates ss-086
+[33m988e5ae[m HEAD@{128}: commit: chore: remove --parallel from tests ss-086
+[33m80ecbaa[m HEAD@{129}: commit: chore: track .env.testing for CI runs ss-086
+[33mc09d6e5[m HEAD@{130}: commit: feat: trigger on develop/main and add workflow_dispatch ss-086
+[33mad08143[m HEAD@{131}: commit: feat: add CI workflow for tests, static analysis, code style ss-086
+[33m6fa80a6[m HEAD@{132}: checkout: moving from develop to 086-add-ci-workflow
+[33m6fa80a6[m HEAD@{133}: checkout: moving from main to develop
+[33m1d84b19[m HEAD@{134}: pull: Fast-forward
+[33md14f830[m HEAD@{135}: checkout: moving from develop to main
+[33m6fa80a6[m HEAD@{136}: commit (merge): Merge branch 'main' into develop
+[33m0837ce8[m HEAD@{137}: checkout: moving from main to develop
+[33md14f830[m HEAD@{138}: checkout: moving from develop to main
+[33m0837ce8[m HEAD@{139}: pull: Fast-forward
+[33mf86b08b[m HEAD@{140}: checkout: moving from 043-implement-google-authentification to develop
+[33m907b40c[m[33m ([m[1;31morigin/043-implement-google-authentification[m[33m, [m[1;32m043-implement-google-authentification[m[33m)[m HEAD@{141}: commit: fix: improve credencials guard ss-043
+[33maf3bb12[m HEAD@{142}: commit: feat: redirect to frontend with token in url fragment after google oauth ss-043
+[33m030fdb9[m HEAD@{143}: commit: fix: enable credentials in cors for oauth state cookie ss-043
+[33m4bcddf8[m HEAD@{144}: commit: fix: protect google oauth against csrf with encrypted state cookie ss-043
+[33m6c08a84[m HEAD@{145}: commit: fix: validate oauth state to prevent google auth csrf ss-043
+[33m1761944[m HEAD@{146}: commit: feat: add validation and fallback for google oauth payload ss-043
+[33m63fb883[m HEAD@{147}: commit: fix: skip password nullability revert in migration down() ss-043
+[33m0d0eed5[m HEAD@{148}: commit (amend): feat: extract user lookup logic into GoogleAuthService ss-043
+[33m8967439[m HEAD@{149}: commit (amend): feat: extract user lookup logic into GoogleAuthService ss-043
+[33m0dde5c3[m HEAD@{150}: commit: feat: extract user lookup logic into GoogleAuthService ss-043
+[33m2cec661[m HEAD@{151}: commit: refactor: improve Google OAuth production readiness ss-043
+[33m858389a[m HEAD@{152}: commit (amend): test: create tests for GoogleAuthController ss-043
+[33mb7f41fb[m HEAD@{153}: commit: test: crate tests for GoogleAuthController ss-043
+[33m04b0b4a[m HEAD@{154}: commit: feat: add avatar field to user resource ss-043
+[33mc102011[m HEAD@{155}: commit: feat: add routes for google OAuth ss-043
+[33m42cf65d[m HEAD@{156}: commit (amend): feat: create GoogleAuthController ss-043
+[33m541eed9[m HEAD@{157}: commit: feat: create GoogleAuthController ss-043
+[33m34cd017[m HEAD@{158}: commit: feat: regicter google service ss-043
+[33m70068ef[m HEAD@{159}: commit: feat: add goolge's fields to the user model ss-043
+[33m01c1c1c[m HEAD@{160}: commit: feat: install socialite and create migration for google OAuth ss-043
+[33mf86b08b[m HEAD@{161}: checkout: moving from develop to 043-implement-google-authentification
+[33mf86b08b[m HEAD@{162}: pull: Fast-forward
+[33m3a83a37[m[33m ([m[1;32m060-support-404-error-messages-in-true-false-game-levels[m[33m)[m HEAD@{163}: checkout: moving from 082-return-404-for-non-numeric-path-parameters to develop
+[33m04d00e3[m[33m ([m[1;31morigin/082-return-404-for-non-numeric-path-parameters[m[33m, [m[1;32m082-return-404-for-non-numeric-path-parameters[m[33m)[m HEAD@{164}: commit: test: use real game fixture in non-numeric level id tests ss-082
+[33m6d481c6[m HEAD@{165}: commit: test: fix no-op assertion in games index test ss-082
+[33md732270[m HEAD@{166}: commit: fix: align OpenAPI path params {levelId} → {level} in LevelController ss-082
+[33mb007b17[m HEAD@{167}: commit: test: expand test coverage ss-082
+[33m4f42635[m HEAD@{168}: commit (amend): fix: Return 404 instead of 500 for non-numeric game and level IDs ss-082
+[33m343c2a9[m HEAD@{169}: commit: fix: Return 404 instead of 500 for non-numeric game and level IDs ss-082
+[33m3a83a37[m[33m ([m[1;32m060-support-404-error-messages-in-true-false-game-levels[m[33m)[m HEAD@{170}: checkout: moving from develop to 082-return-404-for-non-numeric-path-parameters
+[33m3a83a37[m[33m ([m[1;32m060-support-404-error-messages-in-true-false-game-levels[m[33m)[m HEAD@{171}: checkout: moving from 060-support-404-error-messages-in-true-false-game-levels to develop
+[33m3a83a37[m[33m ([m[1;32m060-support-404-error-messages-in-true-false-game-levels[m[33m)[m HEAD@{172}: checkout: moving from develop to 060-support-404-error-messages-in-true-false-game-levels
+[33m3a83a37[m[33m ([m[1;32m060-support-404-error-messages-in-true-false-game-levels[m[33m)[m HEAD@{173}: pull: Fast-forward
+[33m5c024df[m[33m ([m[1;32m062-implement-profile-password-change-ui-logic[m[33m)[m HEAD@{174}: checkout: moving from 080-improve-backend-config to develop
+[33m66716f9[m[33m ([m[1;31morigin/080-improve-backend-config[m[33m, [m[1;32m080-improve-backend-config[m[33m)[m HEAD@{175}: rebase (finish): returning to refs/heads/080-improve-backend-config
+[33m66716f9[m[33m ([m[1;31morigin/080-improve-backend-config[m[33m, [m[1;32m080-improve-backend-config[m[33m)[m HEAD@{176}: rebase (reword): chore: fix phpstan deprecations and clarify env production example ss-080
+[33mdeffb19[m HEAD@{177}: rebase (reword): chore: fix phpstan deprecations and clarify env production example ss-071
+[33m84a9d85[m HEAD@{178}: rebase (reword): chore: fix config inconsistencies ss-080
+[33m3be2e5e[m HEAD@{179}: rebase: fast-forward
+[33m5c024df[m[33m ([m[1;32m062-implement-profile-password-change-ui-logic[m[33m)[m HEAD@{180}: rebase (start): checkout HEAD~2
+[33m384ea11[m HEAD@{181}: commit (amend): chore: fix phpstan deprecations and clarify env production example ss-071
+[33m760c98c[m HEAD@{182}: commit: chore: fix phpstan deprecations and clarify env production example ss-071
+[33m3be2e5e[m HEAD@{183}: commit (amend): chore: fix config inconsistencies ss-071
+[33m77cbbf7[m HEAD@{184}: Branch: renamed refs/heads/071-improve-backend-config to refs/heads/080-improve-backend-config
+[33m77cbbf7[m HEAD@{186}: commit: chore: fix config inconsistencies ss-071
+[33m5c024df[m[33m ([m[1;32m062-implement-profile-password-change-ui-logic[m[33m)[m HEAD@{187}: checkout: moving from develop to 071-improve-backend-config
+[33m5c024df[m[33m ([m[1;32m062-implement-profile-password-change-ui-logic[m[33m)[m HEAD@{188}: checkout: moving from 062-implement-profile-password-change-ui-logic to develop
+[33m5c024df[m[33m ([m[1;32m062-implement-profile-password-change-ui-logic[m[33m)[m HEAD@{189}: checkout: moving from develop to 062-implement-profile-password-change-ui-logic
+[33m5c024df[m[33m ([m[1;32m062-implement-profile-password-change-ui-logic[m[33m)[m HEAD@{190}: pull: Fast-forward
+[33mec5bc25[m[33m ([m[1;32m061-implement-user-profile[m[33m)[m HEAD@{191}: checkout: moving from 074-implement-secure-password-update-endpoint to develop
+[33m48008c1[m[33m ([m[1;31morigin/074-implement-secure-password-update-endpoint[m[33m, [m[1;32m074-implement-secure-password-update-endpoint[m[33m)[m HEAD@{192}: commit: fix: add string validation rule to password fields ss-074
+[33med31a00[m HEAD@{193}: reset: moving to HEAD
+[33med31a00[m HEAD@{194}: commit: fix: exempt new_password fields from TrimStrings middleware ss-074
+[33ma9b54b9[m HEAD@{195}: commit (amend): refactor: reissue bearer token after password change to guarantee full revoke ss-074
+[33m980512b[m HEAD@{196}: reset: moving to HEAD
+[33m980512b[m HEAD@{197}: reset: moving to HEAD
+[33m980512b[m HEAD@{198}: reset: moving to HEAD
+[33m980512b[m HEAD@{199}: commit: refactor: reissue bearer token after password change to guarantee full revoke ss-074
+[33m304bf35[m HEAD@{200}: commit (amend): test: add test for the password change ss-074
+[33m8499059[m HEAD@{201}: commit: test: add test for the password change ss-074
+[33m65699e4[m HEAD@{202}: commit: feat: register route for the password change ss-074
+[33m3ca8b8f[m HEAD@{203}: commit: refactor: move the password change to the service ss-074
+[33m86b4940[m HEAD@{204}: commit: refactor: tighten password requirements ss-074
+[33m2a0ba02[m HEAD@{205}: commit: feat: create ProfilePasswordController ss-074
+[33m5fd0d17[m HEAD@{206}: commit: feat: create UpdatePasswordRequest ss-074
+[33mec5bc25[m[33m ([m[1;32m061-implement-user-profile[m[33m)[m HEAD@{207}: checkout: moving from develop to 074-implement-secure-password-update-endpoint
+[33mec5bc25[m[33m ([m[1;32m061-implement-user-profile[m[33m)[m HEAD@{208}: reset: moving to HEAD
+[33mec5bc25[m[33m ([m[1;32m061-implement-user-profile[m[33m)[m HEAD@{209}: checkout: moving from 061-implement-user-profile to develop
+[33mec5bc25[m[33m ([m[1;32m061-implement-user-profile[m[33m)[m HEAD@{210}: checkout: moving from develop to 061-implement-user-profile
+[33mec5bc25[m[33m ([m[1;32m061-implement-user-profile[m[33m)[m HEAD@{211}: pull: Fast-forward
+[33ma8daa69[m HEAD@{212}: checkout: moving from 073-implement-user-profile-aggregation-endpoint to develop
+[33m71900b2[m[33m ([m[1;31morigin/073-implement-user-profile-aggregation-endpoint[m[33m, [m[1;32m073-implement-user-profile-aggregation-endpoint[m[33m)[m HEAD@{213}: commit: refactor: align with actual db columns and prevent id mass-assignment ss-073
+[33m101d139[m HEAD@{214}: commit (amend): refactor: cache global total levels and gracefully handle missing game tables ss-073
+[33m04e0db9[m HEAD@{215}: commit: refactor: cache global total levels and gracefully handle missing game tables ss-073
+[33m326ed29[m HEAD@{216}: commit (amend): refactor: unwrap profile API response to match OpenAPI spec ss-073
+[33mcc9d6b9[m HEAD@{217}: commit: refactor: unwrap profile API response to match OpenAPI spec ss-073
+[33m39d35cc[m HEAD@{218}: commit: test: add tests for ProfileController ss-073
+[33m402bd9a[m HEAD@{219}: commit (amend): chore: fix docker volume sync for public dir and update example config ss-073
+[33m1bca9b8[m HEAD@{220}: commit: chore: fix docker volume sync for public dir and update example config ss-073
+[33m27f6d04[m HEAD@{221}: commit (amend): refactor: rename xp to score and create swagger docs ss-073
+[33m50e01bc[m HEAD@{222}: commit: refactor: rename xp to score and create swagger docs ss-073
+[33m405b60b[m HEAD@{223}: commit: refactor: batch statistics aggregation via SQL and subqueries ss-073
+[33m070ca9b[m HEAD@{224}: commit (amend): refactor: harden dynamic table resolution in ProfileAggregationService ss-073
+[33mf857766[m HEAD@{225}: commit: refactor: harden dynamic table resolution in ProfileAggregationService ss-073
+[33me31346d[m HEAD@{226}: commit: chore: add database migrations rule to gemini ss-073
+[33md30de60[m HEAD@{227}: commit: feat: create profile endpoint ss-073
+[33m8318093[m HEAD@{228}: commit: chore: add laravel boost ss-073
+[33ma8daa69[m HEAD@{229}: checkout: moving from develop to 073-implement-user-profile-aggregation-endpoint
+[33ma8daa69[m HEAD@{230}: checkout: moving from main to develop
+[33md14f830[m HEAD@{231}: pull: Fast-forward
+[33m237280d[m HEAD@{232}: checkout: moving from develop to main
+[33ma8daa69[m HEAD@{233}: pull: Fast-forward
+[33m776181e[m HEAD@{234}: checkout: moving from 069-add-title_audio_url-to-true-false-games to develop
+[33mddfb08c[m[33m ([m[1;31morigin/069-add-title_audio_url-to-true-false-games[m[33m, [m[1;32m069-add-title_audio_url-to-true-false-games[m[33m)[m HEAD@{235}: commit: fix: register TrueFalseImageLevel in TtsModelMappingEnum ss-069
+[33md89f805[m HEAD@{236}: commit: test: improve unit test quality for TrueFalseImage and TrueFalseText resources ss-069
+[33m61fb59d[m HEAD@{237}: commit: docs: add comment to migrations ss-069
+[33maad0cb8[m HEAD@{238}: commit: test: add title_audio_url coverage to TrueFalseText and TrueFalseImage level resources ss-69
+[33m74c8c7e[m HEAD@{239}: reset: moving to HEAD
+[33m74c8c7e[m HEAD@{240}: commit: feat: update TrueFalseImageLevelResource and TrueFalseTextLevelResource ss-069
+[33mb8feb1d[m HEAD@{241}: commit: fix: update the default values for existing records ss-069
+[33mdca6f04[m HEAD@{242}: commit: feat: update TrueFalseImageLevel adn TrueFalseTextLevel models ss-069
+[33mf2bccd1[m HEAD@{243}: commit: feat: add title_audio_url column ss-069
+[33m776181e[m HEAD@{244}: checkout: moving from develop to 069-add-title_audio_url-to-true-false-games
+[33m776181e[m HEAD@{245}: pull: Fast-forward
+[33m315a45a[m HEAD@{246}: checkout: moving from 067-implement-text-chunking-in-ucranian-tts to develop
+[33m5b62983[m[33m ([m[1;31morigin/067-implement-text-chunking-in-ucranian-tts[m[33m)[m HEAD@{247}: commit: fix: reject whitespace-only text with 400 before synthesis ss-067
+[33m84f8c40[m HEAD@{248}: commit: docs: clarification of documentation ss-067
+[33m6457478[m HEAD@{249}: commit: refactor: improve ucranian tts stability ss-067
+[33m15992fb[m HEAD@{250}: commit: docs: add a voice change instuction for ucranian-tts ss-067
+[33m00b6724[m HEAD@{251}: checkout: moving from develop to 067-implement-text-chunking-in-ucranian-tts
+[33m315a45a[m HEAD@{252}: reset: moving to HEAD~1
+[33m00b6724[m HEAD@{253}: checkout: moving from 067-implement-text-chunking-in-ucranian-tts to develop
+[33m00b6724[m HEAD@{254}: checkout: moving from develop to 067-implement-text-chunking-in-ucranian-tts
+[33m315a45a[m HEAD@{255}: pull: Merge made by the 'ort' strategy.
+[33m0052aca[m HEAD@{256}: checkout: moving from 065-switch-to-redis-queue to develop
+[33m6f2573e[m[33m ([m[1;31morigin/065-switch-to-redis-queue[m[33m)[m HEAD@{257}: commit: fix: parameterize queue namespaces in docker-compose worker entrypoint ss-065
+[33m5a204be[m HEAD@{258}: commit: fix: synchronize retry_after with worker timeout via env variables ss-065
+[33m03efc50[m HEAD@{259}: commit: test: add tests for HasTtsAudio trait ss-065
+[33mee034b6[m HEAD@{260}: commit: refactor: use native JSON updates for TTS audio and enforce default empty objects ss-065
+[33m810dec3[m HEAD@{261}: commit: refactor: strictly rely on env_file for production configuration ss-065
+[33m0f2c63e[m HEAD@{262}: commit: fix: prevent concurrent init by overriding worker entrypoint ss-065
+[33mc2df776[m HEAD@{263}: commit: refactor: use the current connection in the transaction ss-065
+[33ma689987[m HEAD@{264}: commit: docs: fill folder section in readme ss-065
+[33m508862a[m HEAD@{265}: commit: refactor: add transaction to audio path saving ss-065
+[33m3c38153[m HEAD@{266}: commit: refactor: improve tts audio updates and add queue restart script ss-065
+[33m0052aca[m HEAD@{267}: checkout: moving from 063-add-kokoro-for-english-and-spanish-tts to 065-switch-to-redis-queue
+[33m7c82796[m[33m ([m[1;32m063-add-kokoro-for-english-and-spanish-tts[m[33m)[m HEAD@{268}: checkout: moving from 065-switch-to-redis-queue to 063-add-kokoro-for-english-and-spanish-tts
+[33m0052aca[m HEAD@{269}: checkout: moving from develop to 065-switch-to-redis-queue
+[33m0052aca[m HEAD@{270}: checkout: moving from 063-add-kokoro-for-english-and-spanish-tts to develop
+[33m7c82796[m[33m ([m[1;32m063-add-kokoro-for-english-and-spanish-tts[m[33m)[m HEAD@{271}: checkout: moving from develop to 063-add-kokoro-for-english-and-spanish-tts
+[33m0052aca[m HEAD@{272}: pull: Merge made by the 'ort' strategy.
+[33m40fe384[m HEAD@{273}: checkout: moving from 063-add-kokoro-service-for-english-and-spanish-tts to develop
+[33mef60f95[m[33m ([m[1;31morigin/063-add-kokoro-service-for-english-and-spanish-tts[m[33m)[m HEAD@{274}: commit: fix: add trnslations for kokoro exeptions ss-063
+[33me3f865e[m HEAD@{275}: commit: docs: edit readme ss-063
+[33m7cd54ab[m HEAD@{276}: checkout: moving from 7cd54abe55f169868a811a4701e8c4731fc8d803 to 063-add-kokoro-service-for-english-and-spanish-tts
+[33m7cd54ab[m HEAD@{277}: checkout: moving from 063-add-kokoro-for-english-and-spanish-tts to 7cd54abe55f169868a811a4701e8c4731fc8d803
+[33m7c82796[m[33m ([m[1;32m063-add-kokoro-for-english-and-spanish-tts[m[33m)[m HEAD@{278}: commit: feat: switch to redis queue and fix audio update race condition ss-063
+[33m7cd54ab[m HEAD@{279}: commit: refactor: clean code ss-063
+[33m83636ba[m HEAD@{280}: commit: refactor: improve the registration of TTS providers ss-063
+[33m9edfa7b[m HEAD@{281}: commit: test: eliminate the repetition of constants ss-063
+[33m4037e41[m HEAD@{282}: commit: refactor: implement config-driven tts provider registration and clean up kokoro provider ss-63
+[33m59fe24b[m HEAD@{283}: commit: fix: repair default voices for Kokoro ss-063
+[33m6fe8ef3[m HEAD@{284}: commit: refactor: specifying the path to the kokoro configuration ss-063
+[33mcd578fc[m HEAD@{285}: commit: chore: config external tts service in docker ss-063
+[33m9a39315[m HEAD@{286}: commit: feat: register KokoroTtsProvider in TtsServiceProvider and update tests ss-063
+[33m87ab5d4[m HEAD@{287}: commit: feat: create kokoro section in config/ai.php ss-063
+[33m9e73a86[m HEAD@{288}: commit: feat: create KokoroTtsProvider ss-063
+[33m40fe384[m HEAD@{289}: checkout: moving from develop to 063-add-kokoro-for-english-and-spanish-tts
+[33m40fe384[m HEAD@{290}: pull: Merge made by the 'ort' strategy.
+[33m7a8f9c1[m HEAD@{291}: checkout: moving from 061-fix-auduio-genetation-in-true-false-text to develop
+[33m22ebc4e[m[33m ([m[1;31morigin/061-fix-auduio-genetation-in-true-false-text[m[33m)[m HEAD@{292}: commit: refactor: move the locale to a separate variable for consistency ss-061
+[33mdecf6b0[m HEAD@{293}: commit: fix: add TrueFalseTextLevel to TtsModelMappingEnum ss-061
+[33m9f5b7df[m HEAD@{294}: checkout: moving from develop to 061-fix-auduio-genetation-in-true-false-text
+[33m7a8f9c1[m HEAD@{295}: checkout: moving from 061-fix-auduio-genetation-in-true-false-text to develop
+[33m9f5b7df[m HEAD@{296}: commit: fix: add getOrGenerate in level resourse ss-061
+[33m7a8f9c1[m HEAD@{297}: checkout: moving from develop to 061-fix-auduio-genetation-in-true-false-text
+[33m7a8f9c1[m HEAD@{298}: pull: Merge made by the 'ort' strategy.
+[33m9f5d7c1[m HEAD@{299}: checkout: moving from 059-configure-separate-dDocker-environments to develop
+[33m7776372[m[33m ([m[1;32m059-configure-separate-dDocker-environments[m[33m)[m HEAD@{300}: commit: refactor: replace storage bind-mount with named volume for production isolation ss-059
+[33m795c7c3[m[33m ([m[1;31morigin/059-configure-separate-dDocker-environments[m[33m)[m HEAD@{301}: commit: docs: fix DOCKER.md and description of docker-compose.override.yml.example ss-059
+[33ma7f7689[m HEAD@{302}: commit: fix: remove nginx port exposure in production ss-059
+[33m6a1347d[m HEAD@{303}: commit: chore: add Qodo Code Review config (.pr_agent.toml) ss-059
+[33m272a567[m HEAD@{304}: commit: chore: add table prefix to game seeder ss-059
+[33m9f5d7c1[m HEAD@{305}: checkout: moving from develop to 059-configure-separate-dDocker-environments
+[33m9f5d7c1[m HEAD@{306}: pull: Merge made by the 'ort' strategy.
+[33mf07c7da[m HEAD@{307}: checkout: moving from 057-automatic-audio-generation-on-demand to develop
+[33m570d44f[m[33m ([m[1;31morigin/057-automatic-audio-generation-on-demand[m[33m)[m HEAD@{308}: commit: fix: use correct config key app.supported_locales in TtsSyncCommand ss-057
+[33m07c3a2f[m HEAD@{309}: commit: test: fix storage mock conflict and restore failure check ss-057
+[33ma1e05b5[m HEAD@{310}: commit: test: add TtsServiceProviderTest to ensure singletons and providers are correctly bound ss-057
+[33mfde892a[m HEAD@{311}: commit: refactor: optimize TtsSyncCommand with lazy loading and single-pass scan ss-057
+[33m5fe6856[m HEAD@{312}: commit: refactor: format code ss-057
+[33m4a90cfc[m HEAD@{313}: commit: refactor: remove production-specific comments and flags from Dockerfile ss-057
+[33mec919f4[m HEAD@{314}: commit: refactor: replace hardcoded xdebug client host with configurable parameter ss-057
+[33mc2a3216[m HEAD@{315}: commit: chore: update gitignore ss-057
+[33mb89a2c2[m[33m ([m[1;31morigin/000-save-docker-changes[m[33m)[m HEAD@{316}: checkout: moving from 057-automatic-audio-generation-on-demand to 000-save-docker-changes
+[33mb89a2c2[m[33m ([m[1;31morigin/000-save-docker-changes[m[33m)[m HEAD@{317}: merge 000-save-docker-changes: Fast-forward
+[33mf07c7da[m HEAD@{318}: checkout: moving from 000-save-docker-changes to 057-automatic-audio-generation-on-demand
+[33mb89a2c2[m[33m ([m[1;31morigin/000-save-docker-changes[m[33m)[m HEAD@{319}: reset: moving to HEAD
+[33mb89a2c2[m[33m ([m[1;31morigin/000-save-docker-changes[m[33m)[m HEAD@{320}: commit: test: add tests for tts audio generation flow ss-057
+[33m129349a[m HEAD@{321}: commit: fix: avoid false positive lock failure logs in GenerateMissingAudioListener ss-057
+[33m335a360[m HEAD@{322}: commit: refactor: delegate model update responsibility to TtsAudioInterface ss-057
+[33mffa0477[m HEAD@{323}: commit: refactor: move file existence check to storage service ss-057
+[33mb00b8cd[m HEAD@{324}: commit: refactor: inject logger and cleanup service provider ss-057
+[33m1ca9b9b[m HEAD@{325}: commit: refactor: use fresh model check in GenerateMissingAudioListener ss-057
+[33m6ee37e3[m HEAD@{326}: commit: refactor: add try/catch to GenerateMissingAudioListener ss-057
+[33mca46970[m HEAD@{327}: commit: refactor: remove redundant getUrl from TtsStorageService and centralize via MediaHelper ss-057
+[33m0cec793[m HEAD@{328}: commit: refactor: ensure tts audio storage success by throwing exception on failure ss-057

@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property int $id
  * @property string $title
- * @property string $image_url
+ * @property string $title_audio_url
+ * @property string|null $image_url
  *
  * @OA\Schema(
  * schema="Level",
@@ -39,8 +40,6 @@ use Illuminate\Database\Eloquent\Model;
 class Level extends Model
 {
     use HasFactory;
-
-    protected $guarded = [];
 
     public function getImageUrlAttribute(): string
     {
