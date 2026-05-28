@@ -36,13 +36,11 @@ class FindTheWrongItemFactory extends Factory
                 'en' => $this->faker->words(3, true),
                 'es' => $this->faker->words(3, true),
             ],
-            'name_audio_url' => [],
             'explanation' => [
                 'uk' => $this->faker->sentence(),
                 'en' => $this->faker->sentence(),
                 'es' => $this->faker->sentence(),
             ],
-            'explanation_audio_url' => [],
         ];
     }
 }
