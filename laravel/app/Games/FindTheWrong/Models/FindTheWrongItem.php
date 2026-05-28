@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property int $level_id
+ * @property array<int, array{0: float, 1: float}> $polygon
+ * @property string $name
+ * @property string $name_audio_url
+ * @property string $explanation
+ * @property string $explanation_audio_url
+ */
 class FindTheWrongItem extends Model implements TtsAudioInterface
 {
     use HasFactory;
@@ -40,6 +49,9 @@ class FindTheWrongItem extends Model implements TtsAudioInterface
     /** @var array<int, string> */
     public $translatable = ['name', 'name_audio_url', 'explanation', 'explanation_audio_url'];
 
+    /**
+     * @return BelongsTo<FindTheWrongLevel, FindTheWrongItem>
+     */
     public function level(): BelongsTo
     {
         return $this->belongsTo(FindTheWrongLevel::class, 'level_id');

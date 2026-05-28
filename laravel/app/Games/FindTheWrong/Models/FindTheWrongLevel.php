@@ -5,13 +5,11 @@ namespace App\Games\FindTheWrong\Models;
 use App\Contracts\TtsAudioInterface;
 use App\Models\Level;
 use App\Traits\HasTtsAudio;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 class FindTheWrongLevel extends Level implements TtsAudioInterface
 {
-    use HasFactory;
     use HasTranslations;
     use HasTtsAudio;
 
@@ -31,6 +29,9 @@ class FindTheWrongLevel extends Level implements TtsAudioInterface
     /** @var array<int, string> */
     public $translatable = ['title', 'title_audio_url'];
 
+    /**
+     * @return HasMany<FindTheWrongItem>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(FindTheWrongItem::class, 'level_id')->orderBy('id');
