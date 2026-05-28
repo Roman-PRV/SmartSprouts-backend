@@ -23,10 +23,16 @@ class FindTheWrongService implements GameServiceInterface
      */
     public function fetchAllLevels(): Collection
     {
-        $table = (new FindTheWrongLevel)->getTable();
+        $levelTable = (new FindTheWrongLevel)->getTable();
 
-        if (! Schema::hasTable($table)) {
-            throw new TableMissingException($table);
+        if (! Schema::hasTable($levelTable)) {
+            throw new TableMissingException($levelTable);
+        }
+
+        $itemsTable = (new FindTheWrongItem)->getTable();
+
+        if (! Schema::hasTable($itemsTable)) {
+            throw new TableMissingException($itemsTable);
         }
 
         /** @var Collection<int, FindTheWrongLevel> $levels */
