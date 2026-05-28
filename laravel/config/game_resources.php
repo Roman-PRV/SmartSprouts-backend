@@ -1,5 +1,6 @@
 <?php
 
+use App\Games\FindTheWrong\Http\Resources\FindTheWrongLevelResource;
 use App\Games\TrueFalseImage\Http\Resources\TrueFalseImageLevelResource;
 use App\Games\TrueFalseText\Http\Resources\TrueFalseTextLevelResource;
 use App\Http\Resources\LevelDescriptionResource;
@@ -11,6 +12,7 @@ return [
     'map' => [
         'true_false_image' => TrueFalseImageLevelResource::class,
         'true_false_text' => TrueFalseTextLevelResource::class,
+        'find_the_wrong' => FindTheWrongLevelResource::class,
     ],
 
     /*

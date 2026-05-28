@@ -1,6 +1,7 @@
 <?php
 
 use App\Contracts\GameServiceInterface;
+use App\Games\FindTheWrong\Services\FindTheWrongService;
 use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use App\Games\TrueFalseText\Services\TrueFalseTextService;
 
@@ -13,6 +14,7 @@ return [
     'map' => [
         'true_false_image' => TrueFalseImageService::class,
         'true_false_text' => TrueFalseTextService::class,
+        'find_the_wrong' => FindTheWrongService::class,
     ],
 
     /**
