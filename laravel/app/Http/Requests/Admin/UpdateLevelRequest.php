@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Admin;
 
-use Illuminate\Contracts\Validation\Validator;
+use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
  * Validates an admin "update level" request. Same shape as StoreLevelRequest
@@ -37,6 +36,8 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  */
 class UpdateLevelRequest extends FormRequest
 {
+    use RespondsWithJsonValidation;
+
     /**
      * Authorization is delegated to the route middleware (auth + EnsureAdmin).
      */
@@ -57,18 +58,5 @@ class UpdateLevelRequest extends FormRequest
             'title.es' => 'required|string|max:255',
             'image' => 'nullable|file|mimes:jpeg,png,webp|max:5120',
         ];
-    }
-
-    /**
-     * Convert validation failures into a JSON 422 instead of the default redirect.
-     *
-     * @throws HttpResponseException
-     */
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(response()->json([
-            'message' => __('validation.failed_message'),
-            'errors' => $validator->errors(),
-        ], 422));
     }
 }

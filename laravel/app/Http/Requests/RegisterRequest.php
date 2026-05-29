@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
+use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
 
 /**
@@ -14,6 +13,8 @@ use Illuminate\Validation\Rules\Password;
  */
 class RegisterRequest extends FormRequest
 {
+    use RespondsWithJsonValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -34,22 +35,5 @@ class RegisterRequest extends FormRequest
             'email' => 'required|string|email|unique:users',
             'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ];
-    }
-
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator
-     *                                                                 The validator instance containing the failed validation rules.
-     *
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     *                                                           Thrown to immediately return a JSON response with validation errors and a 422 status code.
-     */
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(response()->json([
-            'message' => __('validation.failed_message'),
-            'errors' => $validator->errors(),
-        ], 422));
     }
 }
