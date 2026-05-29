@@ -40,15 +40,9 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
      * admin can fix it via PATCH or DELETE.
      *
      * @param  array<string, mixed>  $data
-     *
-     * @throws \InvalidArgumentException If no image is supplied.
      */
-    public function create(array $data, ?UploadedFile $image): Level
+    public function create(array $data, UploadedFile $image): Level
     {
-        if ($image === null) {
-            throw new \InvalidArgumentException('Image is required when creating a find_the_wrong level.');
-        }
-
         $level = FindTheWrongLevel::create([
             'title' => $data['title'],
         ]);
