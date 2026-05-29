@@ -43,20 +43,32 @@ class Level extends Model
 
     public function getImageUrlAttribute(): string
     {
-        $diskName = ConfigHelper::getString('games.default_icon_disk', 'static');
-
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
-
         $raw = $this->attributes['image_url'] ?? null;
         $path = is_string($raw) ? ltrim($raw, '/') : '';
 
-        $key = $path !== '' && $disk->exists($path)
+        if ($path !== '') {
+            $uploadDiskName = ConfigHelper::getString('games.upload_disk', 'public');
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $uploadDisk */
+            $uploadDisk = \Illuminate\Support\Facades\Storage::disk($uploadDiskName);
+
+            if ($uploadDisk->exists($path)) {
+                return $this->absoluteUrl($uploadDisk->url($path));
+            }
+        }
+
+        $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $staticDisk */
+        $staticDisk = \Illuminate\Support\Facades\Storage::disk($staticDiskName);
+
+        $key = $path !== '' && $staticDisk->exists($path)
             ? $path
             : ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
 
-        $url = $disk->url($key);
+        return $this->absoluteUrl($staticDisk->url($key));
+    }
 
+    private function absoluteUrl(string $url): string
+    {
         return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
             ? $url
             : url($url);

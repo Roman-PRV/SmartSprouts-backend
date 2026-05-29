@@ -13,6 +13,8 @@ class FindTheWrongLevel extends Level implements TtsAudioInterface
     use HasTranslations;
     use HasTtsAudio;
 
+    public const STORAGE_ROOT = 'games/find-the-wrong/levels';
+
     protected $table = 'find_the_wrong_levels';
 
     protected $fillable = [
@@ -35,5 +37,14 @@ class FindTheWrongLevel extends Level implements TtsAudioInterface
     public function items(): HasMany
     {
         return $this->hasMany(FindTheWrongItem::class, 'level_id')->orderBy('id');
+    }
+
+    /**
+     * Directory under the configured upload disk where all of this level's
+     * content lives (cover image, TTS audio for title, item assets, etc.).
+     */
+    public function storageDirectory(): string
+    {
+        return self::STORAGE_ROOT.'/'.$this->id;
     }
 }
