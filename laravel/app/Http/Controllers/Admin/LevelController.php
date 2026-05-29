@@ -11,6 +11,7 @@ use App\Models\Game;
 use App\Services\LevelAdminServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 /**
@@ -84,7 +85,9 @@ class LevelController extends Controller
     }
 
     /**
-     * Look up the admin service for this game; abort 400 if no implementation is registered.
+     * Look up the admin service for this game. Aborts 404 with a fixed message
+     * if no implementation is registered; the internal factory error is logged
+     * for debugging instead of leaking class names into the response.
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
@@ -93,7 +96,12 @@ class LevelController extends Controller
         try {
             return $this->factory->for($game);
         } catch (InvalidArgumentException $e) {
-            abort(400, $e->getMessage());
+            Log::warning('Admin level service not configured for game', [
+                'game_id' => $game->id,
+                'table_prefix' => $game->table_prefix,
+                'error' => $e->getMessage(),
+            ]);
+            abort(404, 'Admin operations are not available for this game.');
         }
     }
 }

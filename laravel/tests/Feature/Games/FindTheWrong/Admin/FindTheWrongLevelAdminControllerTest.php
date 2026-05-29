@@ -173,6 +173,7 @@ class FindTheWrongLevelAdminControllerTest extends TestCase
 
         $this->actingAs($admin)
             ->getJson("/api/admin/games/{$otherGame->id}/levels")
-            ->assertStatus(400);
+            ->assertStatus(404)
+            ->assertJsonPath('message', 'Admin operations are not available for this game.');
     }
 }
