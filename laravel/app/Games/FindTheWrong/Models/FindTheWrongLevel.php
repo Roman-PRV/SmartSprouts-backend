@@ -2,13 +2,14 @@
 
 namespace App\Games\FindTheWrong\Models;
 
+use App\Contracts\TranslatableLevelInterface;
 use App\Contracts\TtsAudioInterface;
 use App\Models\Level;
 use App\Traits\HasTtsAudio;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
-class FindTheWrongLevel extends Level implements TtsAudioInterface
+class FindTheWrongLevel extends Level implements TranslatableLevelInterface, TtsAudioInterface
 {
     use HasTranslations;
     use HasTtsAudio;

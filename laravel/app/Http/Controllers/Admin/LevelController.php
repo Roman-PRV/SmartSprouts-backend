@@ -6,8 +6,8 @@ use App\Contracts\LevelAdminServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreLevelRequest;
 use App\Http\Requests\Admin\UpdateLevelRequest;
+use App\Http\Resources\Admin\LevelAdminResource;
 use App\Models\Game;
-use App\Models\Level;
 use App\Services\LevelAdminServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
@@ -27,9 +27,10 @@ class LevelController extends Controller
     public function index(Game $game): JsonResponse
     {
         $service = $this->resolveService($game);
-        $levels = $service->list();
 
-        return response()->json($levels->map(fn (Level $level): array => $this->serialize($level))->all());
+        return response()->json(
+            LevelAdminResource::collection($service->list())->resolve(request())
+        );
     }
 
     /**
@@ -46,7 +47,10 @@ class LevelController extends Controller
             'title' => $request->validated('title'),
         ], $image);
 
-        return response()->json($this->serialize($level), 201);
+        return response()->json(
+            LevelAdminResource::make($level)->resolve(request()),
+            201
+        );
     }
 
     /**
@@ -63,7 +67,9 @@ class LevelController extends Controller
             'title' => $request->validated('title'),
         ], $image);
 
-        return response()->json($this->serialize($updated));
+        return response()->json(
+            LevelAdminResource::make($updated)->resolve(request())
+        );
     }
 
     /**
@@ -89,26 +95,5 @@ class LevelController extends Controller
         } catch (InvalidArgumentException $e) {
             abort(400, $e->getMessage());
         }
-    }
-
-    /**
-     * Build the JSON shape for a single level. `items_count` is included only
-     * when the relation was counted via withCount() in the service.
-     *
-     * @return array<string, mixed>
-     */
-    private function serialize(Level $level): array
-    {
-        $payload = [
-            'id' => $level->id,
-            'title' => method_exists($level, 'getTranslations') ? $level->getTranslations('title') : $level->title,
-            'image_url' => $level->image_url,
-        ];
-
-        if (isset($level->items_count)) {
-            $payload['items_count'] = $level->items_count;
-        }
-
-        return $payload;
     }
 }
