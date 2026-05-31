@@ -23,7 +23,7 @@ class FindTheWrongLevelFactory extends Factory
                 'en' => $this->faker->sentence(3),
                 'es' => $this->faker->sentence(3),
             ],
-            'image_url' => 'games/find-the-wrong/levels/image.jpg',
+            'image_url' => FindTheWrongLevel::STORAGE_ROOT.'/image.jpg',
         ];
     }
 }

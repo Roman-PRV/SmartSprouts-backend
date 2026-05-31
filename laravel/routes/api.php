@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilePasswordController;
+use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,3 +45,18 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber(['game', 'level']);
 
 });
+
+Route::middleware(['auth:sanctum', EnsureAdmin::class])
+    ->prefix('admin/games/{game}')
+    ->name('admin.games.levels.')
+    ->whereNumber('game')
+    ->group(function () {
+        Route::get('levels', [AdminLevelController::class, 'index'])->name('index');
+        Route::post('levels', [AdminLevelController::class, 'store'])->name('store');
+        Route::match(['put', 'patch'], 'levels/{level}', [AdminLevelController::class, 'update'])
+            ->name('update')
+            ->whereNumber('level');
+        Route::delete('levels/{level}', [AdminLevelController::class, 'destroy'])
+            ->name('destroy')
+            ->whereNumber('level');
+    });

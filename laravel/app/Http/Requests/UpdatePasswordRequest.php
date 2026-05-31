@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
+use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rules\Password;
 
 /**
@@ -13,6 +12,8 @@ use Illuminate\Validation\Rules\Password;
  */
 class UpdatePasswordRequest extends FormRequest
 {
+    use RespondsWithJsonValidation;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -32,19 +33,5 @@ class UpdatePasswordRequest extends FormRequest
             'current_password' => ['required', 'string', 'current_password'],
             'new_password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ];
-    }
-
-    /**
-     * Handle a failed validation attempt.
-     *
-     *
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     */
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(response()->json([
-            'message' => __('validation.failed_message'),
-            'errors' => $validator->errors(),
-        ], 422));
     }
 }
