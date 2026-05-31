@@ -169,7 +169,7 @@ class FindTheWrongLevelAdminControllerTest extends TestCase
     public function test_admin_endpoint_rejects_game_without_admin_service(): void
     {
         $admin = User::factory()->admin()->create();
-        $otherGame = Game::factory()->create(['table_prefix' => 'true_false_image']);
+        $otherGame = Game::factory()->create(['table_prefix' => 'definitely_not_registered']);
 
         $this->actingAs($admin)
             ->getJson("/api/admin/games/{$otherGame->id}/levels")
