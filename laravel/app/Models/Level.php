@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Helpers\ConfigHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -48,8 +50,8 @@ class Level extends Model
 
         if ($path !== '') {
             $uploadDiskName = ConfigHelper::getString('games.upload_disk', 'public');
-            /** @var \Illuminate\Filesystem\FilesystemAdapter $uploadDisk */
-            $uploadDisk = \Illuminate\Support\Facades\Storage::disk($uploadDiskName);
+            /** @var FilesystemAdapter $uploadDisk */
+            $uploadDisk = Storage::disk($uploadDiskName);
 
             if ($uploadDisk->exists($path)) {
                 return $this->absoluteUrl($uploadDisk->url($path));
@@ -57,8 +59,8 @@ class Level extends Model
         }
 
         $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $staticDisk */
-        $staticDisk = \Illuminate\Support\Facades\Storage::disk($staticDiskName);
+        /** @var FilesystemAdapter $staticDisk */
+        $staticDisk = Storage::disk($staticDiskName);
 
         $key = $path !== '' && $staticDisk->exists($path)
             ? $path
