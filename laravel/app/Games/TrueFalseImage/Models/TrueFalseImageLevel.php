@@ -2,6 +2,7 @@
 
 namespace App\Games\TrueFalseImage\Models;
 
+use App\Contracts\TranslatableLevelInterface;
 use App\Contracts\TtsAudioInterface;
 use App\Models\Level;
 use App\Traits\HasTtsAudio;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
-class TrueFalseImageLevel extends Level implements TtsAudioInterface
+class TrueFalseImageLevel extends Level implements TranslatableLevelInterface, TtsAudioInterface
 {
     use HasFactory;
     use HasTranslations;
