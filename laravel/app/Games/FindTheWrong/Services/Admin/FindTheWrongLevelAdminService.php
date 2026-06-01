@@ -49,7 +49,7 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
 
         $level->update(['image_url' => $this->storeImage($image, $level)]);
 
-        return $level->fresh() ?? $level;
+        return $level;
     }
 
     /**
@@ -83,7 +83,7 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
             $this->deleteSilently($oldImagePath, $level->id);
         }
 
-        return $level->fresh() ?? $level;
+        return $level;
     }
 
     /**

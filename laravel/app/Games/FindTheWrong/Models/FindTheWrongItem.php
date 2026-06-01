@@ -24,6 +24,8 @@ class FindTheWrongItem extends Model implements TtsAudioInterface
     use HasTranslations;
     use HasTtsAudio;
 
+    public const STORAGE_ROOT = 'games/find-the-wrong/items';
+
     protected $table = 'find_the_wrong_items';
 
     protected $fillable = [
@@ -55,5 +57,14 @@ class FindTheWrongItem extends Model implements TtsAudioInterface
     public function level(): BelongsTo
     {
         return $this->belongsTo(FindTheWrongLevel::class, 'level_id');
+    }
+
+    /**
+     * Directory under the configured upload disk where all of this item's
+     * generated content lives (TTS audio for name and explanation).
+     */
+    public function storageDirectory(): string
+    {
+        return self::STORAGE_ROOT.'/'.$this->id;
     }
 }

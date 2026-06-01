@@ -204,7 +204,7 @@ class ProfileControllerTest extends TestCase
         Game::factory()->create(['table_prefix' => $invalidPrefix, 'is_active' => true]);
 
         // Mock the configuration so it thinks this prefix is allowed
-        \Illuminate\Support\Facades\Config::set("game_services.map.$invalidPrefix", 'App\Services\MissingGameService');
+        \Illuminate\Support\Facades\Config::set("games.services.$invalidPrefix", 'App\Services\MissingGameService');
 
         // Clear cache just in case since the service uses it
         \Illuminate\Support\Facades\Cache::flush();

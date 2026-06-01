@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use App\Models\Game;
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * Reject requests whose route-bound Game does not match the expected
+ * table_prefix. Used to scope per-game admin endpoints under the universal
+ * /api/admin/games/{game}/... URL so the frontend never needs game-specific
+ * slugs while controllers stay strictly per-game.
+ */
+class GameMatches
+{
+    public function handle(Request $request, Closure $next, string $expectedPrefix): Response
+    {
+        $game = $request->route('game');
+
+        if (! $game instanceof Game || $game->table_prefix !== $expectedPrefix) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
+
+        return $next($request);
+    }
+}

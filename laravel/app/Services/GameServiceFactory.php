@@ -19,8 +19,8 @@ class GameServiceFactory
     public function __construct(Container $container, ?array $map = null, ?string $default = null)
     {
         $this->container = $container;
-        $this->map = $map ?? ConfigHelper::getStringMap('game_services.map', []);
-        $this->default = $default ?? ConfigHelper::getString('game_services.default') ?: null;
+        $this->map = $map ?? ConfigHelper::getStringMap('games.services', []);
+        $this->default = $default ?? ConfigHelper::getString('games.services_default') ?: null;
     }
 
     public function for(Game $game): GameServiceInterface

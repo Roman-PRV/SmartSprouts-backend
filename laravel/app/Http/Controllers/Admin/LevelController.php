@@ -10,6 +10,7 @@ use App\Http\Resources\Admin\LevelAdminResource;
 use App\Models\Game;
 use App\Services\LevelAdminServiceFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -76,12 +77,12 @@ class LevelController extends Controller
     /**
      * Delete a level. Items cascade via FK; storage cleanup is best-effort.
      */
-    public function destroy(Game $game, int $level): JsonResponse
+    public function destroy(Game $game, int $level): Response
     {
         $service = $this->resolveService($game);
         $service->delete($level);
 
-        return response()->json(null, 204);
+        return response()->noContent();
     }
 
     /**
