@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\SupportedLocaleKeys;
 use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -51,7 +52,7 @@ class StoreLevelRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|array',
+            'title' => ['required', 'array', new SupportedLocaleKeys],
             'title.uk' => 'required|string|max:255',
             'title.en' => 'required|string|max:255',
             'title.es' => 'required|string|max:255',

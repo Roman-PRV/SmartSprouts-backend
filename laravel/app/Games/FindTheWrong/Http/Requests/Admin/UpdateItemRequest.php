@@ -2,6 +2,7 @@
 
 namespace App\Games\FindTheWrong\Http\Requests\Admin;
 
+use App\Rules\SupportedLocaleKeys;
 use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -74,12 +75,12 @@ class UpdateItemRequest extends FormRequest
             'polygon.*.0' => 'required_with:polygon|numeric|between:0,1',
             'polygon.*.1' => 'required_with:polygon|numeric|between:0,1',
 
-            'name' => 'sometimes|array',
+            'name' => ['sometimes', 'array', new SupportedLocaleKeys],
             'name.uk' => 'sometimes|string',
             'name.en' => 'sometimes|string',
             'name.es' => 'sometimes|string',
 
-            'explanation' => 'sometimes|array',
+            'explanation' => ['sometimes', 'array', new SupportedLocaleKeys],
             'explanation.uk' => 'sometimes|string',
             'explanation.en' => 'sometimes|string',
             'explanation.es' => 'sometimes|string',

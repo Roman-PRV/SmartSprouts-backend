@@ -153,6 +153,24 @@ class FindTheWrongLevelAdminControllerTest extends TestCase
             ->assertJsonValidationErrors(['title.uk', 'title.es']);
     }
 
+    public function test_store_rejects_unsupported_locale_keys_in_title(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->postJson($this->route, [
+                'title' => [
+                    'uk' => 'Кухня',
+                    'en' => 'Kitchen',
+                    'es' => 'Cocina',
+                    'de' => 'Küche',
+                ],
+                'image' => UploadedFile::fake()->image('foo.png', 800, 600),
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['title']);
+    }
+
     public function test_index_returns_levels_with_items_count(): void
     {
         $admin = User::factory()->admin()->create();

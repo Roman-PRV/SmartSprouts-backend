@@ -222,6 +222,19 @@ class FindTheWrongItemAdminControllerTest extends TestCase
         Storage::disk('public')->assertMissing($audioPath);
     }
 
+    public function test_store_rejects_unsupported_locale_keys_in_name(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $payload = $this->validPayload();
+        $payload['name']['de'] = 'Teller';
+
+        $this->actingAs($admin)
+            ->postJson($this->storeRoute, $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['name']);
+    }
+
     public function test_update_rejects_polygon_with_fewer_than_three_points(): void
     {
         $admin = User::factory()->admin()->create();
