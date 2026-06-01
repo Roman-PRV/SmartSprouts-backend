@@ -222,6 +222,74 @@ class FindTheWrongItemAdminControllerTest extends TestCase
         Storage::disk('public')->assertMissing($audioPath);
     }
 
+    public function test_update_rejects_polygon_with_fewer_than_three_points(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $item = FindTheWrongItem::factory()->create(['level_id' => $this->level->id]);
+
+        $this->actingAs($admin)
+            ->patchJson($this->itemRoute($item->id), [
+                'polygon' => [[0.1, 0.1], [0.2, 0.2]],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['polygon']);
+    }
+
+    public function test_update_rejects_coordinate_out_of_range(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $item = FindTheWrongItem::factory()->create(['level_id' => $this->level->id]);
+
+        $this->actingAs($admin)
+            ->patchJson($this->itemRoute($item->id), [
+                'polygon' => [[1.5, 0.1], [0.4, 0.1], [0.4, 0.4]],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['polygon.0.0']);
+    }
+
+    public function test_empty_update_body_succeeds_without_changes(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $item = FindTheWrongItem::factory()->create([
+            'level_id' => $this->level->id,
+            'polygon' => [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]],
+            'name' => ['uk' => 'Тарілка', 'en' => 'Plate', 'es' => 'Plato'],
+        ]);
+        $originalPolygon = $item->polygon;
+        $originalName = $item->getTranslations('name');
+
+        $response = $this->actingAs($admin)
+            ->patchJson($this->itemRoute($item->id), []);
+
+        $response->assertStatus(200);
+
+        $item->refresh();
+        $this->assertSame($originalPolygon, $item->polygon);
+        $this->assertSame($originalName, $item->getTranslations('name'));
+    }
+
+    public function test_store_returns_404_for_nonexistent_level(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->postJson(
+                "/api/admin/games/{$this->game->id}/levels/999999/items",
+                $this->validPayload()
+            )
+            ->assertStatus(404);
+    }
+
+    public function test_destroy_returns_404_for_nonexistent_item(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->deleteJson($this->itemRoute(999999))
+            ->assertStatus(404);
+    }
+
     public function test_endpoint_rejects_request_for_game_with_wrong_prefix(): void
     {
         $admin = User::factory()->admin()->create();
