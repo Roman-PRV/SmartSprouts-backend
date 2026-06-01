@@ -1,24 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Admin;
+namespace App\Games\FindTheWrong\Http\Requests\Admin;
 
 use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Validates an admin "create item" request consumed by per-game admin
- * controllers (currently FindTheWrongItemController). Lives under the shared
- * App\Http\Requests\Admin namespace because the polygon shape rules apply to
- * any future game that uses polygon-targeted items; if a different shape
- * emerges (true/false flag, free text), that game ships its own request.
- *
+ * Validates an admin "create item" request for find-the-wrong polygon items.
  * Polygon coordinates are normalized 0..1 (relative to the level image),
- * enforced at this boundary so service code can trust the shape.
+ * enforced at this boundary so service code can trust the shape. Other games
+ * (true_false, etc.) ship their own request under their own namespace.
  *
  * @OA\Schema(
- *     schema="Admin.StoreItemRequest",
+ *     schema="Admin.FindTheWrong.StoreItemRequest",
  *     type="object",
- *     title="Admin Store Item Request",
+ *     title="Admin Store FindTheWrong Item Request",
  *     description="JSON payload for creating a new polygon item under a level.",
  *     required={"polygon", "name"},
  *

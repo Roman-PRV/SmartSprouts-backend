@@ -1,24 +1,23 @@
 <?php
 
-namespace App\Http\Requests\Admin;
+namespace App\Games\FindTheWrong\Http\Requests\Admin;
 
 use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Validates an admin "update item" request consumed by per-game admin
- * controllers (currently FindTheWrongItemController). All fields are
- * optional — a PATCH with only `polygon` keeps name/explanation, a PATCH
- * with only a single locale of `name` updates just that locale (Spatie
- * translatable semantics).
+ * Validates an admin "update item" request for find-the-wrong polygon items.
+ * All fields are optional — a PATCH with only `polygon` keeps name/explanation,
+ * a PATCH with only a single locale of `name` updates just that locale
+ * (Spatie translatable semantics).
  *
  * When `polygon` IS provided it must still satisfy the full shape rules
  * (≥3 points, [x, y] pairs in 0..1).
  *
  * @OA\Schema(
- *     schema="Admin.UpdateItemRequest",
+ *     schema="Admin.FindTheWrong.UpdateItemRequest",
  *     type="object",
- *     title="Admin Update Item Request",
+ *     title="Admin Update FindTheWrong Item Request",
  *     description="JSON payload for partially updating an item.",
  *
  *     @OA\Property(
@@ -39,16 +38,16 @@ use Illuminate\Foundation\Http\FormRequest;
  *         property="name",
  *         type="object",
  *         description="Locale keys to overwrite. Omitted locales are kept as-is.",
- *         @OA\Property(property="uk", type="string", maxLength=255),
- *         @OA\Property(property="en", type="string", maxLength=255),
- *         @OA\Property(property="es", type="string", maxLength=255)
+ *         @OA\Property(property="uk", type="string"),
+ *         @OA\Property(property="en", type="string"),
+ *         @OA\Property(property="es", type="string")
  *     ),
  *     @OA\Property(
  *         property="explanation",
  *         type="object",
- *         @OA\Property(property="uk", type="string", maxLength=2000),
- *         @OA\Property(property="en", type="string", maxLength=2000),
- *         @OA\Property(property="es", type="string", maxLength=2000)
+ *         @OA\Property(property="uk", type="string"),
+ *         @OA\Property(property="en", type="string"),
+ *         @OA\Property(property="es", type="string")
  *     )
  * )
  */
