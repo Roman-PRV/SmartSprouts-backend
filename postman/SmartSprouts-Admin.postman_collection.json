@@ -132,8 +132,10 @@
 							"script": {
 								"exec": [
 									"pm.test('200 OK', () => pm.response.to.have.status(200));",
-									"const u = pm.response.json();",
-									"pm.test('is_admin true', () => pm.expect(u.is_admin).to.be.true);"
+									"const body = pm.response.json();",
+									"// /api/auth/me returns { user: { ...UserResource } }",
+									"const user = body.user || body;",
+									"pm.test('is_admin true', () => pm.expect(user.is_admin).to.be.true);"
 								],
 								"type": "text/javascript"
 							}
