@@ -1,6 +1,7 @@
 <?php
 
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
+use App\Games\FindTheWrong\Http\Controllers\FindTheWrongAttemptController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
 Route::middleware('auth:sanctum')->get('auth/me', [AuthController::class, 'me']);
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
@@ -30,6 +33,8 @@ Route::middleware('auth:sanctum')->post('auth/logout', [AuthController::class, '
 
 Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect']);
 Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
+
+// ── Player ────────────────────────────────────────────────────────────────────
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -48,6 +53,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
+// ── Find the wrong — player ───────────────────────────────────────────────────
+
+Route::middleware([
+    'auth:sanctum',
+    GameMatches::class.':find_the_wrong',
+])
+    ->prefix('games/{game}')
+    ->name('games.find-the-wrong.')
+    ->whereNumber('game')
+    ->group(function () {
+        Route::post('levels/{level}/attempts', [FindTheWrongAttemptController::class, 'store'])
+            ->name('levels.attempts.store')
+            ->whereNumber('level');
+    });
+
+// ── Admin — levels (generic) ──────────────────────────────────────────────────
+
 Route::middleware(['auth:sanctum', EnsureAdmin::class])
     ->prefix('admin/games/{game}')
     ->name('admin.games.levels.')
@@ -62,6 +84,8 @@ Route::middleware(['auth:sanctum', EnsureAdmin::class])
             ->name('destroy')
             ->whereNumber('level');
     });
+
+// ── Find the wrong — admin ────────────────────────────────────────────────────
 
 Route::middleware([
     'auth:sanctum',
