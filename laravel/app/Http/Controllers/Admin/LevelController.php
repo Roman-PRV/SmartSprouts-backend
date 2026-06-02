@@ -10,6 +10,7 @@ use App\Http\Resources\Admin\LevelAdminResource;
 use App\Models\Game;
 use App\Services\LevelAdminServiceFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -26,13 +27,11 @@ class LevelController extends Controller
     /**
      * List all levels for the given game (admin view, includes items_count).
      */
-    public function index(Game $game): JsonResponse
+    public function index(Game $game): JsonResource
     {
         $service = $this->resolveService($game);
 
-        return response()->json(
-            LevelAdminResource::collection($service->list())->resolve(request())
-        );
+        return LevelAdminResource::collection($service->list());
     }
 
     /**
@@ -49,16 +48,15 @@ class LevelController extends Controller
             'title' => $request->validated('title'),
         ], $image);
 
-        return response()->json(
-            LevelAdminResource::make($level)->resolve(request()),
-            201
-        );
+        return LevelAdminResource::make($level)
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
      * Update a level's metadata; image is replaced only when a file is attached.
      */
-    public function update(UpdateLevelRequest $request, Game $game, int $level): JsonResponse
+    public function update(UpdateLevelRequest $request, Game $game, int $level): JsonResource
     {
         $service = $this->resolveService($game);
 
@@ -69,9 +67,7 @@ class LevelController extends Controller
             'title' => $request->validated('title'),
         ], $image);
 
-        return response()->json(
-            LevelAdminResource::make($updated)->resolve(request())
-        );
+        return LevelAdminResource::make($updated);
     }
 
     /**

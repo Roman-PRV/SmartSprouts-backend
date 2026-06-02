@@ -9,6 +9,7 @@ use App\Games\FindTheWrong\Services\Admin\FindTheWrongItemAdminService;
 use App\Http\Controllers\Controller;
 use App\Models\Game;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 
 /**
@@ -30,19 +31,16 @@ class FindTheWrongItemController extends Controller
     {
         $item = $this->service->create($level, $request->validated());
 
-        return response()->json(
-            FindTheWrongItemAdminResource::make($item)->resolve(request()),
-            201
-        );
+        return FindTheWrongItemAdminResource::make($item)
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function update(UpdateItemRequest $request, Game $game, int $item): JsonResponse
+    public function update(UpdateItemRequest $request, Game $game, int $item): JsonResource
     {
         $updated = $this->service->update($item, $request->validated());
 
-        return response()->json(
-            FindTheWrongItemAdminResource::make($updated)->resolve(request())
-        );
+        return FindTheWrongItemAdminResource::make($updated);
     }
 
     public function destroy(Game $game, int $item): Response
