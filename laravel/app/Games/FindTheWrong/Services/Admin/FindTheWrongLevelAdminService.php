@@ -88,14 +88,21 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
     }
 
     /**
-     * Delete the level (items cascade via FK) and wipe both storage directories:
-     * images (upload disk) and TTS audio (same disk, mapped path). Storage failures
-     * are logged but never block the DB deletion.
+     * Delete the level and explicitly cascade to items before DB deletion.
+     * Database ON DELETE CASCADE would skip Eloquent events, leaving item TTS audio
+     * orphaned. Instead, call ItemAdminService::delete() for each item to ensure
+     * all storage cleanup runs. Then delete the level and clean its own storage.
      */
     public function delete(int $levelId): void
     {
         /** @var FindTheWrongLevel $level */
         $level = FindTheWrongLevel::query()->findOrFail($levelId);
+
+        $itemService = app(FindTheWrongItemAdminService::class);
+        foreach ($level->items as $item) {
+            $itemService->delete($item->id);
+        }
+
         $imageDir = $level->storageDirectory();
         $mapping = TtsModelMappingEnum::fromModel($level);
         $ttsDir = $mapping ? $this->getTtsDirectory($level, $mapping) : null;
