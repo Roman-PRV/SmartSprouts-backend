@@ -124,6 +124,18 @@ class FindTheWrongLevelAdminControllerTest extends TestCase
         Storage::disk('public')->put($path, 'bytes');
         $level->update(['image_url' => $path]);
 
+        // Seed item-level artifacts so we can prove the cascade triggers the
+        // per-item cleanup (DB CASCADE alone would skip Eloquent events and
+        // leave these files orphaned).
+        $itemArtifacts = [];
+        foreach ($items as $item) {
+            $itemImage = $item->storageDirectory().'/image.png';
+            $itemTtsAudio = $item->storageDirectory().'/uk/name_abc123.mp3';
+            Storage::disk('public')->put($itemImage, 'item-image-bytes');
+            Storage::disk('public')->put($itemTtsAudio, 'tts-audio-bytes');
+            $itemArtifacts[] = [$itemImage, $itemTtsAudio];
+        }
+
         $response = $this->actingAs($admin)->deleteJson("{$this->route}/{$level->id}");
 
         $response->assertStatus(204);
@@ -133,6 +145,10 @@ class FindTheWrongLevelAdminControllerTest extends TestCase
             $this->assertDatabaseMissing('find_the_wrong_items', ['id' => $item->id]);
         }
         Storage::disk('public')->assertMissing($path);
+        foreach ($itemArtifacts as [$itemImage, $itemTtsAudio]) {
+            Storage::disk('public')->assertMissing($itemImage);
+            Storage::disk('public')->assertMissing($itemTtsAudio);
+        }
     }
 
     public function test_store_validation_requires_title_and_image(): void

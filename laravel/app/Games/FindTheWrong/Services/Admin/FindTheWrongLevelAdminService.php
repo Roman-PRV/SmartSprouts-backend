@@ -3,7 +3,6 @@
 namespace App\Games\FindTheWrong\Services\Admin;
 
 use App\Contracts\LevelAdminServiceInterface;
-use App\Enums\Tts\TtsModelMappingEnum;
 use App\Games\FindTheWrong\Models\FindTheWrongLevel;
 use App\Helpers\ConfigHelper;
 use App\Models\Level;
@@ -89,9 +88,10 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
 
     /**
      * Delete the level and explicitly cascade to items before DB deletion.
-     * Database ON DELETE CASCADE would skip Eloquent events, leaving item TTS audio
+     * Database ON DELETE CASCADE would skip Eloquent events, leaving item storage
      * orphaned. Instead, call ItemAdminService::delete() for each item to ensure
-     * all storage cleanup runs. Then delete the level and clean its own storage.
+     * its directory (images + TTS audio) is wiped. Then delete the level and
+     * its own storage directory.
      */
     public function delete(int $levelId): void
     {
@@ -103,31 +103,16 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
             $itemService->delete($item->id);
         }
 
-        $imageDir = $level->storageDirectory();
-        $mapping = TtsModelMappingEnum::fromModel($level);
-        $ttsDir = $mapping ? $this->getTtsDirectory($level, $mapping) : null;
+        $directory = $level->storageDirectory();
         $level->delete();
 
-        $disk = Storage::disk($this->diskName());
-
         try {
-            $disk->deleteDirectory($imageDir);
+            Storage::disk($this->diskName())->deleteDirectory($directory);
         } catch (Throwable $e) {
-            Log::warning('Failed to clean image storage on FindTheWrongLevel delete', [
+            Log::warning('Failed to clean storage on FindTheWrongLevel delete', [
                 'level_id' => $levelId,
                 'error' => $e->getMessage(),
             ]);
-        }
-
-        if ($ttsDir) {
-            try {
-                $disk->deleteDirectory($ttsDir);
-            } catch (Throwable $e) {
-                Log::warning('Failed to clean TTS storage on FindTheWrongLevel delete', [
-                    'level_id' => $levelId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
         }
     }
 
@@ -164,21 +149,6 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Build the TTS storage directory path for a level based on its mapping.
-     * Includes all locales and attributes under {gameType}/{entityType}/{id}/.
-     */
-    private function getTtsDirectory(FindTheWrongLevel $level, TtsModelMappingEnum $mapping): string
-    {
-        return sprintf(
-            '%s/%s/%s/%s',
-            ConfigHelper::getString('ai.tts.storage.path_prefix', 'games'),
-            $mapping->getGameType(),
-            $mapping->getEntityType(),
-            $level->getKey()
-        );
     }
 
     /**
