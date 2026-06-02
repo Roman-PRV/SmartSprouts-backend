@@ -2,6 +2,7 @@
 
 namespace App\Games\FindTheWrong\Services\Admin;
 
+use App\Enums\Tts\TtsModelMappingEnum;
 use App\Games\FindTheWrong\Models\FindTheWrongItem;
 use App\Games\FindTheWrong\Models\FindTheWrongLevel;
 use App\Helpers\ConfigHelper;
@@ -87,25 +88,55 @@ class FindTheWrongItemAdminService
     }
 
     /**
-     * Delete the item and best-effort wipe its storage directory (TTS audio
-     * dropped there by the observer in WIW-BE-07). Missing rows surface as
-     * ModelNotFoundException for the controller to translate into 404.
+     * Delete the item and wipe both storage directories: images (upload disk) and
+     * TTS audio (same disk, mapped path). Missing rows surface as ModelNotFoundException
+     * for the controller to translate into 404.
      */
     public function delete(int $itemId): void
     {
         /** @var FindTheWrongItem $item */
         $item = FindTheWrongItem::query()->findOrFail($itemId);
-        $directory = $item->storageDirectory();
+        $imageDir = $item->storageDirectory();
+        $mapping = TtsModelMappingEnum::fromModel($item);
+        $ttsDir = $mapping ? $this->getTtsDirectory($item, $mapping) : null;
         $item->delete();
 
+        $disk = Storage::disk($this->diskName());
+
         try {
-            Storage::disk($this->diskName())->deleteDirectory($directory);
+            $disk->deleteDirectory($imageDir);
         } catch (Throwable $e) {
-            Log::warning('Failed to clean storage on FindTheWrongItem delete', [
+            Log::warning('Failed to clean image storage on FindTheWrongItem delete', [
                 'item_id' => $itemId,
                 'error' => $e->getMessage(),
             ]);
         }
+
+        if ($ttsDir) {
+            try {
+                $disk->deleteDirectory($ttsDir);
+            } catch (Throwable $e) {
+                Log::warning('Failed to clean TTS storage on FindTheWrongItem delete', [
+                    'item_id' => $itemId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Build the TTS storage directory path for an item based on its mapping.
+     * Includes all locales and attributes under {gameType}/{entityType}/{id}/.
+     */
+    private function getTtsDirectory(FindTheWrongItem $item, TtsModelMappingEnum $mapping): string
+    {
+        return sprintf(
+            '%s/%s/%s/%s',
+            ConfigHelper::getString('ai.tts.storage.path_prefix', 'games'),
+            $mapping->getGameType(),
+            $mapping->getEntityType(),
+            $item->getKey()
+        );
     }
 
     /**
