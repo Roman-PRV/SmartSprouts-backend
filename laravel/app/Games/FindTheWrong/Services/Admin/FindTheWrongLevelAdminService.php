@@ -49,7 +49,7 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
 
         $level->update(['image_url' => $this->storeImage($image, $level)]);
 
-        return $level->fresh() ?? $level;
+        return $level;
     }
 
     /**
@@ -83,17 +83,26 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
             $this->deleteSilently($oldImagePath, $level->id);
         }
 
-        return $level->fresh() ?? $level;
+        return $level;
     }
 
     /**
-     * Delete the level (items cascade via FK) and best-effort wipe its storage
-     * directory. Storage failures are logged but never block the DB deletion.
+     * Delete the level and explicitly cascade to items before DB deletion.
+     * Database ON DELETE CASCADE would skip Eloquent events, leaving item storage
+     * orphaned. Instead, call ItemAdminService::delete() for each item to ensure
+     * its directory (images + TTS audio) is wiped. Then delete the level and
+     * its own storage directory.
      */
     public function delete(int $levelId): void
     {
         /** @var FindTheWrongLevel $level */
         $level = FindTheWrongLevel::query()->findOrFail($levelId);
+
+        $itemService = app(FindTheWrongItemAdminService::class);
+        foreach ($level->items as $item) {
+            $itemService->delete($item->id);
+        }
+
         $directory = $level->storageDirectory();
         $level->delete();
 

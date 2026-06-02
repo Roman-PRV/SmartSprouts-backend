@@ -1,0 +1,593 @@
+{
+	"info": {
+		"_postman_id": "5b1f3a8c-7c2d-4a8f-9d6e-f1c2b3a4d5e6",
+		"name": "SmartSprouts Admin",
+		"description": "Manual smoke tests for admin endpoints: levels CRUD (WIW-BE-05) and find-the-wrong items CRUD (WIW-BE-06).\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `Auth / Login` once — token is auto-saved.\n3. Run `Discovery / Find find_the_wrong game` and `Discovery / Find first level` — IDs auto-saved.\n4. Step through `Happy Path` folder.\n5. Use `Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}} from the collection level.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level guard: print a clear hint when required vars are empty.",
+					"// Variables are populated by earlier requests' Tests scripts (Login → Discovery → Create).",
+					"// Run requests top-to-bottom, or use Collection Runner.",
+					"const reqUrl = pm.request.url.toString();",
+					"const isLogin = reqUrl.includes('/auth/login');",
+					"const needsGame = reqUrl.includes('{{game_id}}') || reqUrl.includes('{{other_game_id}}');",
+					"const needsLevel = reqUrl.includes('{{level_id}}');",
+					"const needsItem = reqUrl.includes('{{item_id}}');",
+					"const missing = [];",
+					"if (!isLogin && !pm.collectionVariables.get('token')) missing.push('token (run \"1. Auth / Login\" first)');",
+					"if (needsGame && !pm.collectionVariables.get('game_id')) missing.push('game_id (run \"2. Discovery / List games\" first)');",
+					"if (reqUrl.includes('{{other_game_id}}') && !pm.collectionVariables.get('other_game_id')) missing.push('other_game_id (run \"2. Discovery / List games\" — needs a non-find_the_wrong game in DB)');",
+					"if (needsLevel && !pm.collectionVariables.get('level_id')) missing.push('level_id (run \"2. Discovery / List levels\" first)');",
+					"if (needsItem && !pm.collectionVariables.get('item_id')) missing.push('item_id (run \"3. Items / Create item\" first)');",
+					"if (missing.length) {",
+					"    console.warn('[SmartSprouts collection] Missing variables:\\n - ' + missing.join('\\n - '));",
+					"    console.warn('Tip: right-click the collection → Run collection to execute everything top-to-bottom.');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "email",
+			"value": "admin@example.com",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "password",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "game_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "level_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "item_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "other_game_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Auth",
+			"item": [
+				{
+					"name": "Login (save token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const data = pm.response.json();",
+									"pm.test('has access_token', () => pm.expect(data.access_token).to.be.a('string').and.not.empty);",
+									"pm.collectionVariables.set('token', data.access_token);",
+									"console.log('Token saved');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Who am I",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"// /api/auth/me returns { user: { ...UserResource } }",
+									"const user = body.user || body;",
+									"pm.test('is_admin true', () => pm.expect(user.is_admin).to.be.true);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "me"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Discovery",
+			"item": [
+				{
+					"name": "List games (save find_the_wrong id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const games = pm.response.json();",
+									"const list = Array.isArray(games) ? games : (games.data || []);",
+									"console.log('Games response sample:', JSON.stringify(list[0] || {}, null, 2));",
+									"// Public GameResource exposes `key` (e.g. 'find_the_wrong'), not `table_prefix`.",
+									"const ftw = list.find(g => g.key === 'find_the_wrong');",
+									"const other = list.find(g => g.key && g.key !== 'find_the_wrong');",
+									"pm.test('find_the_wrong game exists', () => pm.expect(ftw).to.exist);",
+									"if (ftw) {",
+									"  pm.collectionVariables.set('game_id', String(ftw.id));",
+									"  console.log('Saved game_id =', ftw.id, '(' + ftw.key + ')');",
+									"}",
+									"if (other) {",
+									"  pm.collectionVariables.set('other_game_id', String(other.id));",
+									"  console.log('Saved other_game_id =', other.id, '(' + other.key + ')');",
+									"} else {",
+									"  console.warn('No non-find_the_wrong game found — \"Wrong game → 404\" test will fail.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/games",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
+						}
+					}
+				},
+				{
+					"name": "List levels (save first level id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const levels = pm.response.json();",
+									"const list = Array.isArray(levels) ? levels : (levels.data || []);",
+									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
+									"if (list[0]) {",
+									"  pm.collectionVariables.set('level_id', String(list[0].id));",
+									"  console.log('level_id =', list[0].id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Items — Happy Path",
+			"item": [
+				{
+					"name": "Create item (save item_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const item = pm.response.json();",
+									"pm.test('has id', () => pm.expect(item.id).to.be.a('number'));",
+									"pm.test('polygon stored', () => pm.expect(item.polygon).to.have.lengthOf(4));",
+									"pm.test('name.uk persisted', () => pm.expect(item.name.uk).to.equal('Тарілка'));",
+									"pm.test('name.en persisted', () => pm.expect(item.name.en).to.equal('Plate'));",
+									"pm.test('explanation.es persisted', () => pm.expect(item.explanation.es).to.equal('Es un plato'));",
+									"pm.collectionVariables.set('item_id', String(item.id));",
+									"console.log('item_id =', item.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [\n    [0.1, 0.1],\n    [0.4, 0.1],\n    [0.4, 0.4],\n    [0.1, 0.4]\n  ],\n  \"name\": {\n    \"uk\": \"Тарілка\",\n    \"en\": \"Plate\",\n    \"es\": \"Plato\"\n  },\n  \"explanation\": {\n    \"uk\": \"Це тарілка\",\n    \"en\": \"It's a plate\",\n    \"es\": \"Es un plato\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				},
+				{
+					"name": "Update item — partial (polygon + uk only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const item = pm.response.json();",
+									"pm.test('polygon replaced (3 points)', () => pm.expect(item.polygon).to.have.lengthOf(3));",
+									"pm.test('name.uk updated', () => pm.expect(item.name.uk).to.equal('Чашка'));",
+									"pm.test('name.en kept', () => pm.expect(item.name.en).to.equal('Plate'));",
+									"pm.test('name.es kept', () => pm.expect(item.name.es).to.equal('Plato'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [\n    [0.2, 0.2],\n    [0.5, 0.2],\n    [0.5, 0.5]\n  ],\n  \"name\": {\n    \"uk\": \"Чашка\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "items", "{{item_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));",
+									"pm.test('empty body', () => pm.expect(pm.response.text()).to.equal(''));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "items", "{{item_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Verify deleted (PATCH → 404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": { \"uk\": \"X\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "items", "{{item_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Items — Negative Cases",
+			"item": [
+				{
+					"name": "No auth → 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [[0.1,0.1],[0.4,0.1],[0.4,0.4]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				},
+				{
+					"name": "Wrong game (true_false) → 404 GameMatches",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+									"// GameMatches middleware fires before validation; payload doesn't matter"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [[0.1,0.1],[0.4,0.1],[0.4,0.4]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{other_game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{other_game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				},
+				{
+					"name": "Polygon < 3 points → 422",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('errors.polygon present', () => pm.expect(body.errors.polygon).to.exist);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [[0.1, 0.1], [0.2, 0.2]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				},
+				{
+					"name": "Coordinate > 1 → 422",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('coord error present', () => pm.expect(JSON.stringify(body.errors)).to.include('polygon'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [[1.5, 0.1], [0.4, 0.1], [0.4, 0.4]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				},
+				{
+					"name": "Missing locale (name.es) → 422",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('name.es required', () => pm.expect(body.errors['name.es']).to.exist);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"polygon\": [[0.1, 0.1], [0.4, 0.1], [0.4, 0.4]],\n  \"name\": { \"uk\": \"Тарілка\", \"en\": \"Plate\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				},
+				{
+					"name": "Empty body → 422",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('errors.polygon required', () => pm.expect(body.errors.polygon).to.exist);",
+									"pm.test('errors.name required', () => pm.expect(body.errors.name).to.exist);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Levels — Smoke (WIW-BE-05)",
+			"item": [
+				{
+					"name": "List levels (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const list = pm.response.json();",
+									"pm.test('array shape', () => pm.expect(list).to.be.an('array'));",
+									"if (list[0]) {",
+									"  pm.test('items_count field present', () => pm.expect(list[0]).to.have.property('items_count'));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

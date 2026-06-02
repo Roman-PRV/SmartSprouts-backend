@@ -22,7 +22,7 @@ class LevelAdminServiceFactory
      */
     public function __construct(protected Container $container, ?array $map = null)
     {
-        $this->map = $map ?? ConfigHelper::getStringMap('game_admin_services.map', []);
+        $this->map = $map ?? ConfigHelper::getStringMap('games.admin_level_services', []);
     }
 
     /**

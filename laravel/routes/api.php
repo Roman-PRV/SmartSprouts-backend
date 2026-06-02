@@ -1,5 +1,6 @@
 <?php
 
+use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilePasswordController;
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\GameMatches;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -59,4 +61,24 @@ Route::middleware(['auth:sanctum', EnsureAdmin::class])
         Route::delete('levels/{level}', [AdminLevelController::class, 'destroy'])
             ->name('destroy')
             ->whereNumber('level');
+    });
+
+Route::middleware([
+    'auth:sanctum',
+    EnsureAdmin::class,
+    GameMatches::class.':find_the_wrong',
+])
+    ->prefix('admin/games/{game}')
+    ->name('admin.games.find-the-wrong.items.')
+    ->whereNumber('game')
+    ->group(function () {
+        Route::post('levels/{level}/items', [FindTheWrongItemController::class, 'store'])
+            ->name('store')
+            ->whereNumber('level');
+        Route::match(['put', 'patch'], 'items/{item}', [FindTheWrongItemController::class, 'update'])
+            ->name('update')
+            ->whereNumber('item');
+        Route::delete('items/{item}', [FindTheWrongItemController::class, 'destroy'])
+            ->name('destroy')
+            ->whereNumber('item');
     });
