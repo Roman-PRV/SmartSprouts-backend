@@ -10,6 +10,7 @@ use App\Services\GameResultService;
 use App\Services\GameServiceFactory;
 use App\Services\ResourceResolver;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -68,7 +69,7 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function index(Game $game): JsonResponse
+    public function index(Game $game): JsonResource|JsonResponse
     {
         try {
             $service = $this->factory->for($game);
@@ -79,7 +80,7 @@ class LevelController extends Controller
             return response()->json(['message' => $e->getMessage()], 400);
         }
 
-        return response()->json(LevelDescriptionResource::collection($levels)->resolve(request()), 200);
+        return LevelDescriptionResource::collection($levels);
     }
 
     /**
@@ -132,7 +133,7 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function show(Game $game, int $levelId): JsonResponse
+    public function show(Game $game, int $levelId): JsonResource|JsonResponse
     {
         try {
             $service = $this->factory->for($game);
@@ -145,9 +146,7 @@ class LevelController extends Controller
             return response()->json(['message' => $e->getMessage()], 404);
         }
 
-        $resource = $this->resources->resourceFor($game, $level);
-
-        return response()->json($resource->resolve(request()), 200);
+        return $this->resources->resourceFor($game, $level);
     }
 
     /**
