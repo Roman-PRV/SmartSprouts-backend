@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "5b1f3a8c-7c2d-4a8f-9d6e-f1c2b3a4d5e6",
-		"name": "SmartSprouts Admin",
-		"description": "Manual smoke tests for admin endpoints: levels CRUD (WIW-BE-05) and find-the-wrong items CRUD (WIW-BE-06).\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `Auth / Login` once — token is auto-saved.\n3. Run `Discovery / Find find_the_wrong game` and `Discovery / Find first level` — IDs auto-saved.\n4. Step through `Happy Path` folder.\n5. Use `Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}} from the collection level.",
+		"name": "Find the Wrong — Admin",
+		"description": "Manual smoke tests for admin endpoints: levels CRUD and find-the-wrong items CRUD.\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `Auth / Login` once — token is auto-saved.\n3. Run `Discovery / Find find_the_wrong game` and `Discovery / Find first level` — IDs auto-saved.\n4. Step through `Happy Path` folder.\n5. Use `Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}} from the collection level.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -36,7 +36,7 @@
 					"if (needsLevel && !pm.collectionVariables.get('level_id')) missing.push('level_id (run \"2. Discovery / List levels\" first)');",
 					"if (needsItem && !pm.collectionVariables.get('item_id')) missing.push('item_id (run \"3. Items / Create item\" first)');",
 					"if (missing.length) {",
-					"    console.warn('[SmartSprouts collection] Missing variables:\\n - ' + missing.join('\\n - '));",
+					"    console.warn('[Find the Wrong Admin] Missing variables:\\n - ' + missing.join('\\n - '));",
 					"    console.warn('Tip: right-click the collection → Run collection to execute everything top-to-bottom.');",
 					"}"
 				]
@@ -557,7 +557,7 @@
 			]
 		},
 		{
-			"name": "5. Levels — Smoke (WIW-BE-05)",
+			"name": "5. Levels — Smoke",
 			"item": [
 				{
 					"name": "List levels (admin)",
