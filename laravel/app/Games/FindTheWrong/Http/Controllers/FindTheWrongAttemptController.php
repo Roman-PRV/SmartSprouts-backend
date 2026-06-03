@@ -87,8 +87,7 @@ class FindTheWrongAttemptController extends Controller
             $data['duration_seconds'],
         );
 
-        $allItemIds = [...array_column($found, 'item_id'), ...$missedIds];
-        $items = FindTheWrongItem::whereIn('id', $allItemIds)->get()->keyBy('id');
+        $items = $this->service->loadItems([...array_column($found, 'item_id'), ...$missedIds]);
 
         return response()->json([
             'score' => $result->score,

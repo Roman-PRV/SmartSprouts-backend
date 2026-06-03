@@ -2,10 +2,12 @@
 
 namespace App\Games\FindTheWrong\Services;
 
+use App\Games\FindTheWrong\Models\FindTheWrongItem;
 use App\Games\FindTheWrong\Models\FindTheWrongLevel;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Records a player's attempt at a find-the-wrong level. Trusts the validated
@@ -50,5 +52,14 @@ class FindTheWrongAttemptService
                 'duration_seconds' => $durationSeconds,
             ],
         ]);
+    }
+
+    /**
+     * @param  array<int, int>  $ids
+     * @return Collection<int, FindTheWrongItem>
+     */
+    public function loadItems(array $ids): Collection
+    {
+        return FindTheWrongItem::whereIn('id', $ids)->get()->keyBy('id');
     }
 }
