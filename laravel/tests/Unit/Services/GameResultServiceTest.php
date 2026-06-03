@@ -94,5 +94,4 @@ class GameResultServiceTest extends TestCase
             'total_questions' => 4,
         ]);
     }
-
 }

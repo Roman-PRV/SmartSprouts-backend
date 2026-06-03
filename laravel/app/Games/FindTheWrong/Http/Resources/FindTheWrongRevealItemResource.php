@@ -46,9 +46,9 @@ class FindTheWrongRevealItemResource extends JsonResource
         $item = $this->resource;
         $locale = app()->getLocale();
 
-        return array_filter([
+        return [
             'id' => $item->id,
-            'stars' => $this->stars,
+            'stars' => $this->whenNotNull($this->stars),
             'name' => $item->name,
             'name_audio_url' => Tts::getOrGenerate(
                 TtsAudioContext::make($item, 'name_audio_url', $locale)
@@ -57,6 +57,6 @@ class FindTheWrongRevealItemResource extends JsonResource
             'explanation_audio_url' => Tts::getOrGenerate(
                 TtsAudioContext::make($item, 'explanation_audio_url', $locale)
             ),
-        ], static fn (mixed $value, string $key): bool => $key !== 'stars' || $value !== null, ARRAY_FILTER_USE_BOTH);
+        ];
     }
 }
