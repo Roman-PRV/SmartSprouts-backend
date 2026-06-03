@@ -222,4 +222,51 @@ class FindTheWrongSubmitApiTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors(['duration_seconds']);
     }
+
+    public function test_duplicate_item_id_in_found_returns_422(): void
+    {
+        $payload = [
+            'duration_seconds' => 10,
+            'found' => [
+                ['item_id' => $this->items[0]->id, 'stars' => 3],
+                ['item_id' => $this->items[0]->id, 'stars' => 1],
+                ['item_id' => $this->items[1]->id, 'stars' => 2],
+            ],
+            'missed_item_ids' => [$this->items[2]->id, $this->items[3]->id],
+        ];
+
+        $this->actingAs($this->user)
+            ->postJson($this->route(), $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['found.0.item_id']);
+    }
+
+    public function test_double_submit_persists_two_game_results(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson($this->route(), $this->validPayload())
+            ->assertStatus(200);
+
+        $this->actingAs($this->user)
+            ->postJson($this->route(), $this->validPayload())
+            ->assertStatus(200);
+
+        $this->assertDatabaseCount('game_results', 2);
+    }
+
+    public function test_happy_path_returns_translated_names_for_ukrainian_locale(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['Accept-Language' => 'uk'])
+            ->postJson($this->route(), $this->validPayload());
+
+        $response->assertStatus(200);
+
+        $foundItems = $response->json('found_items');
+        $this->assertSame('Праска', $foundItems[0]['name']);
+        $this->assertSame('Не місце на кухні', $foundItems[0]['explanation']);
+
+        $missedItems = $response->json('missed_items');
+        $this->assertSame('Ложка', $missedItems[0]['name']);
+    }
 }
