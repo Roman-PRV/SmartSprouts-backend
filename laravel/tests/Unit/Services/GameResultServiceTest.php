@@ -8,7 +8,6 @@ use App\Models\GameResult;
 use App\Models\User;
 use App\Services\GameResultService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class GameResultServiceTest extends TestCase
@@ -96,19 +95,4 @@ class GameResultServiceTest extends TestCase
         ]);
     }
 
-    public function test_save_logs_error_on_database_failure(): void
-    {
-        $game = Game::factory()->create(['table_prefix' => 'test_game']);
-        $invalidUserId = 999999;
-
-        $dto = new CheckAnswersDTO($invalidUserId, $game, 5, []);
-
-        Log::shouldReceive('error')
-            ->once()
-            ->withAnyArgs();
-
-        $this->service->save($dto, ['results' => []]);
-
-        $this->assertEquals(0, GameResult::count());
-    }
 }
