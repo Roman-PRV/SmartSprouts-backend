@@ -100,29 +100,25 @@ class FindTheWrongAttemptController extends Controller
     /**
      * @param  array<int, array{item_id: int, stars: int}>  $found
      * @param  Collection<int, FindTheWrongItem>  $items
-     * @return array<int, array<string, mixed>>
+     * @return Collection<int, FindTheWrongRevealItemResource>
      */
-    private function resolveFoundItems(array $found, Collection $items): array
+    private function resolveFoundItems(array $found, Collection $items): Collection
     {
-        return collect($found)
-            ->map(fn (array $entry) => (new FindTheWrongRevealItemResource(
-                $items[$entry['item_id']],
-                $entry['stars'],
-            ))->resolve())
-            ->values()
-            ->all();
+        return collect($found)->map(fn (array $entry) => new FindTheWrongRevealItemResource(
+            $items->get($entry['item_id']),
+            $entry['stars'],
+        ));
     }
 
     /**
      * @param  array<int, int>  $missedIds
      * @param  Collection<int, FindTheWrongItem>  $items
-     * @return array<int, array<string, mixed>>
+     * @return Collection<int, FindTheWrongRevealItemResource>
      */
-    private function resolveMissedItems(array $missedIds, Collection $items): array
+    private function resolveMissedItems(array $missedIds, Collection $items): Collection
     {
-        return collect($missedIds)
-            ->map(fn (int $id) => (new FindTheWrongRevealItemResource($items[$id]))->resolve())
-            ->values()
-            ->all();
+        return collect($missedIds)->map(fn (int $id) => new FindTheWrongRevealItemResource(
+            $items->get($id)
+        ));
     }
 }
