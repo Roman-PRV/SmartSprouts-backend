@@ -96,8 +96,8 @@ class SubmitAttemptRequest extends FormRequest
                 return;
             }
 
-            $foundIds = array_map(static fn (array $entry): int => (int) $entry['item_id'], $this->input('found', []));
-            $missedIds = array_map(static fn (int|string $id): int => (int) $id, $this->input('missed_item_ids', []));
+            $foundIds = array_map(static fn (array $entry): int => $entry['item_id'], $this->input('found', []));
+            $missedIds = $this->input('missed_item_ids', []);
 
             if (array_intersect($foundIds, $missedIds) !== []) {
                 $v->errors()->add('found', __('An item cannot appear in both found and missed lists.'));

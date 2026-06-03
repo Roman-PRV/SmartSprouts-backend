@@ -16,8 +16,7 @@ use Illuminate\Database\Eloquent\Collection;
  * project's score-as-count convention (see GameResultService::calculateScore).
  *
  * `total_questions` is `count($found) + count($missedIds)` — equivalent to the
- * level's item count because the request validator enforced full coverage,
- * and avoids an extra DB round-trip.
+ * level's item count because the request validator enforced full coverage.
  */
 class FindTheWrongAttemptService
 {
@@ -48,7 +47,7 @@ class FindTheWrongAttemptService
                     ],
                     $found,
                 ),
-                'missed_item_ids' => array_values(array_map(static fn (int $id): int => $id, $missedIds)),
+                'missed_item_ids' => $missedIds,
                 'duration_seconds' => $durationSeconds,
             ],
         ]);
