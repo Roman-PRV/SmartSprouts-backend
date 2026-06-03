@@ -17,9 +17,10 @@ use Illuminate\Validation\Rule;
  * convention (see App\Services\GameResultService::calculateScore) and prevent
  * tampering of the displayed/stored value.
  *
- * Per-field rules cover uniqueness (`distinct`) and per-row FK scope (`exists`
- * with `level_id` constraint). Cross-array integrity (no overlap, full
- * coverage) requires `withValidator` — those checks span both arrays.
+ * Per-row FK scope is enforced via `Rule::in` over level item IDs that are
+ * pre-fetched once per request and cached in `$validItemIds`. This avoids
+ * the N+1 that `Rule::exists` causes on `*` array fields. `withValidator`
+ * reuses the same cache for the full-coverage check (no extra DB query).
  *
  * @OA\Schema(
  *     schema="FindTheWrong.SubmitAttemptRequest",
@@ -55,6 +56,9 @@ class SubmitAttemptRequest extends FormRequest
 {
     use RespondsWithJsonValidation;
 
+    /** @var array<int, int>|null */
+    private ?array $validItemIds = null;
+
     public function authorize(): bool
     {
         return true;
@@ -65,23 +69,18 @@ class SubmitAttemptRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var FindTheWrongLevel $level */
-        $level = $this->route('level');
-        $levelId = $level->id;
-
-        $itemExistsInLevel = Rule::exists('find_the_wrong_items', 'id')
-            ->where('level_id', $levelId);
+        $validItemIds = $this->getValidItemIds();
 
         return [
             'duration_seconds' => 'required|integer|min:0|max:3600',
 
             'found' => 'present|array',
             'found.*' => 'required|array',
-            'found.*.item_id' => ['required', 'integer', 'distinct', $itemExistsInLevel],
+            'found.*.item_id' => ['required', 'integer', 'distinct', Rule::in($validItemIds)],
             'found.*.stars' => 'required|integer|min:1|max:3',
 
             'missed_item_ids' => 'present|array',
-            'missed_item_ids.*' => ['required', 'integer', 'distinct', $itemExistsInLevel],
+            'missed_item_ids.*' => ['required', 'integer', 'distinct', Rule::in($validItemIds)],
         ];
     }
 
@@ -100,21 +99,28 @@ class SubmitAttemptRequest extends FormRequest
             $missedIds = $this->input('missed_item_ids', []);
 
             if (array_intersect($foundIds, $missedIds) !== []) {
-                $v->errors()->add('found', __('An item cannot appear in both found and missed lists.'));
+                $v->errors()->add('found', __('validation.find_the_wrong.attempt_overlap'));
 
                 return;
             }
 
-            /** @var FindTheWrongLevel $level */
-            $level = $this->route('level');
-            $levelItemCount = FindTheWrongItem::query()->where('level_id', $level->id)->count();
-
-            if (count($foundIds) + count($missedIds) !== $levelItemCount) {
-                $v->errors()->add(
-                    'found',
-                    __('The submitted items must exactly cover all items in the level (found + missed = total).'),
-                );
+            if (count($foundIds) + count($missedIds) !== count($this->getValidItemIds())) {
+                $v->errors()->add('found', __('validation.find_the_wrong.attempt_count_mismatch'));
             }
         });
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function getValidItemIds(): array
+    {
+        if ($this->validItemIds === null) {
+            /** @var FindTheWrongLevel $level */
+            $level = $this->route('level');
+            $this->validItemIds = FindTheWrongItem::where('level_id', $level->id)->pluck('id')->all();
+        }
+
+        return $this->validItemIds;
     }
 }
