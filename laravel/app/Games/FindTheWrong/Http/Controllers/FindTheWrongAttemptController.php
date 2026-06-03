@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 
 /**
  * Player-facing endpoint for storing a completed find-the-wrong attempt.
@@ -92,15 +93,37 @@ class FindTheWrongAttemptController extends Controller
         return response()->json([
             'score' => $result->score,
             'total_questions' => $result->total_questions,
-            'found_items' => collect($found)
-                ->map(fn (array $entry) => (new FindTheWrongRevealItemResource(
-                    $items[$entry['item_id']],
-                    $entry['stars'],
-                ))->resolve())
-                ->values(),
-            'missed_items' => collect($missedIds)
-                ->map(fn (int $id) => (new FindTheWrongRevealItemResource($items[$id]))->resolve())
-                ->values(),
+            'found_items' => $this->resolveFoundItems($found, $items),
+            'missed_items' => $this->resolveMissedItems($missedIds, $items),
         ]);
+    }
+
+    /**
+     * @param  array<int, array{item_id: int, stars: int}>  $found
+     * @param  Collection<int, FindTheWrongItem>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveFoundItems(array $found, Collection $items): array
+    {
+        return collect($found)
+            ->map(fn (array $entry) => (new FindTheWrongRevealItemResource(
+                $items[$entry['item_id']],
+                $entry['stars'],
+            ))->resolve())
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, int>  $missedIds
+     * @param  Collection<int, FindTheWrongItem>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveMissedItems(array $missedIds, Collection $items): array
+    {
+        return collect($missedIds)
+            ->map(fn (int $id) => (new FindTheWrongRevealItemResource($items[$id]))->resolve())
+            ->values()
+            ->all();
     }
 }
