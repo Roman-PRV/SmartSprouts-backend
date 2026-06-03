@@ -43,4 +43,14 @@ interface TtsAudioInterface
      * @param  string  $path  The path to the audio file
      */
     public function setAudioPath(string $attribute, string $locale, string $path): void;
+
+    /**
+     * List the model's audio-URL attributes — i.e. translatable fields whose
+     * source text should drive TTS generation. By convention each audio
+     * attribute pairs with a source attribute named identically minus the
+     * `_audio_url` suffix.
+     *
+     * @return array<int, string> e.g. ['name_audio_url', 'explanation_audio_url']
+     */
+    public function getTtsAudioAttributes(): array;
 }

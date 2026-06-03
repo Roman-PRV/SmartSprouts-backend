@@ -82,4 +82,27 @@ trait HasTtsAudio
                 "{$attribute}->{$locale}" => $path,
             ]);
     }
+
+    /**
+     * Derive the audio-URL attributes from Spatie's $translatable list by the
+     * `_audio_url` suffix convention (paired with getTtsSourceAttribute).
+     * Models that don't use Spatie's HasTranslations get an empty list — TTS
+     * is opt-in via convention.
+     *
+     * @return array<int, string>
+     */
+    public function getTtsAudioAttributes(): array
+    {
+        if (! property_exists($this, 'translatable')) {
+            return [];
+        }
+
+        /** @var array<int, string> $translatable */
+        $translatable = $this->translatable;
+
+        return array_values(array_filter(
+            $translatable,
+            static fn (string $field): bool => str_ends_with($field, '_audio_url'),
+        ));
+    }
 }
