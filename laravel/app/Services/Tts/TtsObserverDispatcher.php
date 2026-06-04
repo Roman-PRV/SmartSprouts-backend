@@ -121,6 +121,12 @@ class TtsObserverDispatcher
 
         $decoded = json_decode($raw, true);
 
-        return is_array($decoded) ? $decoded : [];
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        // Defend against corrupt JSON (manual SQL, migration bug) — keep only
+        // string values so the declared array<string, string> shape holds.
+        return array_filter($decoded, 'is_string');
     }
 }
