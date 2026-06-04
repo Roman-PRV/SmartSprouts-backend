@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * registering on a non-TtsAudioInterface model raises TypeError at first
  * save, instead of silently doing nothing.
  */
-class ProactiveTtsObserver
+final class ProactiveTtsObserver
 {
     public function __construct(
         private readonly TtsObserverDispatcher $dispatcher,

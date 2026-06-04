@@ -42,7 +42,7 @@ use Illuminate\Database\Eloquent\Model;
  * inside the job itself — that single point of dedup covers all dispatch
  * sources (observer, listener, future ad-hoc callers).
  */
-class TtsObserverDispatcher
+final class TtsObserverDispatcher
 {
     /**
      * Dispatch `GenerateTtsAudioJob` for every supported locale on every audio

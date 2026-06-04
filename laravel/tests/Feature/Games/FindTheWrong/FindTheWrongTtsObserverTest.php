@@ -19,10 +19,23 @@ class FindTheWrongTtsObserverTest extends TestCase
         Queue::fake();
     }
 
+    /**
+     * Create a level via factory without firing observers — dependency-only
+     * setup, keeps `Queue::assertPushed` counts focused on the unit under test.
+     */
+    private function makeLevelSilently(): FindTheWrongLevel
+    {
+        /** @var FindTheWrongLevel $level */
+        $level = FindTheWrongLevel::withoutEvents(
+            fn () => FindTheWrongLevel::factory()->create()
+        );
+
+        return $level;
+    }
+
     public function test_creating_item_with_all_locales_dispatches_six_jobs(): void
     {
-        $level = FindTheWrongLevel::factory()->create();
-        Queue::fake();
+        $level = $this->makeLevelSilently();
 
         $item = FindTheWrongItem::factory()->create([
             'level_id' => $level->id,
@@ -46,8 +59,7 @@ class FindTheWrongTtsObserverTest extends TestCase
 
     public function test_creating_item_skips_empty_explanation_locales(): void
     {
-        $level = FindTheWrongLevel::factory()->create();
-        Queue::fake();
+        $level = $this->makeLevelSilently();
 
         FindTheWrongItem::factory()->create([
             'level_id' => $level->id,
@@ -67,11 +79,10 @@ class FindTheWrongTtsObserverTest extends TestCase
 
     public function test_updating_only_name_uk_dispatches_one_name_job(): void
     {
-        $item = FindTheWrongItem::factory()->create([
+        $item = $this->makeItemSilently([
             'name' => ['en' => 'Iron', 'uk' => 'Праска', 'es' => 'Plancha'],
             'explanation' => ['en' => 'A', 'uk' => 'Б', 'es' => 'C'],
         ]);
-        Queue::fake();
 
         $item->setTranslation('name', 'uk', 'Новий переклад')->save();
 
@@ -83,10 +94,64 @@ class FindTheWrongTtsObserverTest extends TestCase
         );
     }
 
+    public function test_updating_name_and_explanation_simultaneously_dispatches_two_jobs(): void
+    {
+        $item = $this->makeItemSilently([
+            'name' => ['en' => 'Iron', 'uk' => 'Праска', 'es' => 'Plancha'],
+            'explanation' => ['en' => 'Old', 'uk' => 'Б', 'es' => 'C'],
+        ]);
+
+        $item->setTranslation('name', 'uk', 'Новий переклад')
+            ->setTranslation('explanation', 'en', 'New explanation')
+            ->save();
+
+        Queue::assertPushed(GenerateTtsAudioJob::class, 2);
+        Queue::assertPushed(
+            GenerateTtsAudioJob::class,
+            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'name_audio_url'
+                && $job->context->getLocale() === 'uk',
+        );
+        Queue::assertPushed(
+            GenerateTtsAudioJob::class,
+            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'explanation_audio_url'
+                && $job->context->getLocale() === 'en',
+        );
+    }
+
+    public function test_adding_new_locale_dispatches_one_job(): void
+    {
+        $item = $this->makeItemSilently([
+            'name' => ['en' => 'Iron'],
+            'explanation' => ['en' => 'Belongs in laundry'],
+        ]);
+
+        $item->setTranslation('name', 'uk', 'Праска')->save();
+
+        Queue::assertPushed(GenerateTtsAudioJob::class, 1);
+        Queue::assertPushed(
+            GenerateTtsAudioJob::class,
+            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'name_audio_url'
+                && $job->context->getLocale() === 'uk',
+        );
+    }
+
+    public function test_clearing_locale_dispatches_no_job(): void
+    {
+        $item = $this->makeItemSilently([
+            'name' => ['en' => 'Iron', 'uk' => 'Праска'],
+        ]);
+
+        // Admin clears the uk translation — observer must NOT dispatch TTS
+        // for an empty string. Stale audio for the old "Праска" stays in DB
+        // until cleanup; this test locks in that no-dispatch behavior.
+        $item->setTranslation('name', 'uk', '')->save();
+
+        Queue::assertNothingPushed();
+    }
+
     public function test_updating_non_translated_field_dispatches_no_jobs(): void
     {
-        $item = FindTheWrongItem::factory()->create();
-        Queue::fake();
+        $item = $this->makeItemSilently();
 
         $item->update([
             'polygon' => [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]],
@@ -97,10 +162,9 @@ class FindTheWrongTtsObserverTest extends TestCase
 
     public function test_updating_name_to_same_values_dispatches_no_jobs(): void
     {
-        $item = FindTheWrongItem::factory()->create([
+        $item = $this->makeItemSilently([
             'name' => ['en' => 'Iron', 'uk' => 'Праска', 'es' => 'Plancha'],
         ]);
-        Queue::fake();
 
         $item->setTranslations('name', ['en' => 'Iron', 'uk' => 'Праска', 'es' => 'Plancha'])->save();
 
@@ -127,10 +191,9 @@ class FindTheWrongTtsObserverTest extends TestCase
 
     public function test_updating_level_title_uk_dispatches_one_job(): void
     {
-        $level = FindTheWrongLevel::factory()->create([
-            'title' => ['en' => 'Kitchen', 'uk' => 'Кухня', 'es' => 'Cocina'],
-        ]);
-        Queue::fake();
+        $level = $this->makeLevelSilently();
+        $level->setTranslations('title', ['en' => 'Kitchen', 'uk' => 'Кухня', 'es' => 'Cocina']);
+        $level->saveQuietly();
 
         $level->setTranslation('title', 'uk', 'Нова кухня')->save();
 
@@ -144,11 +207,31 @@ class FindTheWrongTtsObserverTest extends TestCase
 
     public function test_updating_level_image_only_dispatches_no_jobs(): void
     {
-        $level = FindTheWrongLevel::factory()->create();
-        Queue::fake();
+        $level = $this->makeLevelSilently();
 
         $level->update(['image_url' => 'games/find-the-wrong/levels/other.jpg']);
 
         Queue::assertNothingPushed();
+    }
+
+    /**
+     * Persist an item (and its parent level) without firing any observers,
+     * so subsequent `setTranslation()->save()` is the only event under test.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function makeItemSilently(array $attributes = []): FindTheWrongItem
+    {
+        $level = $this->makeLevelSilently();
+
+        /** @var FindTheWrongItem $item */
+        $item = FindTheWrongItem::withoutEvents(
+            fn () => FindTheWrongItem::factory()->create([
+                'level_id' => $level->id,
+                ...$attributes,
+            ])
+        );
+
+        return $item;
     }
 }
