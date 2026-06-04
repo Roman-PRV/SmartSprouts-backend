@@ -5,7 +5,6 @@ namespace App\Services\Tts;
 use App\Contracts\TtsAudioInterface;
 use App\Helpers\ConfigHelper;
 use App\Jobs\Tts\GenerateTtsAudioJob;
-use App\Services\Tts\DTO\TtsAudioContext;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -100,9 +99,7 @@ final class TtsObserverDispatcher
                 continue;
             }
 
-            GenerateTtsAudioJob::dispatch(
-                TtsAudioContext::make($model, $audioAttribute, $locale)
-            );
+            GenerateTtsAudioJob::dispatch($model, $audioAttribute, $locale);
         }
     }
 

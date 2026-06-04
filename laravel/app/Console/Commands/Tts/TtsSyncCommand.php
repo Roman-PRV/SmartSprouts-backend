@@ -6,7 +6,6 @@ use App\Contracts\TtsAudioInterface;
 use App\Enums\Tts\TtsModelMappingEnum;
 use App\Helpers\ConfigHelper;
 use App\Jobs\Tts\GenerateTtsAudioJob;
-use App\Services\Tts\DTO\TtsAudioContext;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -74,9 +73,7 @@ class TtsSyncCommand extends Command
                                 continue;
                             }
 
-                            GenerateTtsAudioJob::dispatch(
-                                TtsAudioContext::make($record, $audioAttr, $locale, $text)
-                            );
+                            GenerateTtsAudioJob::dispatch($record, $audioAttr, $locale, $text);
 
                             $modelCount++;
                             $totalCount++;

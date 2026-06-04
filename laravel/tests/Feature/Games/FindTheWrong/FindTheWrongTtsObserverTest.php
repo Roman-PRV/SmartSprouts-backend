@@ -49,9 +49,9 @@ class FindTheWrongTtsObserverTest extends TestCase
             foreach (['name_audio_url', 'explanation_audio_url'] as $attribute) {
                 Queue::assertPushed(
                     GenerateTtsAudioJob::class,
-                    fn (GenerateTtsAudioJob $job) => $job->context->getModel()->is($item)
-                        && $job->context->getAttribute() === $attribute
-                        && $job->context->getLocale() === $locale,
+                    fn (GenerateTtsAudioJob $job) => $job->model->is($item)
+                        && $job->attribute === $attribute
+                        && $job->locale === $locale,
                 );
             }
         }
@@ -72,8 +72,8 @@ class FindTheWrongTtsObserverTest extends TestCase
 
         Queue::assertNotPushed(
             GenerateTtsAudioJob::class,
-            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'explanation_audio_url'
-                && in_array($job->context->getLocale(), ['uk', 'es'], true),
+            fn (GenerateTtsAudioJob $job) => $job->attribute === 'explanation_audio_url'
+                && in_array($job->locale, ['uk', 'es'], true),
         );
     }
 
@@ -89,8 +89,8 @@ class FindTheWrongTtsObserverTest extends TestCase
         Queue::assertPushed(GenerateTtsAudioJob::class, 1);
         Queue::assertPushed(
             GenerateTtsAudioJob::class,
-            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'name_audio_url'
-                && $job->context->getLocale() === 'uk',
+            fn (GenerateTtsAudioJob $job) => $job->attribute === 'name_audio_url'
+                && $job->locale === 'uk',
         );
     }
 
@@ -108,13 +108,13 @@ class FindTheWrongTtsObserverTest extends TestCase
         Queue::assertPushed(GenerateTtsAudioJob::class, 2);
         Queue::assertPushed(
             GenerateTtsAudioJob::class,
-            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'name_audio_url'
-                && $job->context->getLocale() === 'uk',
+            fn (GenerateTtsAudioJob $job) => $job->attribute === 'name_audio_url'
+                && $job->locale === 'uk',
         );
         Queue::assertPushed(
             GenerateTtsAudioJob::class,
-            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'explanation_audio_url'
-                && $job->context->getLocale() === 'en',
+            fn (GenerateTtsAudioJob $job) => $job->attribute === 'explanation_audio_url'
+                && $job->locale === 'en',
         );
     }
 
@@ -130,8 +130,8 @@ class FindTheWrongTtsObserverTest extends TestCase
         Queue::assertPushed(GenerateTtsAudioJob::class, 1);
         Queue::assertPushed(
             GenerateTtsAudioJob::class,
-            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'name_audio_url'
-                && $job->context->getLocale() === 'uk',
+            fn (GenerateTtsAudioJob $job) => $job->attribute === 'name_audio_url'
+                && $job->locale === 'uk',
         );
     }
 
@@ -182,9 +182,9 @@ class FindTheWrongTtsObserverTest extends TestCase
         foreach (['en', 'uk', 'es'] as $locale) {
             Queue::assertPushed(
                 GenerateTtsAudioJob::class,
-                fn (GenerateTtsAudioJob $job) => $job->context->getModel()->is($level)
-                    && $job->context->getAttribute() === 'title_audio_url'
-                    && $job->context->getLocale() === $locale,
+                fn (GenerateTtsAudioJob $job) => $job->model->is($level)
+                    && $job->attribute === 'title_audio_url'
+                    && $job->locale === $locale,
             );
         }
     }
@@ -200,8 +200,8 @@ class FindTheWrongTtsObserverTest extends TestCase
         Queue::assertPushed(GenerateTtsAudioJob::class, 1);
         Queue::assertPushed(
             GenerateTtsAudioJob::class,
-            fn (GenerateTtsAudioJob $job) => $job->context->getAttribute() === 'title_audio_url'
-                && $job->context->getLocale() === 'uk',
+            fn (GenerateTtsAudioJob $job) => $job->attribute === 'title_audio_url'
+                && $job->locale === 'uk',
         );
     }
 
