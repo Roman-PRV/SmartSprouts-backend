@@ -92,7 +92,7 @@ class TtsObserverDispatcher
         foreach ($supported as $locale) {
             $value = $model->getTranslatableAttribute($sourceAttribute, $locale);
 
-            if (empty($value)) {
+            if ($value === null || $value === '') {
                 continue;
             }
 
