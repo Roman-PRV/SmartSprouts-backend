@@ -15,15 +15,23 @@ use Illuminate\Database\Eloquent\Model;
 trait HasTtsAudio
 {
     /**
+     * Suffix appended to source text columns to derive their audio-URL pair.
+     * Project-wide convention: `name` → `name_audio_url`, `title` →
+     * `title_audio_url`, etc. Used by both `getTtsSourceAttribute` (strip)
+     * and `getTtsAudioAttributes` (filter `$translatable`).
+     */
+    private const AUDIO_URL_SUFFIX = '_audio_url';
+
+    /**
      * Get the source text attribute for a given audio attribute.
-     * By default, it removes the '_audio_url' suffix.
+     * By default, it removes the AUDIO_URL_SUFFIX suffix.
      *
      * @param  string  $audioAttribute  Example: 'statement_audio_url'
      * @return string Example: 'statement'
      */
     public function getTtsSourceAttribute(string $audioAttribute): string
     {
-        return str_replace('_audio_url', '', $audioAttribute);
+        return str_replace(self::AUDIO_URL_SUFFIX, '', $audioAttribute);
     }
 
     /**
@@ -81,5 +89,28 @@ trait HasTtsAudio
             ->update([
                 "{$attribute}->{$locale}" => $path,
             ]);
+    }
+
+    /**
+     * Derive the audio-URL attributes from Spatie's $translatable list by the
+     * `_audio_url` suffix convention (paired with getTtsSourceAttribute).
+     * Models that don't use Spatie's HasTranslations get an empty list — TTS
+     * is opt-in via convention.
+     *
+     * @return array<int, string>
+     */
+    public function getTtsAudioAttributes(): array
+    {
+        if (! property_exists($this, 'translatable')) {
+            return [];
+        }
+
+        /** @var array<int, string> $translatable */
+        $translatable = $this->translatable;
+
+        return array_values(array_filter(
+            $translatable,
+            static fn (string $field): bool => str_ends_with($field, self::AUDIO_URL_SUFFIX),
+        ));
     }
 }

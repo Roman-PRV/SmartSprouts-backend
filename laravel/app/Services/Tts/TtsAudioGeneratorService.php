@@ -160,7 +160,7 @@ class TtsAudioGeneratorService
      */
     private function validateText(?string $text, TtsAudioContext $context): bool
     {
-        if (! $text) {
+        if ($text === null || $text === '') {
             $this->logger->warning('No text content found for TTS generation', $context->toLogContext());
 
             return false;
