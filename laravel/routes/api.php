@@ -1,6 +1,7 @@
 <?php
 
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
+use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongLevelController;
 use App\Games\FindTheWrong\Http\Controllers\FindTheWrongAttemptController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\AuthController;
@@ -96,6 +97,9 @@ Route::middleware([
     ->name('admin.games.find-the-wrong.items.')
     ->whereNumber('game')
     ->group(function () {
+        Route::get('levels/{level}', [FindTheWrongLevelController::class, 'show'])
+            ->name('show')
+            ->whereNumber('level');
         Route::post('levels/{level}/items', [FindTheWrongItemController::class, 'store'])
             ->name('store')
             ->whereNumber('level');

@@ -33,6 +33,21 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
     }
 
     /**
+     * Return a single level with its items eager-loaded. Items are already
+     * ordered by id via the relation definition on FindTheWrongLevel.
+     * findOrFail surfaces a ModelNotFoundException → 404 for the caller.
+     */
+    public function find(int $levelId): FindTheWrongLevel
+    {
+        /** @var FindTheWrongLevel $level */
+        $level = FindTheWrongLevel::query()
+            ->with('items')
+            ->findOrFail($levelId);
+
+        return $level;
+    }
+
+    /**
      * Create a level and store its cover image. No DB transaction is used —
      * file writes cannot participate in DB transactions, so wrapping them
      * would only give a false sense of atomicity. If the upload or the

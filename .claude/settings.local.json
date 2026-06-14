@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/Coding/pet-project/SmartSprouts-frontend/**)",
+      "Bash(grep -rn \"useGameFetch\" src/libs/hooks --include=\"*.ts\" --include=\"*.tsx\" -l)",
+      "Bash(grep -rn \"ADMIN_GAME_LEVELS\\\\|ADMIN_ROOT\\\\|ADMIN_GAME_LEVEL_EDITOR\" src/libs/enums --include=\"*.ts\")",
+      "Bash(ls tests/games/find-the-wrong/hooks/)",
+      "Bash(ls tests/games/find-the-wrong/libs/hooks/use-strokes/)"
+    ]
+  }
+}
