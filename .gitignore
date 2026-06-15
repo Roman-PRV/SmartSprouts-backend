@@ -41,6 +41,9 @@ lerna-debug.log*
 *.sln
 *.sw?
 
+# AI agents (local, per-developer; shared config like GEMINI.md / copilot-instructions.md stays tracked)
+.claude/settings.local.json
+
 # OS / Misc
 Thumbs.db
 ehthumbs.db
