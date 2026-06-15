@@ -1,6 +1,7 @@
 <?php
 
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
+use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongLevelController;
 use App\Games\FindTheWrong\Http\Controllers\FindTheWrongAttemptController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\AuthController;
@@ -93,16 +94,19 @@ Route::middleware([
     GameMatches::class.':find_the_wrong',
 ])
     ->prefix('admin/games/{game}')
-    ->name('admin.games.find-the-wrong.items.')
+    ->name('admin.games.find-the-wrong.')
     ->whereNumber('game')
     ->group(function () {
+        Route::get('levels/{level}', [FindTheWrongLevelController::class, 'show'])
+            ->name('levels.show')
+            ->whereNumber('level');
         Route::post('levels/{level}/items', [FindTheWrongItemController::class, 'store'])
-            ->name('store')
+            ->name('levels.items.store')
             ->whereNumber('level');
         Route::match(['put', 'patch'], 'items/{item}', [FindTheWrongItemController::class, 'update'])
-            ->name('update')
+            ->name('items.update')
             ->whereNumber('item');
         Route::delete('items/{item}', [FindTheWrongItemController::class, 'destroy'])
-            ->name('destroy')
+            ->name('items.destroy')
             ->whereNumber('item');
     });
