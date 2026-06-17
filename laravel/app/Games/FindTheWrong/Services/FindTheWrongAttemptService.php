@@ -23,6 +23,7 @@ class FindTheWrongAttemptService
     /**
      * @param  array<int, array{item_id: int, stars: int}>  $found
      * @param  array<int, int>  $missedIds
+     * @param  string  $interactionMode  How the player played the level (circle|marker); recorded for analytics.
      */
     public function save(
         User $user,
@@ -31,6 +32,7 @@ class FindTheWrongAttemptService
         array $found,
         array $missedIds,
         int $durationSeconds,
+        string $interactionMode,
     ): GameResult {
         return GameResult::create([
             'user_id' => $user->id,
@@ -49,6 +51,7 @@ class FindTheWrongAttemptService
                 ),
                 'missed_item_ids' => $missedIds,
                 'duration_seconds' => $durationSeconds,
+                'interaction_mode' => $interactionMode,
             ],
         ]);
     }

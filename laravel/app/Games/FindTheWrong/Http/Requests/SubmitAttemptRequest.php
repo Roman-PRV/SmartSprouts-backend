@@ -49,6 +49,15 @@ use Illuminate\Validation\Rule;
  *         description="IDs of items the player did not hit. Together with `found`, must cover every item in the level exactly once.",
  *
  *         @OA\Items(type="integer", example=11)
+ *     ),
+ *
+ *     @OA\Property(
+ *         property="interaction_mode",
+ *         type="string",
+ *         enum={"circle", "marker"},
+ *         nullable=true,
+ *         description="Input mode the player used (circle = draw loops, marker = tap). Recorded in result details for analytics; defaults to circle when absent.",
+ *         example="marker"
  *     )
  * )
  */
@@ -81,6 +90,8 @@ class SubmitAttemptRequest extends FormRequest
 
             'missed_item_ids' => 'present|array',
             'missed_item_ids.*' => ['required', 'integer', 'distinct', Rule::in($validItemIds)],
+
+            'interaction_mode' => 'nullable|in:circle,marker',
         ];
     }
 

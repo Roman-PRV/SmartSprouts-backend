@@ -155,6 +155,42 @@ class FindTheWrongSubmitApiTest extends TestCase
         $this->assertSame(42, $details['duration_seconds']);
     }
 
+    public function test_interaction_mode_defaults_to_circle_when_absent(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson($this->route(), $this->validPayload())
+            ->assertStatus(200);
+
+        $result = GameResult::first();
+        $this->assertNotNull($result);
+        $this->assertSame('circle', $result->details['interaction_mode']);
+    }
+
+    public function test_marker_interaction_mode_is_persisted(): void
+    {
+        $payload = $this->validPayload();
+        $payload['interaction_mode'] = 'marker';
+
+        $this->actingAs($this->user)
+            ->postJson($this->route(), $payload)
+            ->assertStatus(200);
+
+        $result = GameResult::first();
+        $this->assertNotNull($result);
+        $this->assertSame('marker', $result->details['interaction_mode']);
+    }
+
+    public function test_invalid_interaction_mode_returns_422(): void
+    {
+        $payload = $this->validPayload();
+        $payload['interaction_mode'] = 'swipe';
+
+        $this->actingAs($this->user)
+            ->postJson($this->route(), $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['interaction_mode']);
+    }
+
     public function test_stars_out_of_range_returns_422(): void
     {
         $payload = $this->validPayload();

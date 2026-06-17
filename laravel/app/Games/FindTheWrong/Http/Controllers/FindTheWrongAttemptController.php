@@ -85,6 +85,7 @@ class FindTheWrongAttemptController extends Controller
             $found,
             $missedIds,
             $data['duration_seconds'],
+            $data['interaction_mode'] ?? 'circle',
         );
 
         $items = $this->service->loadItems([...array_column($found, 'item_id'), ...$missedIds]);
