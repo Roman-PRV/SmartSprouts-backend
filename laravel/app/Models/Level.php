@@ -38,6 +38,26 @@ use Illuminate\Support\Facades\Storage;
  *
  *   @OA\Property(property="message", type="string", example="Not found")
  * )
+ *
+ * @OA\Schema(
+ *   schema="ValidationErrorResponse",
+ *   type="object",
+ *   description="Returned on 422 when request validation fails.",
+ *
+ *   @OA\Property(property="message", type="string", example="The given data was invalid."),
+ *   @OA\Property(
+ *     property="errors",
+ *     type="object",
+ *     description="Map of field name to the list of its validation messages.",
+ *     example={"duration_seconds": {"The duration seconds field is required."}},
+ *
+ *     @OA\AdditionalProperties(
+ *       type="array",
+ *
+ *       @OA\Items(type="string")
+ *     )
+ *   )
+ * )
  */
 class Level extends Model
 {
