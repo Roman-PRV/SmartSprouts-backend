@@ -21,36 +21,6 @@ use Illuminate\Validation\Rule;
  * pre-fetched once per request and cached in `$validItemIds`. This avoids
  * the N+1 that `Rule::exists` causes on `*` array fields. `withValidator`
  * reuses the same cache for the full-coverage check (no extra DB query).
- *
- * @OA\Schema(
- *     schema="FindTheWrong.SubmitAttemptRequest",
- *     type="object",
- *     title="FindTheWrong Submit Attempt Request",
- *     description="Player's finished attempt at a level: which items were hit and missed.",
- *     required={"duration_seconds", "found", "missed_item_ids"},
- *
- *     @OA\Property(property="duration_seconds", type="integer", minimum=0, maximum=3600, example=42),
- *     @OA\Property(
- *         property="found",
- *         type="array",
- *         description="Items the player hit, with star rating computed on the client (1: hit only, 2: IoU >= 0.2, 3: IoU >= 0.5).",
- *
- *         @OA\Items(
- *             type="object",
- *             required={"item_id", "stars"},
- *
- *             @OA\Property(property="item_id", type="integer", example=10),
- *             @OA\Property(property="stars", type="integer", minimum=1, maximum=3, example=3)
- *         )
- *     ),
- *     @OA\Property(
- *         property="missed_item_ids",
- *         type="array",
- *         description="IDs of items the player did not hit. Together with `found`, must cover every item in the level exactly once.",
- *
- *         @OA\Items(type="integer", example=11)
- *     )
- * )
  */
 class SubmitAttemptRequest extends FormRequest
 {
@@ -65,6 +35,45 @@ class SubmitAttemptRequest extends FormRequest
     }
 
     /**
+     * @OA\Schema(
+     *     schema="FindTheWrong.SubmitAttemptRequest",
+     *     type="object",
+     *     title="FindTheWrong Submit Attempt Request",
+     *     description="Player's finished attempt at a level: which items were hit and missed.",
+     *     required={"duration_seconds", "found", "missed_item_ids"},
+     *
+     *     @OA\Property(property="duration_seconds", type="integer", minimum=0, maximum=3600, example=42),
+     *     @OA\Property(
+     *         property="found",
+     *         type="array",
+     *         description="Items the player hit, with star rating computed on the client (1: hit only, 2: IoU >= 0.2, 3: IoU >= 0.5).",
+     *
+     *         @OA\Items(
+     *             type="object",
+     *             required={"item_id", "stars"},
+     *
+     *             @OA\Property(property="item_id", type="integer", example=10),
+     *             @OA\Property(property="stars", type="integer", minimum=1, maximum=3, example=3)
+     *         )
+     *     ),
+     *     @OA\Property(
+     *         property="missed_item_ids",
+     *         type="array",
+     *         description="IDs of items the player did not hit. Together with `found`, must cover every item in the level exactly once.",
+     *
+     *         @OA\Items(type="integer", example=11)
+     *     ),
+     *
+     *     @OA\Property(
+     *         property="interaction_mode",
+     *         type="string",
+     *         enum={"circle", "marker"},
+     *         nullable=true,
+     *         description="Input mode the player used (circle = draw loops, marker = tap). Recorded in result details for analytics; defaults to circle when absent.",
+     *         example="marker"
+     *     )
+     * )
+     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -81,6 +90,8 @@ class SubmitAttemptRequest extends FormRequest
 
             'missed_item_ids' => 'present|array',
             'missed_item_ids.*' => ['required', 'integer', 'distinct', Rule::in($validItemIds)],
+
+            'interaction_mode' => 'nullable|in:circle,marker',
         ];
     }
 
