@@ -678,7 +678,6 @@
                 ],
                 "properties": {
                     "duration_seconds": {
-                        "description": "Validates a player's submission for a find-the-wrong level: the partition of\nitems into `found` (with star rating) and `missed_item_ids`, plus elapsed\ntime. Score is intentionally NOT in the payload — the controller derives it\nserver-side as `count(found)` to match the project's score-as-count\nconvention (see App\\Services\\GameResultService::calculateScore) and prevent\ntampering of the displayed/stored value.\n\nPer-row FK scope is enforced via `Rule::in` over level item IDs that are\npre-fetched once per request and cached in `$validItemIds`. This avoids\nthe N+1 that `Rule::exists` causes on `*` array fields. `withValidator`\nreuses the same cache for the full-coverage check (no extra DB query).",
                         "type": "integer",
                         "maximum": 3600,
                         "minimum": 0,
@@ -1080,7 +1079,6 @@
                         ],
                         "properties": {
                             "uk": {
-                                "description": "Validates an admin \"create level\" request for any game whose admin operations\nare dispatched via App\\Http\\Controllers\\Admin\\LevelController.",
                                 "type": "string",
                                 "maxLength": 255,
                                 "example": "Кухня"
@@ -1122,7 +1120,6 @@
                         ],
                         "properties": {
                             "uk": {
-                                "description": "Validates an admin \"update level\" request. Same shape as StoreLevelRequest\nexcept the image is optional — when absent, the existing image stays.",
                                 "type": "string",
                                 "maxLength": 255,
                                 "example": "Кухня"
