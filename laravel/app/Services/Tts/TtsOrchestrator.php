@@ -51,7 +51,7 @@ class TtsOrchestrator
 
             $text = $model->getTtsText($attribute, $locale);
 
-            if (! $text) {
+            if ($text === null || $text === '') {
                 return;
             }
 
@@ -74,6 +74,6 @@ class TtsOrchestrator
      */
     private function shouldGenerateAudio(?string $audioPath): bool
     {
-        return (empty($audioPath)) && $this->autoGenerateEnabled;
+        return ($audioPath === null || $audioPath === '') && $this->autoGenerateEnabled;
     }
 }

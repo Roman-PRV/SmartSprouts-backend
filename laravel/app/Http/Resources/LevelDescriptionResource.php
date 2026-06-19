@@ -23,6 +23,7 @@ class LevelDescriptionResource extends JsonResource
             'id' => $level->id,
             'title' => $level->title,
             'image_url' => $level->image_url,
+            'items_count' => $this->whenCounted('items'),
         ];
     }
 }

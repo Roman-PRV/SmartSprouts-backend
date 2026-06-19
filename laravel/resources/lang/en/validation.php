@@ -14,6 +14,7 @@ return [
     */
 
     'failed_message' => 'Validation failed',
+    'unsupported_locale_keys' => 'The :attribute field contains unsupported locale keys (:keys). Allowed: :allowed.',
     'active_url' => 'The :attribute field must be a valid URL.',
     'array' => 'The :attribute field must be an array.',
     'ascii' => 'The :attribute field must only contain single-byte alphanumeric characters and symbols.',
@@ -42,7 +43,9 @@ return [
     'doesnt_end_with' => 'The :attribute field must not end with one of the following: :values.',
     'doesnt_start_with' => 'The :attribute field must not start with one of the following: :values.',
     'email' => 'The :attribute field must be a valid email address.',
+    'in' => 'The selected :attribute is invalid.',
     'integer' => 'The :attribute field must be an integer.',
+    'present' => 'The :attribute field must be present.',
     'max' => [
         'numeric' => 'The :attribute field must not be greater than :max.',
         'file' => 'The :attribute field must not be greater than :max kilobytes.',
@@ -64,6 +67,11 @@ return [
     'url' => 'The :attribute field must be a valid URL.',
     'ulid' => 'The :attribute field must be a valid ULID.',
     'uuid' => 'The :attribute field must be a valid UUID.',
+
+    'find_the_wrong' => [
+        'attempt_overlap' => 'An item cannot appear in both found and missed lists.',
+        'attempt_count_mismatch' => 'The submitted items must exactly cover all items in the level (found + missed = total).',
+    ],
 
     /*
     |--------------------------------------------------------------------------

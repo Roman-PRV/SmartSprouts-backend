@@ -2,6 +2,8 @@
 
 namespace App\Enums\Tts;
 
+use App\Games\FindTheWrong\Models\FindTheWrongItem;
+use App\Games\FindTheWrong\Models\FindTheWrongLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
@@ -9,6 +11,8 @@ use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 
 enum TtsModelMappingEnum: string
 {
+    case FIND_THE_WRONG_ITEM = FindTheWrongItem::class;
+    case FIND_THE_WRONG_LEVEL = FindTheWrongLevel::class;
     case TRUE_FALSE_TEXT_STATEMENT = TrueFalseTextStatement::class;
     case TRUE_FALSE_IMAGE_STATEMENT = TrueFalseImageStatement::class;
     case TRUE_FALSE_TEXT_LEVEL = TrueFalseTextLevel::class;
@@ -20,6 +24,8 @@ enum TtsModelMappingEnum: string
     public function getGameType(): string
     {
         return match ($this) {
+            self::FIND_THE_WRONG_ITEM,
+            self::FIND_THE_WRONG_LEVEL => 'find-the-wrong',
             self::TRUE_FALSE_TEXT_STATEMENT,
             self::TRUE_FALSE_TEXT_LEVEL => 'true_false_text',
             self::TRUE_FALSE_IMAGE_STATEMENT,
@@ -33,6 +39,8 @@ enum TtsModelMappingEnum: string
     public function getEntityType(): string
     {
         return match ($this) {
+            self::FIND_THE_WRONG_ITEM => 'items',
+            self::FIND_THE_WRONG_LEVEL => 'levels',
             self::TRUE_FALSE_TEXT_STATEMENT,
             self::TRUE_FALSE_IMAGE_STATEMENT => 'statements',
             self::TRUE_FALSE_TEXT_LEVEL,

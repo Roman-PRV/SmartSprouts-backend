@@ -18,8 +18,8 @@ class ResourceResolver
 
     public function __construct(?array $map = null, ?string $default = null)
     {
-        $this->map = $map ?? ConfigHelper::getStringMap('game_resources.map', []);
-        $this->default = $default ?? ConfigHelper::getString('game_resources.default') ?: null;
+        $this->map = $map ?? ConfigHelper::getStringMap('games.resources', []);
+        $this->default = $default ?? ConfigHelper::getString('games.resources_default') ?: null;
     }
 
     /**

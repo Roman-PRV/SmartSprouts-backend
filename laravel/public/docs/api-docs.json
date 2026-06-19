@@ -9,6 +9,123 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/games/{game}/levels/{level}/attempts": {
+            "post": {
+                "tags": [
+                    "FindTheWrong"
+                ],
+                "summary": "Submit a completed find-the-wrong attempt",
+                "description": "Validates and stores the player's finished attempt. Returns names, explanations and TTS audio for all found and missed items.",
+                "operationId": "034120c418cabff31c7942499dfedd86",
+                "parameters": [
+                    {
+                        "name": "game",
+                        "in": "path",
+                        "description": "Game ID (must be a find-the-wrong game)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "path",
+                        "description": "Level ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FindTheWrong.SubmitAttemptRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Attempt stored; reveal data returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "score": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "total_questions": {
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "found_items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FindTheWrong.RevealItem"
+                                            }
+                                        },
+                                        "missed_items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FindTheWrong.RevealItem"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Unauthenticated."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Game or level not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games": {
             "get": {
                 "tags": [
@@ -440,6 +557,285 @@
     },
     "components": {
         "schemas": {
+            "Admin.FindTheWrong.StoreItemRequest": {
+                "title": "Admin Store FindTheWrong Item Request",
+                "description": "JSON payload for creating a new polygon item under a level.",
+                "required": [
+                    "polygon",
+                    "name"
+                ],
+                "properties": {
+                    "polygon": {
+                        "description": "Ordered list of [x, y] points in 0..1 coordinates. Minimum 3 points.",
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "format": "float",
+                                "maximum": 1,
+                                "minimum": 0
+                            },
+                            "maxItems": 2,
+                            "minItems": 2
+                        },
+                        "minItems": 3
+                    },
+                    "name": {
+                        "description": "Localized item name. All three locales are required (used by TTS).",
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "type": "string",
+                                "example": "Каструля"
+                            },
+                            "en": {
+                                "type": "string",
+                                "example": "Pot"
+                            },
+                            "es": {
+                                "type": "string",
+                                "example": "Olla"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "explanation": {
+                        "description": "Optional localized explanation shown after the item is found. Locales are independent — send only those you have.",
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.FindTheWrong.UpdateItemRequest": {
+                "title": "Admin Update FindTheWrong Item Request",
+                "description": "JSON payload for partially updating an item.",
+                "properties": {
+                    "polygon": {
+                        "description": "Full replacement polygon (no partial merge). Same shape rules as create.",
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "format": "float",
+                                "maximum": 1,
+                                "minimum": 0
+                            },
+                            "maxItems": 2,
+                            "minItems": 2
+                        },
+                        "minItems": 3
+                    },
+                    "name": {
+                        "description": "Locale keys to overwrite. Omitted locales are kept as-is.",
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "explanation": {
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "FindTheWrong.SubmitAttemptRequest": {
+                "title": "FindTheWrong Submit Attempt Request",
+                "description": "Player's finished attempt at a level: which items were hit and missed.",
+                "required": [
+                    "duration_seconds",
+                    "found",
+                    "missed_item_ids"
+                ],
+                "properties": {
+                    "duration_seconds": {
+                        "type": "integer",
+                        "maximum": 3600,
+                        "minimum": 0,
+                        "example": 42
+                    },
+                    "found": {
+                        "description": "Items the player hit, with star rating computed on the client (1: hit only, 2: IoU >= 0.2, 3: IoU >= 0.5).",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "item_id",
+                                "stars"
+                            ],
+                            "properties": {
+                                "item_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "stars": {
+                                    "type": "integer",
+                                    "maximum": 3,
+                                    "minimum": 1,
+                                    "example": 3
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "missed_item_ids": {
+                        "description": "IDs of items the player did not hit. Together with `found`, must cover every item in the level exactly once.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "example": 11
+                        }
+                    },
+                    "interaction_mode": {
+                        "description": "Input mode the player used (circle = draw loops, marker = tap). Recorded in result details for analytics; defaults to circle when absent.",
+                        "type": "string",
+                        "enum": [
+                            "circle",
+                            "marker"
+                        ],
+                        "example": "marker",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "FindTheWrong.Item": {
+                "title": "FindTheWrong.Item",
+                "description": "Public-facing polygon item without reveal-after-submit fields",
+                "properties": {
+                    "id": {
+                        "description": "Item ID",
+                        "type": "integer"
+                    },
+                    "polygon": {
+                        "description": "Ordered list of [x, y] vertices in normalized 0..1 coordinates",
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "format": "float"
+                            }
+                        }
+                    },
+                    "name": {
+                        "description": "Localized item name",
+                        "type": "string"
+                    },
+                    "name_audio_url": {
+                        "description": "Absolute URL of the name audio for the current locale",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "FindTheWrong.Level": {
+                "title": "FindTheWrong.Level",
+                "description": "Find the wrong level resource",
+                "properties": {
+                    "id": {
+                        "description": "Level ID",
+                        "type": "integer"
+                    },
+                    "title": {
+                        "description": "Localized level title",
+                        "type": "string"
+                    },
+                    "title_audio_url": {
+                        "description": "Absolute URL of the title audio for the current locale",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "image_url": {
+                        "description": "Absolute URL of the level image",
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "items_count": {
+                        "description": "Number of items on the level (present on list endpoint)",
+                        "type": "integer"
+                    },
+                    "items": {
+                        "description": "Polygon items (present on show endpoint)",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FindTheWrong.Item"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "FindTheWrong.RevealItem": {
+                "title": "FindTheWrong.RevealItem",
+                "properties": {
+                    "id": {
+                        "description": "Reveal-after-submit shape for a find-the-wrong item. Used for both found and\nmissed items in the submit response — `stars` is included only when set\n(found items 1..3); for missed items it's omitted.\n\n`stars` is injected via the second constructor argument so callers can\nbuild the resource per item with the right rating, without contorting\n`$this->resource` into a wrapper object.",
+                        "type": "integer"
+                    },
+                    "stars": {
+                        "description": "Present only for found items",
+                        "type": "integer",
+                        "maximum": 3,
+                        "minimum": 1,
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_audio_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "explanation": {
+                        "type": "string"
+                    },
+                    "explanation_audio_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "TrueFalseImage.Level": {
                 "title": "TrueFalseImage.Level",
                 "description": "True/False Image Level resource",
@@ -672,6 +1068,90 @@
                 },
                 "type": "object"
             },
+            "Admin.StoreLevelRequest": {
+                "title": "Admin Store Level Request",
+                "description": "Multipart/form-data payload for creating a new game level.",
+                "required": [
+                    "title",
+                    "image"
+                ],
+                "properties": {
+                    "title": {
+                        "description": "Localized level title. All three locales are required.",
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Кухня"
+                            },
+                            "en": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Kitchen"
+                            },
+                            "es": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Cocina"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "image": {
+                        "description": "Cover image (jpeg/png/webp, max 5 MB).",
+                        "type": "string",
+                        "format": "binary"
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.UpdateLevelRequest": {
+                "title": "Admin Update Level Request",
+                "description": "Multipart/form-data payload for updating an existing game level. Send via POST with _method=PATCH so the file part survives Laravel's form-method spoofing.",
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "description": "Localized level title. All three locales are required.",
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Кухня"
+                            },
+                            "en": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Kitchen"
+                            },
+                            "es": {
+                                "type": "string",
+                                "maxLength": 255,
+                                "example": "Cocina"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "image": {
+                        "description": "Optional replacement cover image (jpeg/png/webp, max 5 MB). Omit to keep the existing one.",
+                        "type": "string",
+                        "format": "binary",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "CheckAnswersRequest": {
                 "title": "Check Answers Request",
                 "description": "Request payload for validating player's answers. Includes automatically injected properties from route and authentication.",
@@ -855,10 +1335,39 @@
                     }
                 },
                 "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "description": "Returned on 422 when request validation fails.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "description": "Map of field name to the list of its validation messages.",
+                        "type": "object",
+                        "example": {
+                            "duration_seconds": [
+                                "The duration seconds field is required."
+                            ]
+                        },
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
             }
         }
     },
     "tags": [
+        {
+            "name": "FindTheWrong",
+            "description": "Find-the-wrong game — player endpoints"
+        },
         {
             "name": "Levels",
             "description": "API for game levels"

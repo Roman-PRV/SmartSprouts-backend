@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ProfileResource;
 use App\Services\ProfileAggregationService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProfileController extends Controller
 {
@@ -37,13 +37,13 @@ class ProfileController extends Controller
      *     )
      * )
      */
-    public function show(Request $request): JsonResponse
+    public function show(Request $request): JsonResource
     {
         /** @var \App\Models\User $user */
         $user = $request->user();
 
         $stats = $this->profileAggregationService->aggregate($user);
 
-        return response()->json((new ProfileResource($user, $stats))->resolve($request));
+        return new ProfileResource($user, $stats);
     }
 }

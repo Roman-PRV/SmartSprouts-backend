@@ -16,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $google_id
  * @property string|null $avatar
  * @property string|null $password
+ * @property bool $is_admin
  * @property \Illuminate\Support\Carbon|null $email_verified_at
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
@@ -36,6 +37,7 @@ class User extends Authenticatable
         'password',
         'google_id',
         'avatar',
+        'is_admin',
     ];
 
     /**
@@ -55,6 +57,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_admin' => 'boolean',
     ];
 
     public function gameResults(): HasMany

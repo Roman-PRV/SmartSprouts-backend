@@ -14,6 +14,7 @@ return [
     */
 
     'failed_message' => 'Validación fallida',
+    'unsupported_locale_keys' => 'El campo :attribute contiene claves de configuración regional no admitidas (:keys). Permitidas: :allowed.',
     'active_url' => 'El campo :attribute no es una URL válida.',
     'array' => 'El campo :attribute debe ser un arreglo.',
     'ascii' => 'El campo :attribute solo debe contener caracteres alfanuméricos y símbolos de un solo byte.',
@@ -42,6 +43,8 @@ return [
     'doesnt_end_with' => 'El campo :attribute no debe terminar con uno de los siguientes: :values.',
     'doesnt_start_with' => 'El campo :attribute no debe comenzar con uno de los siguientes: :values.',
     'email' => 'El campo :attribute debe ser un correo electrónico válido.',
+    'in' => 'El campo :attribute seleccionado es inválido.',
+    'present' => 'El campo :attribute debe estar presente.',
     'required' => 'El campo :attribute es obligatorio.',
     'string' => 'El campo :attribute debe ser una cadena de texto.',
     'timezone' => 'El campo :attribute debe ser una zona horaria válida.',
@@ -63,6 +66,11 @@ return [
         'file' => 'El archivo :attribute no debe pesar más de :max kilobytes.',
         'string' => 'El campo :attribute no debe contener más de :max caracteres.',
         'array' => 'El campo :attribute no debe contener más de :max elementos.',
+    ],
+
+    'find_the_wrong' => [
+        'attempt_overlap' => 'Un elemento no puede aparecer en ambas listas de encontrados y omitidos.',
+        'attempt_count_mismatch' => 'Los elementos enviados deben cubrir exactamente todos los elementos del nivel (encontrados + omitidos = total).',
     ],
 
     /*

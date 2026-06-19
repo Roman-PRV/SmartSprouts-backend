@@ -81,7 +81,12 @@ class GenerateMissingAudioListener
             return false;
         }
 
-        GenerateTtsAudioJob::dispatch($context);
+        GenerateTtsAudioJob::dispatch(
+            $context->getModel(),
+            $context->getAttribute(),
+            $context->getLocale(),
+            $context->getText(),
+        );
 
         $this->logJobDispatched($context);
 

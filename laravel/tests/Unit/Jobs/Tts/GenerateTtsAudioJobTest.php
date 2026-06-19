@@ -33,12 +33,12 @@ class GenerateTtsAudioJobTest extends TestCase
         config(['ai.tts.auto_generate.queue' => 'tts']);
     }
 
-    private function createContext(): TtsAudioContext
+    private function createJob(): GenerateTtsAudioJob
     {
         $model = $this->createMock(JobTtsMockModel::class);
         $model->method('getKey')->willReturn(1);
 
-        return new TtsAudioContext($model, 'statement_audio_url', 'uk', 'Текст');
+        return new GenerateTtsAudioJob($model, 'statement_audio_url', 'uk', 'Текст');
     }
 
     // ──────────────────────────────────────────────
@@ -47,13 +47,16 @@ class GenerateTtsAudioJobTest extends TestCase
 
     public function test_calls_generate_for_model_and_logs_info(): void
     {
-        $context = $this->createContext();
-        $job = new GenerateTtsAudioJob($context);
+        $job = $this->createJob();
 
         $this->audioGenerator
             ->expects($this->once())
             ->method('generateForModel')
-            ->with($context);
+            ->with($this->callback(
+                fn (TtsAudioContext $context) => $context->getAttribute() === 'statement_audio_url'
+                    && $context->getLocale() === 'uk'
+                    && $context->getText() === 'Текст'
+            ));
 
         $this->logger
             ->expects($this->once())
@@ -68,11 +71,12 @@ class GenerateTtsAudioJobTest extends TestCase
 
     public function test_releases_job_on_quota_exceeded(): void
     {
-        $context = $this->createContext();
+        $model = $this->createMock(JobTtsMockModel::class);
+        $model->method('getKey')->willReturn(1);
 
         /** @var GenerateTtsAudioJob&MockObject $job */
         $job = $this->getMockBuilder(GenerateTtsAudioJob::class)
-            ->setConstructorArgs([$context])
+            ->setConstructorArgs([$model, 'statement_audio_url', 'uk', 'Текст'])
             ->onlyMethods(['release', 'attempts'])
             ->getMock();
 
@@ -102,8 +106,7 @@ class GenerateTtsAudioJobTest extends TestCase
 
     public function test_rethrows_on_generic_throwable(): void
     {
-        $context = $this->createContext();
-        $job = new GenerateTtsAudioJob($context);
+        $job = $this->createJob();
 
         $this->audioGenerator
             ->method('generateForModel')

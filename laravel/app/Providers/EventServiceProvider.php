@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Events\TtsAudioRequestedEvent;
+use App\Games\FindTheWrong\Models\FindTheWrongItem;
+use App\Games\FindTheWrong\Models\FindTheWrongLevel;
 use App\Listeners\GenerateMissingAudioListener;
+use App\Observers\ProactiveTtsObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -25,12 +28,19 @@ class EventServiceProvider extends ServiceProvider
     ];
 
     /**
+     * The model observers to register.
+     *
+     * @var array<class-string, class-string|array<int, class-string>>
+     */
+    protected $observers = [
+        FindTheWrongItem::class => [ProactiveTtsObserver::class],
+        FindTheWrongLevel::class => [ProactiveTtsObserver::class],
+    ];
+
+    /**
      * Register any events for your application.
      */
-    public function boot(): void
-    {
-        //
-    }
+    public function boot(): void {}
 
     /**
      * Determine if events and listeners should be automatically discovered.

@@ -1,0 +1,730 @@
+{
+	"info": {
+		"_postman_id": "a3f7c2d1-8b4e-4f9a-bc6d-e2f1a0b3c5d8",
+		"name": "Find the Wrong — Player",
+		"description": "Smoke tests for player-facing endpoints: level read and attempt submit.\n\nAdaptive payloads — Happy Path and Negative Cases build request bodies dynamically based on actual items in the level (works with 1+ items).\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `1. Auth / Login` — token is auto-saved.\n3. Run `2. Discovery` folder top-to-bottom — game_id, level_id, and all_item_ids auto-saved.\n4. Step through `3. Happy Path`.\n5. Use `4. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}}.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"const url = pm.request.url.toString();",
+					"const isLogin = url.includes('/auth/login');",
+					"const missing = [];",
+					"if (!isLogin && !pm.collectionVariables.get('token')) missing.push('token (run \"1. Auth / Login\" first)');",
+					"if (url.includes('{{game_id}}') && !pm.collectionVariables.get('game_id')) missing.push('game_id (run \"2. Discovery / List games\" first)');",
+					"if (url.includes('{{level_id}}') && !pm.collectionVariables.get('level_id')) missing.push('level_id (run \"2. Discovery / List levels\" first)');",
+					"if (missing.length) console.warn('[Find the Wrong Player] Missing variables:\\n - ' + missing.join('\\n - '));"
+				]
+			}
+		}
+	],
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+		{ "key": "email", "value": "player@example.com", "type": "string" },
+		{ "key": "password", "value": "password", "type": "string" },
+		{ "key": "token", "value": "", "type": "string" },
+		{ "key": "game_id", "value": "", "type": "string" },
+		{ "key": "level_id", "value": "", "type": "string" },
+		{ "key": "all_item_ids", "value": "[]", "type": "string", "description": "JSON array of every item ID in the level. Populated by Discovery." },
+		{ "key": "request_payload", "value": "{}", "type": "string", "description": "Per-request payload built in pre-request scripts. Sent as raw body." }
+	],
+	"item": [
+		{
+			"name": "1. Auth",
+			"item": [
+				{
+					"name": "Login (save token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const data = pm.response.json();",
+									"pm.test('has access_token', () => pm.expect(data.access_token).to.be.a('string').and.not.empty);",
+									"pm.collectionVariables.set('token', data.access_token);",
+									"console.log('Token saved.');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Discovery",
+			"item": [
+				{
+					"name": "List games (save find_the_wrong id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const list = Array.isArray(body) ? body : (body.data || []);",
+									"const ftw = list.find(g => g.key === 'find_the_wrong');",
+									"pm.test('find_the_wrong game exists', () => pm.expect(ftw).to.exist);",
+									"if (ftw) {",
+									"  pm.collectionVariables.set('game_id', String(ftw.id));",
+									"  console.log('Saved game_id =', ftw.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/games",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
+						}
+					}
+				},
+				{
+					"name": "List levels (save first level id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const list = Array.isArray(body) ? body : (body.data || []);",
+									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
+									"if (list.length) {",
+									"  pm.collectionVariables.set('level_id', String(list[0].id));",
+									"  console.log('Saved level_id =', list[0].id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels"]
+						}
+					}
+				},
+				{
+					"name": "Get level with items (save all item IDs)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"// Response shape: { id, title, items: [...] } — no `data` wrapping",
+									"const items = body.items || body.data?.items || [];",
+									"pm.test('at least one item in level', () => pm.expect(items.length).to.be.greaterThan(0));",
+									"const ids = items.map(i => i.id);",
+									"pm.collectionVariables.set('all_item_ids', JSON.stringify(ids));",
+									"console.log('Level has', ids.length, 'item(s):', ids);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Happy Path",
+			"item": [
+				{
+					"name": "Submit attempt — all found (perfect score)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"const found = ids.map((id, i) => ({ item_id: id, stars: ((i % 3) + 1) }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 42,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"pm.test('score = total_questions', () => pm.expect(body.score).to.equal(body.total_questions));",
+									"pm.test('total_questions matches level', () => pm.expect(body.total_questions).to.equal(ids.length));",
+									"pm.test('found_items count matches', () => pm.expect(body.found_items).to.have.lengthOf(ids.length));",
+									"pm.test('missed_items is empty', () => pm.expect(body.missed_items).to.have.lengthOf(0));",
+									"const found0 = body.found_items[0];",
+									"pm.test('found item has id, stars, name, explanation', () => {",
+									"  pm.expect(found0).to.have.property('id');",
+									"  pm.expect(found0).to.have.property('stars');",
+									"  pm.expect(found0).to.have.property('name');",
+									"  pm.expect(found0).to.have.property('explanation');",
+									"});",
+									"console.log('Score:', body.score, '/', body.total_questions);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "Submit attempt — all missed (zero score)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 30,",
+									"  found: [],",
+									"  missed_item_ids: ids,",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"pm.test('score = 0', () => pm.expect(body.score).to.equal(0));",
+									"pm.test('total_questions matches level', () => pm.expect(body.total_questions).to.equal(ids.length));",
+									"pm.test('found_items is empty', () => pm.expect(body.found_items).to.have.lengthOf(0));",
+									"pm.test('missed_items count matches', () => pm.expect(body.missed_items).to.have.lengthOf(ids.length));",
+									"const missed0 = body.missed_items[0];",
+									"pm.test('missed item has no stars key', () => pm.expect(missed0).to.not.have.property('stars'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "Submit attempt — Ukrainian locale",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"const found = ids.map(id => ({ item_id: id, stars: 3 }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 42,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.test('found_items present', () => pm.expect(body.found_items).to.be.an('array').that.is.not.empty);",
+									"console.log('Sample name (uk):', body.found_items[0]?.name);",
+									"console.log('Sample explanation (uk):', body.found_items[0]?.explanation);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "uk" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "Double submit — both persist",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"const found = ids.map(id => ({ item_id: id, stars: 2 }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 15,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"console.log('Second submit succeeded. DB should now have 2+ game_results for this user/level.');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Negative Cases",
+			"item": [
+				{
+					"name": "401 — no token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('401 Unauthenticated', () => pm.response.to.have.status(401));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"duration_seconds\": 42,\n  \"found\": [],\n  \"missed_item_ids\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "404 — nonexistent game",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"const found = ids.map(id => ({ item_id: id, stars: 3 }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 42,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/999999/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "999999", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "404 — nonexistent level",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"const found = ids.map(id => ({ item_id: id, stars: 3 }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 42,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/999999/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "999999", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — stars out of range (stars = 5)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"// First item gets stars=5 (invalid). Others valid stars=3. Missed kept empty so first per-field error wins.",
+									"const found = ids.map((id, i) => ({ item_id: id, stars: i === 0 ? 5 : 3 }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 42,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on found.0.stars', () => pm.expect(body.errors).to.have.property('found.0.stars'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — duration out of range (duration = 9999)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"const found = ids.map(id => ({ item_id: id, stars: 3 }));",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 9999,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on duration_seconds', () => pm.expect(body.errors).to.have.property('duration_seconds'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — count mismatch (empty submission)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on found', () => pm.expect(body.errors).to.have.property('found'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"duration_seconds\": 42,\n  \"found\": [],\n  \"missed_item_ids\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — overlap (item in both found and missed)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"// Same id appears in both `found` and `missed_item_ids`.",
+									"const firstId = ids[0];",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 10,",
+									"  found: [{ item_id: firstId, stars: 3 }],",
+									"  missed_item_ids: ids,",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on found', () => pm.expect(body.errors).to.have.property('found'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — duplicate item_id in found",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const ids = JSON.parse(pm.collectionVariables.get('all_item_ids') || '[]');",
+									"if (ids.length === 0) throw new Error('No item IDs — run Discovery first');",
+									"// First id duplicated in `found` — triggers distinct violation.",
+									"const firstId = ids[0];",
+									"const found = [",
+									"  { item_id: firstId, stars: 3 },",
+									"  { item_id: firstId, stars: 1 },",
+									"];",
+									"pm.variables.set('request_payload', JSON.stringify({",
+									"  duration_seconds: 10,",
+									"  found,",
+									"  missed_item_ids: [],",
+									"}));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on duplicate found.*.item_id', () => {",
+									"  const errors = body.errors || {};",
+									"  const hasDup = Object.keys(errors).some(k => k.startsWith('found.') && k.endsWith('.item_id'));",
+									"  pm.expect(hasDup).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

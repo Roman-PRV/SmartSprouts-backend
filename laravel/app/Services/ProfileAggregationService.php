@@ -46,7 +46,7 @@ class ProfileAggregationService
         $completedLevels = (int) ($aggregates?->completed_levels ?? 0);
         $totalQuestions = (int) ($aggregates?->total_questions ?? 0);
 
-        $allowedMap = ConfigHelper::getStringMap('game_services.map', []);
+        $allowedMap = ConfigHelper::getStringMap('games.services', []);
 
         $prefixes = Game::query()
             ->where('is_active', true)

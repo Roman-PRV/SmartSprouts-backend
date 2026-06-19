@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\GameResource;
 use App\Models\Game;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class GameController extends Controller
 {
@@ -31,7 +30,7 @@ class GameController extends Controller
      *     )
      * )
      */
-    public function index(): JsonResponse
+    public function index(): JsonResource
     {
         $games = Game::where('is_active', true)->get([
             'id',
@@ -40,7 +39,7 @@ class GameController extends Controller
             'is_active',
         ]);
 
-        return response()->json(GameResource::collection($games));
+        return GameResource::collection($games);
     }
 
     // /**
@@ -93,9 +92,9 @@ class GameController extends Controller
      * )
      * )
      */
-    public function show(Game $game): JsonResponse
+    public function show(Game $game): JsonResource
     {
-        return response()->json(new GameResource($game));
+        return new GameResource($game);
     }
 
     // /**

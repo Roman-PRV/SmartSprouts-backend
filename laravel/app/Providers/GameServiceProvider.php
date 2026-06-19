@@ -13,19 +13,19 @@ class GameServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(GameServiceFactory::class, function (Container $app): GameServiceFactory {
-            $map = config('game_services.map', null);
-            $default = config('game_services.default', null);
+            $map = config('games.services', null);
+            $default = config('games.services_default', null);
 
             if ($map === null) {
                 $map = [];
             }
 
             if (! is_array($map)) {
-                throw new RuntimeException('Invalid configuration: config.game_services.map must be an array.');
+                throw new RuntimeException('Invalid configuration: config.games.services must be an array.');
             }
 
             if ($default !== null && ! is_string($default)) {
-                throw new RuntimeException('Invalid configuration: config.game_services.default must be a string or null.');
+                throw new RuntimeException('Invalid configuration: config.games.services_default must be a string or null.');
             }
 
             return new GameServiceFactory($app, $map, $default);
