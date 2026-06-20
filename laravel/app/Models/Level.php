@@ -63,6 +63,17 @@ class Level extends Model
 {
     use HasFactory;
 
+    /**
+     * Resolve the public URL for this level's cover image.
+     *
+     * Trusts the stored path: when image_url is set the upload-disk URL is
+     * built directly, with no exists() probe. On a cloud disk (R2/S3) a probe
+     * would cost a HeadObject request per access — an N+1 over the network on
+     * list endpoints. A missing file therefore surfaces as a broken URL (404)
+     * instead of being silently masked; keeping stored paths valid is the data
+     * layer's responsibility. Only an empty path falls back to the configured
+     * default icon on the static disk.
+     */
     public function getImageUrlAttribute(): string
     {
         $raw = $this->attributes['image_url'] ?? null;
@@ -73,20 +84,15 @@ class Level extends Model
             /** @var FilesystemAdapter $uploadDisk */
             $uploadDisk = Storage::disk($uploadDiskName);
 
-            if ($uploadDisk->exists($path)) {
-                return $this->absoluteUrl($uploadDisk->url($path));
-            }
+            return $this->absoluteUrl($uploadDisk->url($path));
         }
 
         $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
         /** @var FilesystemAdapter $staticDisk */
         $staticDisk = Storage::disk($staticDiskName);
+        $defaultKey = ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
 
-        $key = $path !== '' && $staticDisk->exists($path)
-            ? $path
-            : ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
-
-        return $this->absoluteUrl($staticDisk->url($key));
+        return $this->absoluteUrl($staticDisk->url($defaultKey));
     }
 
     private function absoluteUrl(string $url): string
