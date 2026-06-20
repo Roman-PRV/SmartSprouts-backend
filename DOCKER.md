@@ -1,12 +1,11 @@
 # 🐳 Docker Guide
 
-The project uses three Compose files to separate development and production environments:
+The project uses two Compose files to separate development and production:
 
 | File | Purpose |
 |---|---|
-| `docker-compose.yml` | Base configuration shared across all environments |
-| `docker-compose.override.yml` | Development overrides (auto-loaded) |
-| `docker-compose.prod.yml` | Production overrides (explicitly loaded via `-f`) |
+| `docker-compose.yml` | Base, prod-ready configuration. Coolify reads **only** this file in production. |
+| `docker-compose.override.yml` | Development overrides (auto-loaded by Docker Compose; dev-only) |
 
 ---
 
@@ -28,21 +27,48 @@ The development stack runs `laravel` using the **`dev` stage** (Xdebug enabled, 
 
 ---
 
-## Production
+## Production (Coolify)
+
+Production is deployed by **Coolify**, which reads **only `docker-compose.yml`**
+(`docker-compose.override.yml` is dev-only and ignored). The `laravel` / `queue-worker`
+images are pulled from GHCR — CI builds the **`prod` stage** (no Xdebug, no dev
+dependencies, optimized OPcache), pushes it, then triggers a Coolify webhook
+(see `.github/workflows/ci.yml`). Env vars and the domain are set in the Coolify UI,
+not in a committed file.
+
+Migrations run automatically on container startup: `APP_ENV=production` triggers
+`php artisan migrate --force --isolated` in `entrypoint.sh`.
+
+### Networking invariant (do not add custom networks)
+
+The base compose declares **no custom networks on purpose**. Under Coolify every
+service joins the network Coolify manages (the resource "Destination" network),
+which the Traefik proxy also joins — so the proxy resolves each service to one
+deterministic IP. Adding a custom network makes containers **multi-homed**, and
+Traefik then routes to an IP it cannot reach → intermittent **504** that the
+browser reports as a CORS error (`No 'Access-Control-Allow-Origin'`). Locally,
+Compose's implicit `default` network gives the same single-network behaviour.
+
+### Troubleshooting: backend unreachable after deploy
+
+Symptom: the frontend hangs ~20s then fails with a CORS error, yet containers are healthy.
 
 ```bash
-# Start the production stack
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# 1. Containers up & healthy?
+docker ps -a --filter "name=<resource-uuid>" --format "table {{.Names}}\t{{.Status}}"
 
-# Start with the ukrainian-tts service
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tts up -d
+# 2. App reachable directly (bypass Traefik)? Fast response = app fine, blame the proxy.
+docker exec <nginx-container> wget -qO- http://127.0.0.1/api/games
 
-# Rebuild the production image
-docker compose -f docker-compose.yml -f docker-compose.prod.yml build laravel
+# 3. Is nginx on a SINGLE network? More than one = the multi-homing bug.
+docker ps --format "table {{.Names}}\t{{.Networks}}"
+
+# 4. App logs survive redeploy on the laravel_storage volume:
+docker exec <laravel-container> tail -50 storage/logs/laravel.log
 ```
 
-The production stack is built using the **`prod` stage** (no Xdebug, no dev dependencies, optimized OPcache).  
-Migrations run automatically on container startup (`APP_ENV=production` triggers `php artisan migrate --force` in `entrypoint.sh`).
+If the browser shows "CORS" / timeout but the app log is empty and step 2 is instant,
+the fault is proxy↔nginx routing — not the application or the CORS config.
 
 ---
 
@@ -74,15 +100,15 @@ Port: `9003` | IDE Key: `ANTIGRAVITY`
 # Validate dev configuration (no build)
 docker compose config
 
-# Validate prod configuration (no build)
-docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+# Validate prod configuration as Coolify sees it (base file only)
+docker compose -f docker-compose.yml config
 
 # Check which services start without the TTS profile
 docker compose config --services
 
-# Verify that Xdebug is absent in the prod image
-docker compose -f docker-compose.yml -f docker-compose.prod.yml build laravel
-docker run --rm $(docker compose -f docker-compose.yml -f docker-compose.prod.yml images -q laravel) php -m | grep -i xdebug
+# Verify that Xdebug is absent in the prod image (build the prod stage directly)
+docker build -f laravel/docker/Dockerfile --target prod -t smartsprouts-prod-check laravel
+docker run --rm smartsprouts-prod-check php -m | grep -i xdebug   # expect no output
 ```
 
 ---
