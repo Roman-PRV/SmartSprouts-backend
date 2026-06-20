@@ -4,6 +4,14 @@
 # This file is the canonical, prod-ready compose. It is the SOLE file read by
 # Coolify in production deploys.
 #
+# Networking: NO custom networks are declared on purpose. Per Coolify's guidance
+# for Compose apps, every service shares the network Coolify manages (the
+# resource "Destination" network), which coolify-proxy/Traefik also joins — so
+# the proxy resolves each service to a single, deterministic IP. Declaring a
+# custom network here made containers multi-homed and caused Traefik to
+# intermittently route to an unreachable IP (504 / "CORS"). Locally (no Coolify)
+# Compose's implicit `default` network gives the same single-network behaviour.
+#
 # Development:
 #   docker compose up                  (auto-merges docker-compose.override.yml)
 #   docker compose --profile tts up    (also starts ukrainian-tts; defined in override)
@@ -23,8 +31,6 @@ services:
     volumes:
       - laravel_public:/var/www/public
       - laravel_storage:/var/www/storage
-    networks:
-      - app-network
     depends_on:
       mysql:
         condition: service_healthy
@@ -50,8 +56,6 @@ services:
     volumes:
       - laravel_public:/var/www/public
       - laravel_storage:/var/www/storage  # named volume in prod; bind-mounted in dev (override)
-    networks:
-      - app-network
     depends_on:
       laravel:
         condition: service_healthy
@@ -74,8 +78,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD?}
     volumes:
       - mysql_data:/var/lib/mysql
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin ping -h localhost -u root --silent"]
       interval: 10s
@@ -93,9 +95,14 @@ services:
       - laravel_public:/var/www/public:ro
       - laravel_storage:/var/www/storage:ro
     depends_on:
-      - laravel
-    networks:
-      - app-network
+      laravel:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx-health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -105,8 +112,6 @@ services:
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD?}
     volumes:
       - redis_data:/data
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"${REDIS_PASSWORD}\" ping | grep PONG || exit 1"]
       interval: 10s
@@ -121,7 +126,3 @@ volumes:
   redis_data:
   laravel_public:   # shared between laravel (write via entrypoint) and nginx (read-only)
   laravel_storage:  # persistent Laravel storage in prod; overridden by bind-mount in dev
-
-networks:
-  app-network:
-    driver: bridge

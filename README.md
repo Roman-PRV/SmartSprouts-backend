@@ -185,9 +185,8 @@ SmartSprouts-backend/
 ├── nginx/                          # Nginx virtual host config
 ├── python-services/
 │   └── ukrainian-tts/              # Self-hosted Ukrainian TTS microservice
-├── docker-compose.yml              # Base services (all environments)
+├── docker-compose.yml              # Base, prod-ready services (Coolify reads only this)
 ├── docker-compose.override.yml     # Dev overrides (auto-loaded by Docker Compose)
-├── docker-compose.prod.yml         # Production overrides
 └── package.json                    # Root NPM scripts (lint, test, queue:restart, …)
 ```
 
