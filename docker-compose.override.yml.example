@@ -22,7 +22,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - app-network
+      - default
       - dev-local-network
 
   queue-worker:
@@ -40,7 +40,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - app-network
+      - default
       - dev-local-network
 
   # mysql host port binding (127.0.0.1:3306:3306) is now defined in base
@@ -72,8 +72,6 @@ services:
     environment:
       - TTS_MAX_TEXT_LENGTH=${TTS_MAX_TEXT_LENGTH:-2000}
       - TTS_CHUNK_SIZE=${TTS_CHUNK_SIZE:-200}
-    networks:
-      - app-network
 
 volumes:
   vendor_data:
