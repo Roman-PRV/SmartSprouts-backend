@@ -95,7 +95,8 @@ services:
       - laravel_public:/var/www/public:ro
       - laravel_storage:/var/www/storage:ro
     depends_on:
-      - laravel
+      laravel:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx-health >/dev/null 2>&1 || exit 1"]
       interval: 10s
