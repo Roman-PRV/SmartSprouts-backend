@@ -94,8 +94,16 @@ services:
       - laravel_storage:/var/www/storage:ro
     depends_on:
       - laravel
-    networks:
-      - app-network
+    # No explicit network here: Coolify attaches its proxy network, so Traefik
+    # resolves nginx to a single deterministic IP. A second network made Traefik
+    # intermittently route to an unreachable IP → 504. nginx reaches laravel on
+    # that same Coolify network. Dev re-adds app-network in the override file.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx-health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine

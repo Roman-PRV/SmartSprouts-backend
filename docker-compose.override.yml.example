@@ -47,6 +47,8 @@ services:
   # docker-compose.yml — no need to duplicate here.
 
   nginx:
+    networks:
+      - app-network                            # dev has no Coolify network; nginx needs this to reach laravel
     ports:
       - "3000:80"                              # Expose to host for local development
     volumes:
