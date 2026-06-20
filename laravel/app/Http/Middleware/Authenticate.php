@@ -12,6 +12,9 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // API-only backend: never resolve route('login') (it does not exist).
+        // Returning null keeps the AuthenticationException constructible so the
+        // Handler's unauthenticated() override can render it as a JSON 401.
+        return null;
     }
 }
