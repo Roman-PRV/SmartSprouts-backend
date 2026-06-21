@@ -30,6 +30,11 @@ class MediaHelper
      * Cloud disks (s3/R2) already return absolute URLs; local disks return a
      * site-relative path, which we prefix with the app URL. Single source of
      * truth reused by the media services and the model accessors (Game, Level).
+     *
+     * Assumes a disk URL is either an absolute http(s) URL or a scheme-less
+     * site-relative path. Protocol-relative ("//cdn/…") or other schemes are
+     * not produced by the current disks; revisit this check if a CDN that
+     * emits them is added.
      */
     public static function toAbsolute(string $url): string
     {

@@ -176,8 +176,6 @@ class LevelControllerTest extends TestCase
             'table_prefix' => 'true_false_image',
         ]);
 
-        config(['filesystems.default' => 'public']);
-
         DB::table('true_false_image_levels')->truncate();
 
         DB::table('true_false_image_levels')->insert([
