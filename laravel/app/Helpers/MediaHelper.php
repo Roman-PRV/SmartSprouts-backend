@@ -2,12 +2,12 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Facades\Storage;
+use App\Contracts\Media\MediaUrlGeneratorInterface;
 
 class MediaHelper
 {
     /**
-     * Get absolute URL for a path using a disk from configuration.
+     * Get absolute URL for a path using a disk resolved from configuration.
      *
      * @param  string|null  $path  Relative storage path
      * @param  string  $diskConfigKey  Config key for the disk name
@@ -15,17 +15,9 @@ class MediaHelper
      */
     public static function getUrl(?string $path, string $diskConfigKey = 'ai.tts.storage.disk', string $defaultDisk = 'public'): ?string
     {
-        if (! $path) {
-            return null;
-        }
-
         $diskName = ConfigHelper::getString($diskConfigKey, $defaultDisk);
-        $url = Storage::disk($diskName)->url($path);
 
-        // Cloud disks (s3/R2) return absolute URLs already; only prefix relative paths.
-        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
-            ? $url
-            : url($url);
+        return app(MediaUrlGeneratorInterface::class)->getUrl($path, $diskName);
     }
 
     /**

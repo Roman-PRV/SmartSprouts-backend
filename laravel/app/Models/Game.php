@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Helpers\ConfigHelper;
+use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Schema(
@@ -37,25 +40,29 @@ class Game extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Resolve the public URL for this game's icon.
+     *
+     * Mirrors Level::getImageUrlAttribute(): the stored path is trusted and the
+     * URL is built without an exists() probe. A missing file surfaces as a
+     * broken URL (404) instead of being masked; only an empty path falls back
+     * to the configured default icon. Icons live on the static (local,
+     * git-committed) disk, so there is no cloud round-trip either way — the
+     * point here is behavioural consistency with the Level accessor.
+     */
     public function getIconUrlAttribute(): string
     {
         $diskName = ConfigHelper::getString('games.default_icon_disk', 'static');
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk($diskName);
 
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
+        $path = MediaUrl::normalizePath($this->attributes['icon_url'] ?? null);
 
-        $raw = $this->attributes['icon_url'] ?? null;
-        $path = is_string($raw) ? ltrim($raw, '/') : '';
-
-        $key = $path !== '' && $disk->exists($path)
+        $key = $path !== ''
             ? $path
             : ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
-        $url = $disk->url($key);
-
-        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
-            ? $url
-            : url($url);
+        return MediaUrl::toAbsolute($disk->url($key));
     }
 
     public function gameResults(): HasMany

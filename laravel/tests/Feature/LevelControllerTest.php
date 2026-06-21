@@ -82,8 +82,7 @@ class LevelControllerTest extends TestCase
 
     public function test_show_returns_single_level_with_file_url_and_statements(): void
     {
-        Storage::fake('static', ['url' => config('app.url')]);
-        Storage::disk('static')->put('levels/first.png', 'dummy');
+        Storage::fake('public', ['url' => config('app.url').'/storage']);
 
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
@@ -142,7 +141,7 @@ class LevelControllerTest extends TestCase
             ->assertJson([
                 'id' => 1,
                 'title' => 'First level',
-                'image_url' => 'http://localhost/levels/first.png',
+                'image_url' => 'http://localhost/storage/levels/first.png',
             ]);
 
         $response->assertJsonFragment([
@@ -164,6 +163,56 @@ class LevelControllerTest extends TestCase
         ]);
 
         $this->assertCount(2, $response->json('statements'));
+    }
+
+    public function test_image_url_is_built_without_existence_probe(): void
+    {
+        // Upload disk faked but the file is deliberately NOT written: the
+        // accessor must still return the constructed URL (404 at fetch time),
+        // never a silent default-icon swap. The frontend handles the 404.
+        Storage::fake('public', ['url' => config('app.url').'/storage']);
+
+        $game = Game::factory()->create([
+            'table_prefix' => 'true_false_image',
+        ]);
+
+        DB::table('true_false_image_levels')->truncate();
+
+        DB::table('true_false_image_levels')->insert([
+            'id' => 1,
+            'title' => json_encode(['en' => 'Lvl', 'es' => 'Nivel', 'uk' => 'Рівень']),
+            'image_url' => 'levels/missing.png',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->getJson("/api/games/{$game->id}/levels/1")
+            ->assertStatus(200)
+            ->assertJson(['image_url' => 'http://localhost/storage/levels/missing.png']);
+    }
+
+    public function test_empty_image_url_falls_back_to_default_icon(): void
+    {
+        $game = Game::factory()->create([
+            'table_prefix' => 'true_false_image',
+        ]);
+
+        DB::table('true_false_image_levels')->truncate();
+
+        DB::table('true_false_image_levels')->insert([
+            'id' => 1,
+            'title' => json_encode(['en' => 'Lvl', 'es' => 'Nivel', 'uk' => 'Рівень']),
+            'image_url' => '',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->getJson("/api/games/{$game->id}/levels/1");
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('icons/default-icon.png', $response->json('image_url'));
     }
 
     public function test_check_missing_game_returns_404(): void
@@ -475,8 +524,7 @@ class LevelControllerTest extends TestCase
      */
     public function test_show_returns_level_in_requested_locale(string $locale, string $expectedTitle): void
     {
-        Storage::fake('static', ['url' => config('app.url')]);
-        Storage::disk('static')->put('levels/first.png', 'dummy');
+        Storage::fake('public', ['url' => config('app.url').'/storage']);
 
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
