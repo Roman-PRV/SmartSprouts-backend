@@ -3,6 +3,7 @@
 namespace App\Services\Media;
 
 use App\Contracts\Media\MediaUrlGeneratorInterface;
+use App\Helpers\MediaHelper;
 use Illuminate\Support\Facades\Storage;
 
 class MediaUrlGenerator implements MediaUrlGeneratorInterface
@@ -16,11 +17,6 @@ class MediaUrlGenerator implements MediaUrlGeneratorInterface
             return null;
         }
 
-        $url = Storage::disk($diskName)->url($path);
-
-        // Cloud disks (s3/R2) return absolute URLs already; only prefix relative paths.
-        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
-            ? $url
-            : url($url);
+        return MediaHelper::toAbsolute(Storage::disk($diskName)->url($path));
     }
 }

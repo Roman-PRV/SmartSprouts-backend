@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\ConfigHelper;
+use App\Helpers\MediaHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,14 +63,7 @@ class Game extends Model
             ? $path
             : ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
-        return $this->absoluteUrl($disk->url($key));
-    }
-
-    private function absoluteUrl(string $url): string
-    {
-        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
-            ? $url
-            : url($url);
+        return MediaHelper::toAbsolute($disk->url($key));
     }
 
     public function gameResults(): HasMany

@@ -20,9 +20,19 @@ class MediaHelper
         }
 
         $diskName = ConfigHelper::getString($diskConfigKey, $defaultDisk);
-        $url = Storage::disk($diskName)->url($path);
 
-        // Cloud disks (s3/R2) return absolute URLs already; only prefix relative paths.
+        return self::toAbsolute(Storage::disk($diskName)->url($path));
+    }
+
+    /**
+     * Promote a disk-generated URL to an absolute one.
+     *
+     * Cloud disks (s3/R2) already return absolute URLs; local disks return a
+     * site-relative path, which we prefix with the app URL. Single source of
+     * truth reused by the media services and the model accessors (Game, Level).
+     */
+    public static function toAbsolute(string $url): string
+    {
         return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
             ? $url
             : url($url);
