@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\ConfigHelper;
-use App\Helpers\MediaHelper;
+use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -56,14 +56,13 @@ class Game extends Model
         /** @var FilesystemAdapter $disk */
         $disk = Storage::disk($diskName);
 
-        $raw = $this->attributes['icon_url'] ?? null;
-        $path = is_string($raw) ? ltrim($raw, '/') : '';
+        $path = MediaUrl::normalizePath($this->attributes['icon_url'] ?? null);
 
         $key = $path !== ''
             ? $path
             : ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
-        return MediaHelper::toAbsolute($disk->url($key));
+        return MediaUrl::toAbsolute($disk->url($key));
     }
 
     public function gameResults(): HasMany

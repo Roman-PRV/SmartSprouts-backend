@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\ConfigHelper;
-use App\Helpers\MediaHelper;
+use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -77,15 +77,14 @@ class Level extends Model
      */
     public function getImageUrlAttribute(): string
     {
-        $raw = $this->attributes['image_url'] ?? null;
-        $path = is_string($raw) ? ltrim($raw, '/') : '';
+        $path = MediaUrl::normalizePath($this->attributes['image_url'] ?? null);
 
         if ($path !== '') {
             $uploadDiskName = ConfigHelper::getString('games.upload_disk', 'public');
             /** @var FilesystemAdapter $uploadDisk */
             $uploadDisk = Storage::disk($uploadDiskName);
 
-            return MediaHelper::toAbsolute($uploadDisk->url($path));
+            return MediaUrl::toAbsolute($uploadDisk->url($path));
         }
 
         $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
@@ -93,6 +92,6 @@ class Level extends Model
         $staticDisk = Storage::disk($staticDiskName);
         $defaultKey = ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
 
-        return MediaHelper::toAbsolute($staticDisk->url($defaultKey));
+        return MediaUrl::toAbsolute($staticDisk->url($defaultKey));
     }
 }

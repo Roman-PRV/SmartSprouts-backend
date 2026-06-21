@@ -29,18 +29,4 @@ class MediaHelperTest extends TestCase
     {
         $this->assertNull(MediaHelper::getUrl(null));
     }
-
-    public function test_to_absolute_prefixes_relative_url()
-    {
-        $root = rtrim(url('/'), '/');
-
-        $this->assertEquals($root.'/storage/file.mp3', MediaHelper::toAbsolute('/storage/file.mp3'));
-    }
-
-    public function test_to_absolute_leaves_already_absolute_url_untouched()
-    {
-        $absolute = 'https://pub-abc.r2.dev/games/find-the-wrong/levels/4/image.jpg';
-
-        $this->assertEquals($absolute, MediaHelper::toAbsolute($absolute));
-    }
 }

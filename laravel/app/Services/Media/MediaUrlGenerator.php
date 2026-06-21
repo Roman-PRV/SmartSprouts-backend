@@ -3,7 +3,6 @@
 namespace App\Services\Media;
 
 use App\Contracts\Media\MediaUrlGeneratorInterface;
-use App\Helpers\MediaHelper;
 use Illuminate\Support\Facades\Storage;
 
 class MediaUrlGenerator implements MediaUrlGeneratorInterface
@@ -17,6 +16,6 @@ class MediaUrlGenerator implements MediaUrlGeneratorInterface
             return null;
         }
 
-        return MediaHelper::toAbsolute(Storage::disk($diskName)->url($path));
+        return MediaUrl::toAbsolute(Storage::disk($diskName)->url($path));
     }
 }
