@@ -15,6 +15,48 @@ use Illuminate\Support\Facades\Validator;
  * submit flow (validate → score → persist) lives here once. Each game supplies
  * its own reads and scoring via fetchAllLevels()/fetchLevel()/check(), which
  * touch the game-specific models.
+ *
+ * @OA\Schema(
+ *     schema="TrueFalse.AttemptRequest",
+ *     type="object",
+ *     title="TrueFalse Attempt Request",
+ *     required={"answers"},
+ *
+ *     @OA\Property(
+ *         property="answers",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *             required={"statement_id", "answer"},
+ *
+ *             @OA\Property(property="statement_id", type="integer", example=10),
+ *             @OA\Property(property="answer", type="boolean", example=true)
+ *         )
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="TrueFalse.AttemptResponse",
+ *     type="object",
+ *     title="TrueFalse Attempt Response",
+ *
+ *     @OA\Property(
+ *         property="results",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *
+ *             @OA\Property(property="statement_id", type="integer"),
+ *             @OA\Property(property="correct", type="boolean"),
+ *             @OA\Property(property="is_true", type="boolean"),
+ *             @OA\Property(property="explanation", type="string", nullable=true),
+ *             @OA\Property(property="statement_audio_url", type="string", format="uri", nullable=true),
+ *             @OA\Property(property="explanation_audio_url", type="string", format="uri", nullable=true)
+ *         )
+ *     )
+ * )
  */
 abstract class StatementGameService implements GameServiceInterface
 {

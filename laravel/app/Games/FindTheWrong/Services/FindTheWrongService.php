@@ -17,6 +17,41 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * @OA\Schema(
+ *     schema="FindTheWrong.AttemptRequest",
+ *     type="object",
+ *     title="FindTheWrong Attempt Request",
+ *     required={"duration_seconds", "found", "missed_item_ids"},
+ *
+ *     @OA\Property(property="duration_seconds", type="integer", minimum=0, maximum=3600, example=42),
+ *     @OA\Property(
+ *         property="found",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *             required={"item_id", "stars"},
+ *
+ *             @OA\Property(property="item_id", type="integer", example=10),
+ *             @OA\Property(property="stars", type="integer", minimum=1, maximum=3, example=3)
+ *         )
+ *     ),
+ *     @OA\Property(property="missed_item_ids", type="array", @OA\Items(type="integer", example=11)),
+ *     @OA\Property(property="interaction_mode", type="string", enum={"circle", "marker"}, nullable=true, example="marker")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="FindTheWrong.AttemptResponse",
+ *     type="object",
+ *     title="FindTheWrong Attempt Response",
+ *
+ *     @OA\Property(property="score", type="integer", example=3),
+ *     @OA\Property(property="total_questions", type="integer", example=4),
+ *     @OA\Property(property="found_items", type="array", @OA\Items(ref="#/components/schemas/FindTheWrong.RevealItem")),
+ *     @OA\Property(property="missed_items", type="array", @OA\Items(ref="#/components/schemas/FindTheWrong.RevealItem"))
+ * )
+ */
 class FindTheWrongService implements GameServiceInterface
 {
     public function __construct(private FindTheWrongAttemptService $attempts) {}

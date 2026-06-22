@@ -34,9 +34,20 @@ class AttemptController extends Controller
      *     @OA\Parameter(name="game", in="path", required=true, @OA\Schema(type="integer", example=1)),
      *     @OA\Parameter(name="level", in="path", required=true, @OA\Schema(type="integer", example=3)),
      *
-     *     @OA\RequestBody(required=true, @OA\JsonContent(type="object", description="Game-specific submission payload")),
+     *     @OA\RequestBody(required=true, @OA\JsonContent(oneOf={
      *
-     *     @OA\Response(response=200, description="Scored result (shape depends on the game)"),
+     *         @OA\Schema(ref="#/components/schemas/TrueFalse.AttemptRequest"),
+     *         @OA\Schema(ref="#/components/schemas/Arithmetic.AttemptRequest"),
+     *         @OA\Schema(ref="#/components/schemas/FindTheWrong.AttemptRequest")
+     *     })),
+     *
+     *     @OA\Response(response=200, description="Scored result (shape depends on the game)", @OA\JsonContent(oneOf={
+     *
+     *         @OA\Schema(ref="#/components/schemas/TrueFalse.AttemptResponse"),
+     *         @OA\Schema(ref="#/components/schemas/Arithmetic.AttemptResponse"),
+     *         @OA\Schema(ref="#/components/schemas/FindTheWrong.AttemptResponse")
+     *     })),
+     *
      *     @OA\Response(response=400, description="Service misconfiguration for the game prefix", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=401, description="Unauthenticated", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=404, description="Game or level not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

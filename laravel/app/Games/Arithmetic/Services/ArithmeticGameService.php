@@ -23,6 +23,49 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * `N ∘ b` — so all read and check logic lives here. A concrete game supplies
  * only the operation via symbol(), apply() and levelTitle(); content is
  * deterministic, so there are no tables, item models or admin screens.
+ *
+ * @OA\Schema(
+ *     schema="Arithmetic.AttemptRequest",
+ *     type="object",
+ *     title="Arithmetic Attempt Request",
+ *     required={"answers"},
+ *
+ *     @OA\Property(
+ *         property="answers",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *             required={"equation_id", "answer"},
+ *
+ *             @OA\Property(property="equation_id", type="integer", minimum=1, maximum=10, example=4),
+ *             @OA\Property(property="answer", type="integer", example=12)
+ *         )
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Arithmetic.AttemptResponse",
+ *     type="object",
+ *     title="Arithmetic Attempt Response",
+ *
+ *     @OA\Property(
+ *         property="results",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *
+ *             @OA\Property(property="equation_id", type="integer"),
+ *             @OA\Property(property="operand_a", type="integer"),
+ *             @OA\Property(property="operand_b", type="integer"),
+ *             @OA\Property(property="operator", type="string"),
+ *             @OA\Property(property="given_answer", type="integer"),
+ *             @OA\Property(property="expected_answer", type="integer"),
+ *             @OA\Property(property="correct", type="boolean")
+ *         )
+ *     )
+ * )
  */
 abstract class ArithmeticGameService implements GameServiceInterface
 {
