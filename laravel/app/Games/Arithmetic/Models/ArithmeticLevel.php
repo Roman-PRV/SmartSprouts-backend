@@ -5,8 +5,6 @@ namespace App\Games\Arithmetic\Models;
 use App\Helpers\ConfigHelper;
 use App\Models\Level;
 use App\Services\Media\MediaUrl;
-use Illuminate\Filesystem\FilesystemAdapter;
-use Illuminate\Support\Facades\Storage;
 use LogicException;
 
 /**
@@ -40,16 +38,12 @@ class ArithmeticLevel extends Level
      */
     public function getImageUrlAttribute(): string
     {
-        $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
-        /** @var FilesystemAdapter $staticDisk */
-        $staticDisk = Storage::disk($staticDiskName);
-
         $path = MediaUrl::normalizePath($this->attributes['image_url'] ?? null);
 
         if ($path === '') {
             $path = ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
         }
 
-        return MediaUrl::toAbsolute($staticDisk->url($path));
+        return MediaUrl::diskUrl(ConfigHelper::getString('games.default_icon_disk', 'static'), $path);
     }
 }

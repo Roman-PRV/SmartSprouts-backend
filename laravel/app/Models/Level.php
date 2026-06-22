@@ -6,8 +6,6 @@ use App\Helpers\ConfigHelper;
 use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Filesystem\FilesystemAdapter;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -80,18 +78,12 @@ class Level extends Model
         $path = MediaUrl::normalizePath($this->attributes['image_url'] ?? null);
 
         if ($path !== '') {
-            $uploadDiskName = ConfigHelper::getString('games.upload_disk', 'public');
-            /** @var FilesystemAdapter $uploadDisk */
-            $uploadDisk = Storage::disk($uploadDiskName);
-
-            return MediaUrl::toAbsolute($uploadDisk->url($path));
+            return MediaUrl::diskUrl(ConfigHelper::getString('games.upload_disk', 'public'), $path);
         }
 
-        $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
-        /** @var FilesystemAdapter $staticDisk */
-        $staticDisk = Storage::disk($staticDiskName);
-        $defaultKey = ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
-
-        return MediaUrl::toAbsolute($staticDisk->url($defaultKey));
+        return MediaUrl::diskUrl(
+            ConfigHelper::getString('games.default_icon_disk', 'static'),
+            ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png'),
+        );
     }
 }
