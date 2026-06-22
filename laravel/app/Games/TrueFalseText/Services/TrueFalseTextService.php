@@ -11,6 +11,7 @@ use App\Helpers\MediaHelper;
 use App\Models\Level;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrueFalseTextService extends StatementGameService
@@ -64,7 +65,7 @@ class TrueFalseTextService extends StatementGameService
      *
      * @throws TableMissingException
      * @throws NotFoundHttpException
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function check(CheckAnswersDTO $dto): array
     {
@@ -88,7 +89,7 @@ class TrueFalseTextService extends StatementGameService
 
         foreach ($statementIds as $statementId) {
             if (! in_array($statementId, $existingStatementIds, true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'answers' => ["The statement {$statementId} does not belong to level {$dto->levelId}."],
                 ]);
             }
