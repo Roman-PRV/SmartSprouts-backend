@@ -73,6 +73,10 @@ return [
         'attempt_count_mismatch' => 'Los elementos enviados deben cubrir exactamente todos los elementos del nivel (encontrados + omitidos = total).',
     ],
 
+    'arithmetic' => [
+        'answers_coverage' => 'Las respuestas enviadas deben cubrir cada ecuación del nivel exactamente una vez.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language Lines

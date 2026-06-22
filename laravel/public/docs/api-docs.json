@@ -557,6 +557,112 @@
     },
     "components": {
         "schemas": {
+            "Arithmetic.AttemptRequest": {
+                "title": "Arithmetic Attempt Request",
+                "description": "Player's answers for every equation in an arithmetic level.",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "description": "One entry per equation; together they must cover the whole level.",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "equation_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "equation_id": {
+                                    "description": "Validates a player's submission for an arithmetic level: one answer per\nequation in the level. The set of equation_ids must cover 1..FACTS_PER_LEVEL\nexactly once — partial or duplicated submissions are rejected so the derived\nscore is always over the full level. The answer value itself is just an\ninteger; correctness is decided server-side in the service.",
+                                    "type": "integer",
+                                    "maximum": 10,
+                                    "minimum": 1,
+                                    "example": 4
+                                },
+                                "answer": {
+                                    "type": "integer",
+                                    "example": 12
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Arithmetic.Level": {
+                "title": "Arithmetic.Level",
+                "description": "Arithmetic game level (multiplication, addition, …).",
+                "required": [
+                    "id",
+                    "title",
+                    "image_url",
+                    "operator"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Level ID (1..10)",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "title": {
+                        "description": "Localized level title",
+                        "type": "string",
+                        "example": "Multiply by 3"
+                    },
+                    "title_audio_url": {
+                        "description": "Title audio URL (not yet generated for arithmetic)",
+                        "type": "string",
+                        "format": "uri",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "image_url": {
+                        "description": "Level cover image URL",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/storage/icons/default-icon.png"
+                    },
+                    "operator": {
+                        "description": "Operation symbol for the level",
+                        "type": "string",
+                        "example": "×"
+                    },
+                    "equations": {
+                        "description": "Facts for the level; present only on the single-level view.",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id",
+                                "operand_a",
+                                "operand_b",
+                                "result"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 4
+                                },
+                                "operand_a": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "operand_b": {
+                                    "type": "integer",
+                                    "example": 4
+                                },
+                                "result": {
+                                    "type": "integer",
+                                    "example": 12
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "Admin.FindTheWrong.StoreItemRequest": {
                 "title": "Admin Store FindTheWrong Item Request",
                 "description": "JSON payload for creating a new polygon item under a level.",

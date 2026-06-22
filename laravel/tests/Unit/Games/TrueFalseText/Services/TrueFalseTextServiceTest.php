@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
@@ -163,91 +162,6 @@ class TrueFalseTextServiceTest extends TestCase
 
         $this->assertTrue($result->relationLoaded('statements'));
         $this->assertCount(1, $result->statements);
-    }
-
-    /** @test */
-    public function fetch_data_for_level_returns_statements_for_given_level(): void
-    {
-        // Create test level
-        $level = TrueFalseTextLevel::create([
-            'title' => 'Test Level',
-            'text' => 'This is test text',
-            'image_url' => 'test.jpg',
-        ]);
-
-        // Create test statements
-        $statement1 = TrueFalseTextStatement::create([
-            'level_id' => $level->id,
-            'statement' => 'Statement 1',
-            'is_true' => true,
-            'explanation' => 'Explanation 1',
-            'statement_audio_url' => ['uk' => 'stmt1_uk.mp3'],
-            'explanation_audio_url' => ['uk' => 'expl1_uk.mp3'],
-        ]);
-
-        $statement2 = TrueFalseTextStatement::create([
-            'level_id' => $level->id,
-            'statement' => 'Statement 2',
-            'is_true' => false,
-            'explanation' => 'Explanation 2',
-            'statement_audio_url' => ['uk' => 'stmt2_uk.mp3'],
-            'explanation_audio_url' => ['uk' => 'expl2_uk.mp3'],
-        ]);
-
-        // Create statement for different level (should not be returned)
-        $otherLevel = TrueFalseTextLevel::create([
-            'title' => 'Other Level',
-            'text' => 'Other text',
-            'image_url' => 'other.jpg',
-        ]);
-
-        TrueFalseTextStatement::create([
-            'level_id' => $otherLevel->id,
-            'statement' => 'Other Statement',
-            'is_true' => true,
-            'explanation' => 'Other Explanation',
-        ]);
-
-        $statements = $this->service->fetchDataForLevel($level->id);
-
-        $this->assertInstanceOf(Collection::class, $statements);
-        $this->assertCount(2, $statements);
-        $this->assertEquals('Statement 1', $statements->first()->statement);
-        $this->assertEquals('Statement 2', $statements->last()->statement);
-        $this->assertTrue($statements->first()->is_true);
-        $this->assertFalse($statements->last()->is_true);
-    }
-
-    /** @test */
-    public function fetch_data_for_level_validates_statements_table_exists(): void
-    {
-        // Verify that statements table exists before proceeding
-        $this->assertTrue(Schema::hasTable('true_false_text_statements'));
-    }
-
-    /** @test */
-    public function fetch_data_for_level_throws_exception_when_no_statements_found(): void
-    {
-        // Create level but no statements
-        $level = TrueFalseTextLevel::create([
-            'title' => 'Empty Level',
-            'text' => 'This level has no statements',
-            'image_url' => 'empty.jpg',
-        ]);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("No statements found for level {$level->id}");
-
-        $this->service->fetchDataForLevel($level->id);
-    }
-
-    /** @test */
-    public function fetch_data_for_level_throws_exception_when_level_does_not_exist(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No statements found for level 999');
-
-        $this->service->fetchDataForLevel(999);
     }
 
     /** @test */

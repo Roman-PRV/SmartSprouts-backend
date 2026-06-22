@@ -7,8 +7,6 @@ use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Filesystem\FilesystemAdapter;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Schema(
@@ -52,17 +50,13 @@ class Game extends Model
      */
     public function getIconUrlAttribute(): string
     {
-        $diskName = ConfigHelper::getString('games.default_icon_disk', 'static');
-        /** @var FilesystemAdapter $disk */
-        $disk = Storage::disk($diskName);
-
         $path = MediaUrl::normalizePath($this->attributes['icon_url'] ?? null);
 
         $key = $path !== ''
             ? $path
             : ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
-        return MediaUrl::toAbsolute($disk->url($key));
+        return MediaUrl::diskUrl(ConfigHelper::getString('games.default_icon_disk', 'static'), $key);
     }
 
     public function gameResults(): HasMany

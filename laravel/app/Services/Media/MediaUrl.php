@@ -2,9 +2,13 @@
 
 namespace App\Services\Media;
 
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Storage;
+
 /**
  * Dependency-free leaf with the pure, low-level media-URL primitives shared by
- * the media services (MediaUrlGenerator) and the model accessors (Game, Level).
+ * the media services (MediaUrlGenerator) and the model accessors (Game, Level,
+ * ArithmeticLevel).
  *
  * Keeping these here — rather than on MediaHelper — avoids an inverted
  * dependency: MediaUrlGenerator would otherwise depend on the ergonomic
@@ -12,6 +16,20 @@ namespace App\Services\Media;
  */
 final class MediaUrl
 {
+    /**
+     * Resolve a disk-relative key to an absolute URL on the named disk. Wraps
+     * the Storage dance shared by the model image/icon accessors; each accessor
+     * keeps its own path/fallback branching and delegates the final resolution
+     * here.
+     */
+    public static function diskUrl(string $diskName, string $key): string
+    {
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk($diskName);
+
+        return self::toAbsolute($disk->url($key));
+    }
+
     /**
      * Promote a disk-generated URL to an absolute one.
      *

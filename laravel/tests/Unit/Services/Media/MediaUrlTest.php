@@ -30,4 +30,11 @@ class MediaUrlTest extends TestCase
     {
         $this->assertSame('', MediaUrl::normalizePath(null));
     }
+
+    public function test_disk_url_resolves_a_key_to_an_absolute_url_on_the_static_disk()
+    {
+        $root = rtrim(url('/'), '/');
+
+        $this->assertSame($root.'/icons/default-icon.png', MediaUrl::diskUrl('static', 'icons/default-icon.png'));
+    }
 }
