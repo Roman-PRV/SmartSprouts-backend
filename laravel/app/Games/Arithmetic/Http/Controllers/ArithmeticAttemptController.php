@@ -17,10 +17,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * factory, so a single controller serves multiplication, addition and any
  * future operation.
  *
- * @OA\Tag(
- *     name="Arithmetic",
- *     description="Arithmetic pair-match games — player endpoints"
- * )
+ * No OpenAPI annotations here: the route is registered later, when concrete
+ * games are wired up, and its `POST .../attempts` path is shared with
+ * find-the-wrong (one OpenAPI operation per path+method), so endpoint docs are
+ * decided there.
  */
 class ArithmeticAttemptController extends Controller
 {
@@ -36,24 +36,11 @@ class ArithmeticAttemptController extends Controller
      * route model binding so the GameMatches middleware (registered on the
      * per-game route) sees a resolved Game; the service is resolved from the DTO.
      *
-     * @OA\Post(
-     *     path="/api/games/{game}/levels/{level}/attempts",
-     *     tags={"Arithmetic"},
-     *     summary="Submit answers for an arithmetic level",
-     *     description="Validates the answers, scores them server-side and stores the result.",
-     *     security={{"sanctum": {}}},
-     *
-     *     @OA\Parameter(name="game", in="path", required=true, @OA\Schema(type="integer", example=4)),
-     *     @OA\Parameter(name="level", in="path", required=true, @OA\Schema(type="integer", example=3)),
-     *
-     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Arithmetic.AttemptRequest")),
-     *
-     *     @OA\Response(response=200, description="Scored results"),
-     *     @OA\Response(response=400, description="Service misconfiguration for the game prefix", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-     *     @OA\Response(response=401, description="Unauthenticated", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-     *     @OA\Response(response=404, description="Game or level not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-     *     @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-     * )
+     * No OpenAPI operation is declared here: the arithmetic attempts route shares
+     * the `POST /api/games/{game}/levels/{level}/attempts` path with
+     * find-the-wrong, and the spec allows only one operation per path+method.
+     * Endpoint documentation (and how to represent the shared path) is deferred
+     * to when concrete games register their routes.
      */
     public function store(ArithmeticAttemptRequest $request, Game $game): JsonResponse
     {

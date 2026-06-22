@@ -7,10 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Single read shape for every arithmetic game, used for both the level list and
- * the single-level view. `operator` is always present; `equations` appears only
- * when the level was loaded with them (show), and omits the per-equation
- * operator since it is already carried at the level.
+ * Read shape for a single arithmetic level (the show endpoint). `operator` is
+ * always present here; `equations` appears only when the level was loaded with
+ * them, and omits the per-equation operator since it is already carried at the
+ * level.
+ *
+ * Note: the generic levels-list endpoint renders through LevelDescriptionResource,
+ * not this resource, so `operator` is in practice a show-only field.
  *
  * @OA\Schema(
  *     schema="Arithmetic.Level",

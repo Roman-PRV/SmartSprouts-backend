@@ -9,7 +9,6 @@ use App\Games\Arithmetic\Support\ArithmeticConstants;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
-use LogicException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
@@ -151,14 +150,6 @@ class ArithmeticGameServiceTest extends TestCase
             'icons/arithmetic/addition/1.png',
             $service->fetchAllLevels()->first()->image_url,
         );
-    }
-
-    /** @test */
-    public function the_synthesized_level_refuses_to_be_persisted(): void
-    {
-        $this->expectException(LogicException::class);
-
-        (new ArithmeticLevel)->save();
     }
 
     /** @test */

@@ -5,7 +5,6 @@ namespace App\Games\Arithmetic\Models;
 use App\Helpers\ConfigHelper;
 use App\Models\Level;
 use App\Services\Media\MediaUrl;
-use LogicException;
 
 /**
  * In-memory level for the arithmetic game family. Content is fully
@@ -19,17 +18,6 @@ use LogicException;
  */
 class ArithmeticLevel extends Level
 {
-    /**
-     * Synthesized in memory and never persisted — guard against an accidental
-     * save() hitting a table that does not exist.
-     *
-     * @param  array<string, mixed>  $options
-     */
-    public function save(array $options = []): bool
-    {
-        throw new LogicException('ArithmeticLevel is in-memory only and must not be persisted.');
-    }
-
     /**
      * Resolve the level icon against the static (git-committed) disk. Unlike the
      * base Level — whose images are admin-uploaded to the cloud upload disk —

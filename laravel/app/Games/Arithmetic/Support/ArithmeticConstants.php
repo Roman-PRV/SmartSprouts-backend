@@ -17,6 +17,9 @@ final class ArithmeticConstants
 
     /**
      * Number of facts (equation cards) per level.
+     *
+     * Keep ArithmeticAttemptRequest's OpenAPI `maximum` in sync — swagger-php
+     * annotations are static and cannot reference this constant.
      */
     public const FACTS_PER_LEVEL = 10;
 }
