@@ -119,18 +119,6 @@ abstract class ArithmeticGameService implements GameServiceInterface
     }
 
     /**
-     * Equations for a level as a collection (data-only access). The interface
-     * returns an Eloquent collection for model-backed games; arithmetic content
-     * is synthesized arrays, so the element type intentionally diverges from the
-     * Model-bound generic.
-     */
-    public function fetchDataForLevel(int $levelId): Collection
-    {
-        /** @phpstan-ignore-next-line arithmetic facts are synthesized arrays, not Eloquent models */
-        return new Collection($this->factsFor($levelId));
-    }
-
-    /**
      * Score a player's answers for a level. Each answer is compared against the
      * canonical result derived from factsFor() (never from the payload), so the
      * stored score cannot be tampered with. The `correct` key is required by
