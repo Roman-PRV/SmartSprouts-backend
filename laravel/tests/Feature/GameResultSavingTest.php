@@ -36,7 +36,7 @@ class GameResultSavingTest extends TestCase
 
         // 2. Perform check request
         $response = $this->actingAs($user)
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],
                 ],
@@ -81,7 +81,7 @@ class GameResultSavingTest extends TestCase
 
         // 1 correct, 1 incorrect
         $this->actingAs($user)
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],  // correct
                     ['statement_id' => 11, 'answer' => true],  // incorrect
@@ -113,7 +113,7 @@ class GameResultSavingTest extends TestCase
 
         $this->actingAs($user)
             ->withHeaders(['Accept-Language' => 'uk'])
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],
                 ],

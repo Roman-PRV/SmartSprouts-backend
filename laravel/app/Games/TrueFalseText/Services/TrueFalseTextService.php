@@ -8,13 +8,42 @@ use App\Exceptions\TableMissingException;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Helpers\MediaHelper;
+use App\Models\Game;
 use App\Models\Level;
+use App\Models\User;
+use App\Services\GameResultService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrueFalseTextService implements GameServiceInterface
 {
+    public function __construct(private GameResultService $gameResults) {}
+
+    /**
+     * Validate the player's answers, score them and persist the result.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function submit(User $user, Game $game, int $levelId, array $payload): array
+    {
+        Validator::make($payload, [
+            'answers' => 'required|array',
+            'answers.*.statement_id' => 'required|integer',
+            'answers.*.answer' => 'required|boolean',
+        ])->validate();
+
+        $dto = new CheckAnswersDTO($user->id, $game, $levelId, $payload['answers']);
+        $results = $this->check($dto);
+        $this->gameResults->save($dto, $results);
+
+        return $results;
+    }
+
     /**
      * Fetch all levels for the game (no statements attached).
      *

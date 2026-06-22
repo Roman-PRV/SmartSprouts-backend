@@ -2,8 +2,8 @@
 
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongLevelController;
-use App\Games\FindTheWrong\Http\Controllers\FindTheWrongAttemptController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
+use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GoogleAuthController;
@@ -48,26 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index', 'show'])
         ->whereNumber(['game', 'level']);
 
-    Route::post('games/{game}/levels/{level}/check', [LevelController::class, 'check'])
-        ->name('games.levels.check')
+    // One submit endpoint for every game; the controller dispatches by game.
+    Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
+        ->name('games.levels.attempts')
         ->whereNumber(['game', 'level']);
 
 });
-
-// ── Find the wrong — player ───────────────────────────────────────────────────
-
-Route::middleware([
-    'auth:sanctum',
-    GameMatches::class.':find_the_wrong',
-])
-    ->prefix('games/{game}')
-    ->name('games.find-the-wrong.')
-    ->whereNumber('game')
-    ->group(function () {
-        Route::post('levels/{level}/attempts', [FindTheWrongAttemptController::class, 'store'])
-            ->name('levels.attempts.store')
-            ->whereNumber('level');
-    });
 
 // ── Admin — levels (generic) ──────────────────────────────────────────────────
 

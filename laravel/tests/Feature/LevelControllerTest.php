@@ -218,7 +218,7 @@ class LevelControllerTest extends TestCase
     public function test_check_missing_game_returns_404(): void
     {
         $response = $this->actingAs(User::factory()->create())
-            ->postJson('/api/games/99999/levels/1/check', [
+            ->postJson('/api/games/99999/levels/1/attempts', [
                 'answers' => [
                     ['statement_id' => 1, 'answer' => true],
                 ],
@@ -235,13 +235,13 @@ class LevelControllerTest extends TestCase
 
         // Missing required fields
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", []);
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", []);
 
         $response->assertStatus(422);
 
         // Invalid answer type
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 1, 'answer' => 'not a boolean'],
                 ],
@@ -288,7 +288,7 @@ class LevelControllerTest extends TestCase
 
         // Try to check level 1 with statement from level 2
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 20, 'answer' => true],
                 ],
@@ -337,7 +337,7 @@ class LevelControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],
                     ['statement_id' => 11, 'answer' => false],
@@ -396,7 +396,7 @@ class LevelControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => false], // Wrong answer
                 ],
@@ -453,7 +453,7 @@ class LevelControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
+            ->postJson("/api/games/{$game->id}/levels/1/attempts", [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],  // Correct
                     ['statement_id' => 11, 'answer' => true],  // Incorrect
@@ -604,7 +604,7 @@ class LevelControllerTest extends TestCase
         $user = User::factory()->create();
         $game = Game::factory()->create();
 
-        $this->actingAs($user)->postJson("/api/games/{$game->id}/levels/abc/check", [
+        $this->actingAs($user)->postJson("/api/games/{$game->id}/levels/abc/attempts", [
             'answers' => [['statement_id' => 1, 'answer' => true]],
         ])->assertStatus(404);
     }
@@ -615,7 +615,7 @@ class LevelControllerTest extends TestCase
 
         $this->actingAs($user)->getJson('/api/games/abc/levels')->assertStatus(404);
         $this->actingAs($user)->getJson('/api/games/abc/levels/1')->assertStatus(404);
-        $this->actingAs($user)->postJson('/api/games/abc/levels/1/check', [
+        $this->actingAs($user)->postJson('/api/games/abc/levels/1/attempts', [
             'answers' => [['statement_id' => 1, 'answer' => true]],
         ])->assertStatus(404);
     }
@@ -627,6 +627,6 @@ class LevelControllerTest extends TestCase
         $this->getJson('/api/games')->assertStatus(401);
         $this->getJson("/api/games/{$game->id}/levels")->assertStatus(401);
         $this->getJson("/api/games/{$game->id}/levels/1")->assertStatus(401);
-        $this->postJson("/api/games/{$game->id}/levels/1/check", [])->assertStatus(401);
+        $this->postJson("/api/games/{$game->id}/levels/1/attempts", [])->assertStatus(401);
     }
 }

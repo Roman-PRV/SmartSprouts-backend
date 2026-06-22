@@ -3,17 +3,24 @@
 namespace App\Games\FindTheWrong\Services;
 
 use App\Contracts\GameServiceInterface;
-use App\DTO\CheckAnswersDTO;
 use App\Exceptions\TableMissingException;
+use App\Games\FindTheWrong\Http\Resources\FindTheWrongRevealItemResource;
 use App\Games\FindTheWrong\Models\FindTheWrongItem;
 use App\Games\FindTheWrong\Models\FindTheWrongLevel;
+use App\Models\Game;
 use App\Models\Level;
+use App\Models\User;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class FindTheWrongService implements GameServiceInterface
 {
+    public function __construct(private FindTheWrongAttemptService $attempts) {}
+
     /**
      * Fetch all levels with the count of their items (used for the list endpoint).
      *
@@ -71,17 +78,88 @@ class FindTheWrongService implements GameServiceInterface
     }
 
     /**
-     * The legacy /check endpoint is not used by this game — scoring goes through
-     * the dedicated submit endpoint introduced in WIW-BE-04.
+     * Validate the player's finished attempt, persist it and return the reveal
+     * data (names, explanations, audio for found and missed items). Score is
+     * derived server-side as the count of found items.
      *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
+     * @throws \Illuminate\Validation\ValidationException
      * @throws NotFoundHttpException
      */
-    public function check(CheckAnswersDTO $dto): array
+    public function submit(User $user, Game $game, int $levelId, array $payload): array
     {
-        throw new NotFoundHttpException(
-            'The check endpoint is not supported for find_the_wrong; use the submit endpoint instead.'
+        $level = FindTheWrongLevel::find($levelId);
+
+        if (! $level) {
+            throw new NotFoundHttpException("Level {$levelId} not found");
+        }
+
+        $validItemIds = FindTheWrongItem::where('level_id', $level->id)->pluck('id')->all();
+
+        $validator = Validator::make($payload, [
+            'duration_seconds' => 'required|integer|min:0|max:3600',
+            'found' => 'present|array',
+            'found.*' => 'required|array',
+            'found.*.item_id' => ['required', 'integer', 'distinct', Rule::in($validItemIds)],
+            'found.*.stars' => 'required|integer|min:1|max:3',
+            'missed_item_ids' => 'present|array',
+            'missed_item_ids.*' => ['required', 'integer', 'distinct', Rule::in($validItemIds)],
+            'interaction_mode' => 'nullable|in:circle,marker',
+        ]);
+
+        $validator->after(function (ValidatorContract $v) use ($payload, $validItemIds): void {
+            if ($v->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $foundIds = array_map(static fn (array $entry): int => $entry['item_id'], $payload['found'] ?? []);
+            $missedIds = $payload['missed_item_ids'] ?? [];
+
+            if (array_intersect($foundIds, $missedIds) !== []) {
+                $v->errors()->add('found', __('validation.find_the_wrong.attempt_overlap'));
+
+                return;
+            }
+
+            if (count($foundIds) + count($missedIds) !== count($validItemIds)) {
+                $v->errors()->add('found', __('validation.find_the_wrong.attempt_count_mismatch'));
+            }
+        });
+
+        /** @var array{duration_seconds: int, found: array<int, array{item_id: int, stars: int}>, missed_item_ids: array<int, int>, interaction_mode?: string|null} $data */
+        $data = $validator->validate();
+
+        $found = $data['found'];
+        $missedIds = $data['missed_item_ids'];
+
+        $result = $this->attempts->save(
+            $user,
+            $game,
+            $level,
+            $found,
+            $missedIds,
+            $data['duration_seconds'],
+            $data['interaction_mode'] ?? 'circle',
         );
+
+        $items = $this->attempts->loadItems([...array_column($found, 'item_id'), ...$missedIds]);
+
+        return [
+            'score' => $result->score,
+            'total_questions' => $result->total_questions,
+            'found_items' => array_map(
+                static fn (array $entry): FindTheWrongRevealItemResource => new FindTheWrongRevealItemResource(
+                    $items->get($entry['item_id']),
+                    $entry['stars'],
+                ),
+                $found,
+            ),
+            'missed_items' => array_map(
+                static fn (int $id): FindTheWrongRevealItemResource => new FindTheWrongRevealItemResource($items->get($id)),
+                $missedIds,
+            ),
+        ];
     }
 }

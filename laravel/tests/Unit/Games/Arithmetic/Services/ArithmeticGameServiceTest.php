@@ -7,6 +7,7 @@ use App\Games\Arithmetic\Models\ArithmeticLevel;
 use App\Games\Arithmetic\Services\ArithmeticGameService;
 use App\Games\Arithmetic\Support\ArithmeticConstants;
 use App\Models\Game;
+use App\Services\GameResultService;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -22,7 +23,7 @@ class ArithmeticGameServiceTest extends TestCase
 
         // Stub operation: distinct symbol and an injective apply() so each
         // expected result is easy to assert (apply(a, b) = a*10 + b).
-        $this->service = new class extends ArithmeticGameService
+        $this->service = new class(new GameResultService) extends ArithmeticGameService
         {
             protected function symbol(): string
             {
@@ -119,7 +120,7 @@ class ArithmeticGameServiceTest extends TestCase
     /** @test */
     public function levels_resolve_a_unique_icon_from_the_static_disk(): void
     {
-        $service = new class extends ArithmeticGameService
+        $service = new class(new GameResultService) extends ArithmeticGameService
         {
             protected function symbol(): string
             {
