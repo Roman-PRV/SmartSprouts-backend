@@ -8,6 +8,7 @@ use App\Games\Arithmetic\Services\ArithmeticGameService;
 use App\Games\Arithmetic\Support\ArithmeticConstants;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Collection;
+use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
@@ -172,6 +173,33 @@ class ArithmeticGameServiceTest extends TestCase
             levelId: 11,
             answers: [['equation_id' => 1, 'answer' => 11]],
         ));
+    }
+
+    /** @test */
+    public function check_throws_for_an_unknown_equation_id(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->service->check(new CheckAnswersDTO(
+            userId: 1,
+            game: new Game,
+            levelId: 3,
+            answers: [['equation_id' => 99, 'answer' => 5]],
+        ));
+    }
+
+    /** @test */
+    public function check_accepts_a_negative_given_answer(): void
+    {
+        $result = $this->service->check(new CheckAnswersDTO(
+            userId: 1,
+            game: new Game,
+            levelId: 3,
+            answers: [['equation_id' => 1, 'answer' => -5]],
+        ));
+
+        $this->assertSame(-5, $result['results'][0]['given_answer']);
+        $this->assertFalse($result['results'][0]['correct']);
     }
 
     /** @test */

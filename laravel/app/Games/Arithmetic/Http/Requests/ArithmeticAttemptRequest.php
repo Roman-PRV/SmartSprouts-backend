@@ -33,7 +33,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *             required={"equation_id", "answer"},
  *
  *             @OA\Property(property="equation_id", type="integer", minimum=1, maximum=10, example=4),
- *             @OA\Property(property="answer", type="integer", minimum=0, example=12)
+ *             @OA\Property(property="answer", type="integer", example=12)
  *         )
  *     )
  * )
@@ -63,7 +63,7 @@ class ArithmeticAttemptRequest extends FormRequest
         return [
             'answers' => 'required|array',
             'answers.*.equation_id' => 'required|integer|distinct|between:1,'.ArithmeticConstants::FACTS_PER_LEVEL,
-            'answers.*.answer' => 'required|integer|min:0',
+            'answers.*.answer' => 'required|integer',
         ];
     }
 
