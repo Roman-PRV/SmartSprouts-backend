@@ -3,6 +3,7 @@
 use App\Contracts\GameServiceInterface;
 use App\Contracts\LevelAdminServiceInterface;
 use App\Games\Arithmetic\Http\Resources\ArithmeticLevelResource;
+use App\Games\Arithmetic\Services\AdditionTableService;
 use App\Games\Arithmetic\Services\MultiplicationTableService;
 use App\Games\FindTheWrong\Http\Resources\FindTheWrongLevelResource;
 use App\Games\FindTheWrong\Services\Admin\FindTheWrongLevelAdminService;
@@ -39,6 +40,7 @@ return [
         'true_false_text' => TrueFalseTextService::class,
         'find_the_wrong' => FindTheWrongService::class,
         'multiplication_table' => MultiplicationTableService::class,
+        'addition_table' => AdditionTableService::class,
     ],
 
     /*
@@ -58,6 +60,7 @@ return [
         'true_false_text' => TrueFalseTextLevelResource::class,
         'find_the_wrong' => FindTheWrongLevelResource::class,
         'multiplication_table' => ArithmeticLevelResource::class,
+        'addition_table' => ArithmeticLevelResource::class,
     ],
 
     /*

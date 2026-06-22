@@ -25,11 +25,10 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # Pinning to @main tracks upstream; for reproducibility pin to a release
-      # tag or commit SHA (see github.com/qodo-ai/pr-agent/releases), matching
-      # the SHA-pinned actions in ci.yml.
+      # Pinned to a release tag for reproducibility (matching the action-version
+      # pinning in ci.yml); bump deliberately, see github.com/qodo-ai/pr-agent/releases.
       - name: PR Agent
-        uses: qodo-ai/pr-agent@main
+        uses: qodo-ai/pr-agent@v0.36.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

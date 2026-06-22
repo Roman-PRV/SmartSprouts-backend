@@ -18,4 +18,9 @@ return [
         'description' => 'Practise the multiplication table, one factor at a time',
         'level_title' => 'Multiply by :n',
     ],
+    'addition_table' => [
+        'title' => 'Addition Table',
+        'description' => 'Practise addition, one number at a time',
+        'level_title' => 'Add :n',
+    ],
 ];
