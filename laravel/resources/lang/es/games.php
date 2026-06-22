@@ -18,4 +18,9 @@ return [
         'description' => 'Practica la tabla de multiplicar, un factor a la vez',
         'level_title' => 'Multiplica por :n',
     ],
+    'addition_table' => [
+        'title' => 'Tabla de sumar',
+        'description' => 'Practica la suma, un número a la vez',
+        'level_title' => 'Suma :n',
+    ],
 ];
