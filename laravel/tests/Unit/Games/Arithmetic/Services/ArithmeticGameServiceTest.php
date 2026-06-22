@@ -7,7 +7,10 @@ use App\Games\Arithmetic\Models\ArithmeticLevel;
 use App\Games\Arithmetic\Services\ArithmeticGameService;
 use App\Games\Arithmetic\Support\ArithmeticConstants;
 use App\Models\Game;
+use App\Models\User;
+use App\Services\GameResultService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
@@ -22,7 +25,7 @@ class ArithmeticGameServiceTest extends TestCase
 
         // Stub operation: distinct symbol and an injective apply() so each
         // expected result is easy to assert (apply(a, b) = a*10 + b).
-        $this->service = new class extends ArithmeticGameService
+        $this->service = new class(new GameResultService) extends ArithmeticGameService
         {
             protected function symbol(): string
             {
@@ -119,7 +122,7 @@ class ArithmeticGameServiceTest extends TestCase
     /** @test */
     public function levels_resolve_a_unique_icon_from_the_static_disk(): void
     {
-        $service = new class extends ArithmeticGameService
+        $service = new class(new GameResultService) extends ArithmeticGameService
         {
             protected function symbol(): string
             {
@@ -222,5 +225,72 @@ class ArithmeticGameServiceTest extends TestCase
         $this->assertSame(32, $wrong['expected_answer']);
         $this->assertSame(99, $wrong['given_answer']);
         $this->assertFalse($wrong['correct']);
+    }
+
+    /** @test */
+    public function submit_rejects_a_payload_missing_the_answers_key(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->service->submit(new User, new Game, 3, []);
+    }
+
+    /** @test */
+    public function submit_rejects_an_out_of_range_equation_id(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->service->submit(new User, new Game, 3, [
+            'answers' => $this->answersFor([11]),
+        ]);
+    }
+
+    /** @test */
+    public function submit_rejects_a_duplicate_equation_id(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->service->submit(new User, new Game, 3, [
+            'answers' => $this->answersFor([1, 1]),
+        ]);
+    }
+
+    /** @test */
+    public function submit_rejects_a_non_integer_answer(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->service->submit(new User, new Game, 3, [
+            'answers' => [['equation_id' => 1, 'answer' => 'abc']],
+        ]);
+    }
+
+    /** @test */
+    public function submit_rejects_partial_equation_coverage(): void
+    {
+        // Each entry is individually valid, but the set omits one equation —
+        // the after() closure must reject anything short of the full 1..N range.
+        $partial = range(1, ArithmeticConstants::FACTS_PER_LEVEL - 1);
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->submit(new User, new Game, 3, [
+            'answers' => $this->answersFor($partial),
+        ]);
+    }
+
+    /**
+     * Build a well-formed answers array (any integer answer) for the given
+     * equation ids, so tests can isolate a single rule under scrutiny.
+     *
+     * @param  array<int, int>  $equationIds
+     * @return array<int, array{equation_id: int, answer: int}>
+     */
+    private function answersFor(array $equationIds): array
+    {
+        return array_map(
+            static fn (int $id): array => ['equation_id' => $id, 'answer' => 0],
+            $equationIds,
+        );
     }
 }

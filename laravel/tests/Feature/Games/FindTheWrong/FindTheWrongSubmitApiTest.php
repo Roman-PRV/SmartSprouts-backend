@@ -92,13 +92,15 @@ class FindTheWrongSubmitApiTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_wrong_game_prefix_returns_404(): void
+    public function test_payload_for_a_different_game_type_returns_422(): void
     {
+        // The submit endpoint is shared across games; a find-the-wrong payload
+        // sent to a true/false game fails that game's validation (422), not 404.
         $otherGame = Game::factory()->create(['table_prefix' => 'true_false_image']);
 
         $this->actingAs($this->user)
             ->postJson($this->route(gameId: $otherGame->id), $this->validPayload())
-            ->assertStatus(404);
+            ->assertStatus(422);
     }
 
     public function test_happy_path_returns_score_and_reveal_data(): void

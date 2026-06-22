@@ -3,7 +3,6 @@
 namespace App\Games\FindTheWrong\Http\Requests\Admin;
 
 use App\Rules\SupportedLocaleKeys;
-use App\Traits\RespondsWithJsonValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -54,8 +53,6 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class UpdateItemRequest extends FormRequest
 {
-    use RespondsWithJsonValidation;
-
     /**
      * Authorization is delegated to the route middleware (auth + EnsureAdmin).
      */

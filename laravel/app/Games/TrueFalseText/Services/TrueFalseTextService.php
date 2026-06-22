@@ -2,18 +2,19 @@
 
 namespace App\Games\TrueFalseText\Services;
 
-use App\Contracts\GameServiceInterface;
 use App\DTO\CheckAnswersDTO;
 use App\Exceptions\TableMissingException;
+use App\Games\TrueFalse\Services\StatementGameService;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Helpers\MediaHelper;
 use App\Models\Level;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class TrueFalseTextService implements GameServiceInterface
+class TrueFalseTextService extends StatementGameService
 {
     /**
      * Fetch all levels for the game (no statements attached).
@@ -64,7 +65,7 @@ class TrueFalseTextService implements GameServiceInterface
      *
      * @throws TableMissingException
      * @throws NotFoundHttpException
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function check(CheckAnswersDTO $dto): array
     {
@@ -88,7 +89,7 @@ class TrueFalseTextService implements GameServiceInterface
 
         foreach ($statementIds as $statementId) {
             if (! in_array($statementId, $existingStatementIds, true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'answers' => ["The statement {$statementId} does not belong to level {$dto->levelId}."],
                 ]);
             }

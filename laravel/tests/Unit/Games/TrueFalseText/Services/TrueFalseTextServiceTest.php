@@ -8,6 +8,7 @@ use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Games\TrueFalseText\Services\TrueFalseTextService;
 use App\Models\Game;
 use App\Models\User;
+use App\Services\GameResultService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -24,7 +25,7 @@ class TrueFalseTextServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TrueFalseTextService;
+        $this->service = new TrueFalseTextService(new GameResultService);
         $this->app->setLocale('uk');
 
         // Isolate storage for tests
