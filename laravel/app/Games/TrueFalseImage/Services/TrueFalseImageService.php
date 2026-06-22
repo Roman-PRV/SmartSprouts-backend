@@ -11,7 +11,6 @@ use App\Helpers\MediaHelper;
 use App\Models\Level;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
-use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrueFalseImageService implements GameServiceInterface
@@ -58,29 +57,6 @@ class TrueFalseImageService implements GameServiceInterface
         }
 
         return $level;
-    }
-
-    /**
-     * Fetch statements for a given level id.
-     *
-     * @throws TableMissingException
-     * @throws InvalidArgumentException
-     */
-    public function fetchDataForLevel(int $levelId): Collection
-    {
-        $table = (new TrueFalseImageStatement)->getTable();
-
-        if (! Schema::hasTable($table)) {
-            throw new TableMissingException($table);
-        }
-
-        $statements = TrueFalseImageStatement::where('level_id', $levelId)->get();
-
-        if ($statements->isEmpty()) {
-            throw new InvalidArgumentException("No statements found for level {$levelId}");
-        }
-
-        return $statements;
     }
 
     /**

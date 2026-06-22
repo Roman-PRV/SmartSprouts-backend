@@ -71,27 +71,6 @@ class FindTheWrongService implements GameServiceInterface
     }
 
     /**
-     * Fetch items for a level (used by the submit endpoint in WIW-BE-04).
-     *
-     * @return Collection<int, FindTheWrongItem>
-     *
-     * @throws TableMissingException
-     */
-    public function fetchDataForLevel(int $levelId): Collection
-    {
-        $table = (new FindTheWrongItem)->getTable();
-
-        if (! Schema::hasTable($table)) {
-            throw new TableMissingException($table);
-        }
-
-        /** @var Collection<int, FindTheWrongItem> $items */
-        $items = FindTheWrongItem::query()->where('level_id', $levelId)->orderBy('id')->get();
-
-        return $items;
-    }
-
-    /**
      * The legacy /check endpoint is not used by this game — scoring goes through
      * the dedicated submit endpoint introduced in WIW-BE-04.
      *

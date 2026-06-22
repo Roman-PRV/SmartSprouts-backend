@@ -73,6 +73,10 @@ return [
         'attempt_count_mismatch' => 'The submitted items must exactly cover all items in the level (found + missed = total).',
     ],
 
+    'arithmetic' => [
+        'answers_coverage' => 'The submitted answers must cover every equation in the level exactly once.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language Lines
