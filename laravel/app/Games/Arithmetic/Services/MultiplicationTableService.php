@@ -23,4 +23,9 @@ class MultiplicationTableService extends ArithmeticGameService
     {
         return (string) trans('games.multiplication_table.level_title', ['n' => $level]);
     }
+
+    protected function imageDirectory(): ?string
+    {
+        return 'icons/arithmetic/multiplication';
+    }
 }
