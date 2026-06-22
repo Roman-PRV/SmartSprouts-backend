@@ -31,6 +31,12 @@ class GameSeeder extends Seeder
                 'icon_url' => 'https://example.com/icons/true-false-text.png',
                 'is_active' => true,
             ],
+            [
+                'table_prefix' => 'multiplication_table',
+                'key' => 'multiplication_table',
+                'icon_url' => 'https://example.com/icons/multiplication-table.png',
+                'is_active' => true,
+            ],
         ]);
     }
 }

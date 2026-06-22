@@ -1,0 +1,720 @@
+{
+	"info": {
+		"_postman_id": "b7e2c9a4-5d61-4c8f-9a3b-1f0e6d2c4a90",
+		"name": "Multiplication Table — Player",
+		"description": "Smoke tests for the multiplication_table game over the shared generic endpoints (read via LevelController, submit via AttemptController).\n\nThe game is deterministic and table-less: level N is the row N×1 … N×10. Payloads are built dynamically from the level's `equations` (Discovery), so the collection works for whichever level is discovered.\n\nNotes for arithmetic vs find-the-wrong:\n- Submit response is `{ results: [ { equation_id, operand_a, operand_b, operator, given_answer, expected_answer, correct } ] }`. There is no `score` in the body — the score is computed and persisted server-side (game_results).\n- Submit requires FULL coverage of the level (equation_id 1..10) and integer answers; partial/out-of-range/duplicate/non-integer payloads return 422.\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `1. Auth / Login` — token is auto-saved.\n3. Run `2. Discovery` top-to-bottom — game_id, level_id, equations auto-saved.\n4. Step through `3. Happy Path`.\n5. Use `4. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}}.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"const url = pm.request.url.toString();",
+					"const isLogin = url.includes('/auth/login');",
+					"const missing = [];",
+					"if (!isLogin && !pm.collectionVariables.get('token')) missing.push('token (run \"1. Auth / Login\" first)');",
+					"if (url.includes('{{game_id}}') && !pm.collectionVariables.get('game_id')) missing.push('game_id (run \"2. Discovery / List games\" first)');",
+					"if (url.includes('{{level_id}}') && !pm.collectionVariables.get('level_id')) missing.push('level_id (run \"2. Discovery / List levels\" first)');",
+					"if (missing.length) console.warn('[Multiplication Player] Missing variables:\\n - ' + missing.join('\\n - '));"
+				]
+			}
+		}
+	],
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+		{ "key": "email", "value": "player@example.com", "type": "string" },
+		{ "key": "password", "value": "password", "type": "string" },
+		{ "key": "token", "value": "", "type": "string" },
+		{ "key": "game_id", "value": "", "type": "string" },
+		{ "key": "level_id", "value": "", "type": "string" },
+		{ "key": "equations", "value": "[]", "type": "string", "description": "JSON array of the level's facts: [{ id, operand_a, operand_b, result }]. Populated by Discovery." },
+		{ "key": "facts_count", "value": "", "type": "string", "description": "Number of facts in the level (FACTS_PER_LEVEL). Populated by Discovery." },
+		{ "key": "request_payload", "value": "{}", "type": "string", "description": "Per-request payload built in pre-request scripts. Sent as raw body." }
+	],
+	"item": [
+		{
+			"name": "1. Auth",
+			"item": [
+				{
+					"name": "Login (save token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const data = pm.response.json();",
+									"pm.test('has access_token', () => pm.expect(data.access_token).to.be.a('string').and.not.empty);",
+									"pm.collectionVariables.set('token', data.access_token);",
+									"console.log('Token saved.');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Discovery",
+			"item": [
+				{
+					"name": "List games (save multiplication_table id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const list = Array.isArray(body) ? body : (body.data || []);",
+									"const game = list.find(g => g.key === 'multiplication_table');",
+									"pm.test('multiplication_table game exists', () => pm.expect(game).to.exist);",
+									"if (game) {",
+									"  pm.collectionVariables.set('game_id', String(game.id));",
+									"  console.log('Saved game_id =', game.id, '| title:', game.title);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/games",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
+						}
+					}
+				},
+				{
+					"name": "List levels (save first level id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const list = Array.isArray(body) ? body : (body.data || []);",
+									"pm.test('ten levels', () => pm.expect(list.length).to.equal(10));",
+									"pm.test('list item has id, title, image_url', () => {",
+									"  pm.expect(list[0]).to.have.property('id');",
+									"  pm.expect(list[0]).to.have.property('title');",
+									"  pm.expect(list[0]).to.have.property('image_url');",
+									"});",
+									"pm.test('list shape has NO operator (show-only field)', () => pm.expect(list[0]).to.not.have.property('operator'));",
+									"if (list.length) {",
+									"  pm.collectionVariables.set('level_id', String(list[0].id));",
+									"  console.log('Saved level_id =', list[0].id, '| title:', list[0].title);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels"]
+						}
+					}
+				},
+				{
+					"name": "Get level with equations (save facts)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.test('operator is × (show shape)', () => pm.expect(body.operator).to.equal('×'));",
+									"const eqs = body.equations || [];",
+									"pm.test('level has equations', () => pm.expect(eqs.length).to.be.greaterThan(0));",
+									"pm.test('equation has id, operand_a, operand_b, result', () => {",
+									"  pm.expect(eqs[0]).to.have.property('id');",
+									"  pm.expect(eqs[0]).to.have.property('operand_a');",
+									"  pm.expect(eqs[0]).to.have.property('operand_b');",
+									"  pm.expect(eqs[0]).to.have.property('result');",
+									"});",
+									"pm.collectionVariables.set('equations', JSON.stringify(eqs));",
+									"pm.collectionVariables.set('facts_count', String(eqs.length));",
+									"console.log('Level has', eqs.length, 'fact(s). First:', eqs[0]);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Get level — Ukrainian title (localization)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.test('title is localized to uk', () => pm.expect(body.title).to.match(/Множення/));",
+									"console.log('uk title:', body.title, '| operator:', body.operator);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "uk" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Happy Path",
+			"item": [
+				{
+					"name": "Submit attempt — all correct (perfect score)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const count = Number(pm.collectionVariables.get('facts_count'));",
+									"pm.test('results length matches level', () => pm.expect(body.results).to.have.lengthOf(count));",
+									"pm.test('every answer is correct', () => pm.expect(body.results.every(r => r.correct === true)).to.be.true);",
+									"const r0 = body.results[0];",
+									"pm.test('result has expected fields', () => {",
+									"  pm.expect(r0).to.have.property('equation_id');",
+									"  pm.expect(r0).to.have.property('operand_a');",
+									"  pm.expect(r0).to.have.property('operand_b');",
+									"  pm.expect(r0).to.have.property('operator');",
+									"  pm.expect(r0).to.have.property('given_answer');",
+									"  pm.expect(r0).to.have.property('expected_answer');",
+									"  pm.expect(r0).to.have.property('correct');",
+									"});",
+									"console.log('All', count, 'answers correct. Score persisted server-side (no score in body).');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "Submit attempt — all wrong (zero score)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"// Off-by-one answer for every fact — full coverage, all wrong.",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result + 1 }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.test('every answer is wrong', () => pm.expect(body.results.every(r => r.correct === false)).to.be.true);",
+									"console.log('Zero correct. game_results score should be 0.');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "Submit attempt — mixed (one wrong)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"// First fact deliberately wrong, the rest correct.",
+									"const answers = eqs.map((e, i) => ({ equation_id: e.id, answer: i === 0 ? e.result + 7 : e.result }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const count = Number(pm.collectionVariables.get('facts_count'));",
+									"pm.test('first answer wrong', () => pm.expect(body.results[0].correct).to.equal(false));",
+									"const correct = body.results.filter(r => r.correct).length;",
+									"pm.test('exactly one wrong', () => pm.expect(correct).to.equal(count - 1));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "Submit attempt — Ukrainian locale (persists locale)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"console.log('Submitted with Accept-Language: uk. game_results.locale should be saved as uk.');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "uk" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Negative Cases",
+			"item": [
+				{
+					"name": "401 — no token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('401 Unauthenticated', () => pm.response.to.have.status(401));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"answers\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "404 — nonexistent game",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/999999/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "999999", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "404 — nonexistent level (valid full-coverage payload)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"// Payload must pass validation (full coverage) so the level guard (404), not validation (422), fires.",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/999/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "999", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — partial coverage (one fact missing)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length < 2) throw new Error('Need 2+ equations — run Discovery first');",
+									"// Drop the last fact — the coverage check must reject an incomplete set.",
+									"const answers = eqs.slice(0, -1).map(e => ({ equation_id: e.id, answer: e.result }));",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('unified contract message', () => pm.expect(body.message).to.equal('Validation failed'));",
+									"pm.test('error on answers (coverage)', () => pm.expect(body.errors).to.have.property('answers'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — equation_id out of range (id = 11)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"const count = Number(pm.collectionVariables.get('facts_count'));",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"answers[0].equation_id = count + 1; // outside 1..FACTS_PER_LEVEL",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on an answers.*.equation_id', () => {",
+									"  const keys = Object.keys(body.errors || {});",
+									"  const hit = keys.some(k => k.startsWith('answers.') && k.endsWith('.equation_id'));",
+									"  pm.expect(hit).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — duplicate equation_id",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length < 2) throw new Error('Need 2+ equations — run Discovery first');",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"answers[1].equation_id = answers[0].equation_id; // breaks distinct",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on an answers.*.equation_id', () => {",
+									"  const keys = Object.keys(body.errors || {});",
+									"  const hit = keys.some(k => k.startsWith('answers.') && k.endsWith('.equation_id'));",
+									"  pm.expect(hit).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "422 — non-integer answer",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const eqs = JSON.parse(pm.collectionVariables.get('equations') || '[]');",
+									"if (eqs.length === 0) throw new Error('No equations — run Discovery first');",
+									"const answers = eqs.map(e => ({ equation_id: e.id, answer: e.result }));",
+									"answers[0].answer = 'abc'; // not an integer",
+									"pm.variables.set('request_payload', JSON.stringify({ answers }));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('422 Unprocessable', () => pm.response.to.have.status(422));",
+									"const body = pm.response.json();",
+									"pm.test('error on an answers.*.answer', () => {",
+									"  const keys = Object.keys(body.errors || {});",
+									"  const hit = keys.some(k => k.startsWith('answers.') && k.endsWith('.answer'));",
+									"  pm.expect(hit).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"url": {
+							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
