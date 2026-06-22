@@ -13,6 +13,7 @@ use App\Services\GameResultService;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -117,7 +118,7 @@ abstract class ArithmeticGameService implements GameServiceInterface
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      * @throws NotFoundHttpException
      */
     public function submit(User $user, Game $game, int $levelId, array $payload): array
@@ -145,9 +146,9 @@ abstract class ArithmeticGameService implements GameServiceInterface
             }
         });
 
-        $validator->validate();
+        $data = $validator->validate();
 
-        $dto = new CheckAnswersDTO($user->id, $game, $levelId, $payload['answers']);
+        $dto = new CheckAnswersDTO($user->id, $game, $levelId, $data['answers']);
         $results = $this->check($dto);
         $this->gameResults->save($dto, $results);
 

@@ -8,6 +8,7 @@ use App\Models\Game;
 use App\Models\User;
 use App\Services\GameResultService;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Shared engine for the statement-based true/false games (image + text). They
@@ -68,13 +69,13 @@ abstract class StatementGameService implements GameServiceInterface
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function submit(User $user, Game $game, int $levelId, array $payload): array
     {
-        Validator::make($payload, $this->submitRules())->validate();
+        $data = Validator::make($payload, $this->submitRules())->validate();
 
-        $dto = new CheckAnswersDTO($user->id, $game, $levelId, $payload['answers']);
+        $dto = new CheckAnswersDTO($user->id, $game, $levelId, $data['answers']);
         $results = $this->check($dto);
         $this->gameResults->save($dto, $results);
 

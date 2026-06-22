@@ -17,6 +17,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * validation, scoring, persistence and the response shape. Mirrors the generic
  * read path (one route, dispatched by game).
  *
+ * Validation deliberately lives in the service (via Validator), not a
+ * FormRequest: a single generic endpoint cannot statically bind a per-game
+ * FormRequest because the payload shape depends on the game resolved at runtime.
+ *
  * @OA\Tag(name="Attempts", description="Submit a completed level attempt")
  */
 class AttemptController extends Controller

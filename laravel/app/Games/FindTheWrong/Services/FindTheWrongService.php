@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -120,7 +121,7 @@ class FindTheWrongService implements GameServiceInterface
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      * @throws NotFoundHttpException
      */
     public function submit(User $user, Game $game, int $levelId, array $payload): array
