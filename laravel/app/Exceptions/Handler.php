@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -46,6 +47,31 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    /**
+     * API-only backend: render every exception as JSON regardless of the
+     * request's Accept header (there is no web UI to redirect to).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     */
+    protected function shouldReturnJson($request, Throwable $e): bool
+    {
+        return true;
+    }
+
+    /**
+     * Single, stable JSON 422 shape for every validation failure (game submits
+     * via Validator, FormRequests, and ValidationException::withMessages).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     */
+    protected function invalidJson($request, ValidationException $exception): JsonResponse
+    {
+        return response()->json([
+            'message' => __('validation.failed_message'),
+            'errors' => $exception->errors(),
+        ], $exception->status);
     }
 
     /**

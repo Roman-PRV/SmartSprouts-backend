@@ -48,7 +48,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index', 'show'])
         ->whereNumber(['game', 'level']);
 
-    // One submit endpoint for every game; the controller dispatches by game.
     Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
         ->name('games.levels.attempts')
         ->whereNumber(['game', 'level']);
