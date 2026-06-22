@@ -9,6 +9,7 @@ use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Games\TrueFalseImage\Services\TrueFalseImageService;
 use App\Models\Game;
 use App\Models\User;
+use App\Services\GameResultService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -22,7 +23,7 @@ class TrueFalseImageServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TrueFalseImageService;
+        $this->service = new TrueFalseImageService(new GameResultService);
         $this->app->setLocale('uk');
 
         // Isolate storage for tests

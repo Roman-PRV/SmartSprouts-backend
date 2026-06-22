@@ -5,6 +5,7 @@ namespace Tests\Feature\Games\TrueFalseText\Services;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Games\TrueFalseText\Services\TrueFalseTextService;
+use App\Services\GameResultService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +18,7 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TrueFalseTextService;
+        $this->service = new TrueFalseTextService(new GameResultService);
         $this->app->setLocale('uk');
     }
 

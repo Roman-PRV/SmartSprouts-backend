@@ -6,8 +6,14 @@ use App\Contracts\GameServiceInterface;
 use App\DTO\CheckAnswersDTO;
 use App\Games\Arithmetic\Models\ArithmeticLevel;
 use App\Games\Arithmetic\Support\ArithmeticConstants;
+use App\Models\Game;
 use App\Models\Level;
+use App\Models\User;
+use App\Services\GameResultService;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -18,9 +24,54 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * `N ∘ b` — so all read and check logic lives here. A concrete game supplies
  * only the operation via symbol(), apply() and levelTitle(); content is
  * deterministic, so there are no tables, item models or admin screens.
+ *
+ * @OA\Schema(
+ *     schema="Arithmetic.AttemptRequest",
+ *     type="object",
+ *     title="Arithmetic Attempt Request",
+ *     required={"answers"},
+ *
+ *     @OA\Property(
+ *         property="answers",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *             required={"equation_id", "answer"},
+ *
+ *             @OA\Property(property="equation_id", type="integer", minimum=1, maximum=10, example=4),
+ *             @OA\Property(property="answer", type="integer", example=12)
+ *         )
+ *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Arithmetic.AttemptResponse",
+ *     type="object",
+ *     title="Arithmetic Attempt Response",
+ *
+ *     @OA\Property(
+ *         property="results",
+ *         type="array",
+ *
+ *         @OA\Items(
+ *             type="object",
+ *
+ *             @OA\Property(property="equation_id", type="integer"),
+ *             @OA\Property(property="operand_a", type="integer"),
+ *             @OA\Property(property="operand_b", type="integer"),
+ *             @OA\Property(property="operator", type="string"),
+ *             @OA\Property(property="given_answer", type="integer"),
+ *             @OA\Property(property="expected_answer", type="integer"),
+ *             @OA\Property(property="correct", type="boolean")
+ *         )
+ *     )
+ * )
  */
 abstract class ArithmeticGameService implements GameServiceInterface
 {
+    public function __construct(private GameResultService $gameResults) {}
+
     /**
      * Operation symbol shown on equation cards (e.g. "×", "+").
      */
@@ -61,6 +112,50 @@ abstract class ArithmeticGameService implements GameServiceInterface
     }
 
     /**
+     * Validate the player's answers (full coverage, integer answers), score them
+     * and persist the result.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     *
+     * @throws ValidationException
+     * @throws NotFoundHttpException
+     */
+    public function submit(User $user, Game $game, int $levelId, array $payload): array
+    {
+        $validator = Validator::make($payload, [
+            'answers' => 'required|array',
+            'answers.*.equation_id' => 'required|integer|distinct|between:1,'.ArithmeticConstants::FACTS_PER_LEVEL,
+            'answers.*.answer' => 'required|integer',
+        ]);
+
+        $validator->after(function (ValidatorContract $v) use ($payload): void {
+            if ($v->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $equationIds = array_map(
+                static fn (array $answer): int => (int) $answer['equation_id'],
+                $payload['answers'] ?? [],
+            );
+
+            sort($equationIds);
+
+            if ($equationIds !== range(1, ArithmeticConstants::FACTS_PER_LEVEL)) {
+                $v->errors()->add('answers', __('validation.arithmetic.answers_coverage'));
+            }
+        });
+
+        $data = $validator->validate();
+
+        $dto = new CheckAnswersDTO($user->id, $game, $levelId, $data['answers']);
+        $results = $this->check($dto);
+        $this->gameResults->save($dto, $results);
+
+        return $results;
+    }
+
+    /**
      * Build the deterministic facts for a level: operand_a is the level number,
      * operand_b runs 1..FACTS_PER_LEVEL (also used as the fact id).
      *
@@ -73,8 +168,8 @@ abstract class ArithmeticGameService implements GameServiceInterface
         for ($operandB = 1; $operandB <= ArithmeticConstants::FACTS_PER_LEVEL; $operandB++) {
             $facts[] = [
                 // Invariant: the fact id IS operand_b (1..FACTS_PER_LEVEL).
-                // ArithmeticAttemptRequest's coverage check relies on this — it
-                // validates equation_id against the same 1..FACTS_PER_LEVEL range.
+                // submit()'s coverage check relies on this — it validates
+                // equation_id against the same 1..FACTS_PER_LEVEL range.
                 // Keep id == operand_b if the fact generation ever changes.
                 'id' => $operandB,
                 'operand_a' => $level,
