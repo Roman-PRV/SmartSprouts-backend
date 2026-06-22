@@ -84,6 +84,24 @@ class AuthControllerTest extends TestCase
     }
 
     /** @test */
+    public function validation_errors_use_the_unified_json_contract(): void
+    {
+        // Pins the API-wide 422 shape ({message, errors}) on a non-game endpoint,
+        // so the unification stays locked beyond the game submit flow.
+        $response = $this->withMiddleware()
+            ->withHeaders(['Accept-Language' => 'en'])
+            ->postJson('/api/auth/register', [
+                'name' => 'Edge User',
+                'email' => 'not-an-email',
+                'password' => 'short',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'errors']);
+        $response->assertJson(['message' => 'Validation failed']);
+    }
+
+    /** @test */
     public function user_can_retrieve_own_profile(): void
     {
         $user = \App\Models\User::factory()->create();
