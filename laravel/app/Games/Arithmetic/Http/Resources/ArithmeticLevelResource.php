@@ -24,7 +24,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *
  *     @OA\Property(property="id", type="integer", example=3, description="Level ID (1..10)"),
  *     @OA\Property(property="title", type="string", example="Multiply by 3", description="Localized level title"),
- *     @OA\Property(property="title_audio_url", type="string", format="uri", nullable=true, example=null, description="Title audio URL (not yet generated for arithmetic)"),
  *     @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/storage/icons/default-icon.png", description="Level cover image URL"),
  *     @OA\Property(property="operator", type="string", example="×", description="Operation symbol for the level"),
  *     @OA\Property(
@@ -54,7 +53,6 @@ class ArithmeticLevelResource extends JsonResource
         return [
             'id' => $level->id,
             'title' => $level->title,
-            'title_audio_url' => null,
             'image_url' => $level->image_url,
             'operator' => $level->operator,
             'equations' => $this->when(
