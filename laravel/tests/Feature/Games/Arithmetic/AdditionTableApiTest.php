@@ -57,7 +57,7 @@ class AdditionTableApiTest extends TestCase
 
         // List shape comes from LevelDescriptionResource — no per-level operator.
         $this->assertArrayNotHasKey('operator', $response->json()[0]);
-        $this->assertStringContainsString('icons/default-icon.png', $response->json()[0]['image_url']);
+        $this->assertStringContainsString('icons/arithmetic/addition/1.png', $response->json()[0]['image_url']);
     }
 
     public function test_shows_a_single_level_with_operator_and_equations(): void

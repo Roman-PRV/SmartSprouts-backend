@@ -6,9 +6,14 @@ on:
   issue_comment:            # enables /review, /describe, /improve, /ask commands in PR comments
     types: [created]
 
+# Never let one run cancel another. PR-Agent's own describe/improve output fires
+# issue_comment events; keying each comment run by comment.id keeps them in their
+# own groups so they are skipped by the job `if` instead of evicting each other
+# (or the in-flight review) from a single shared queue. pull_request events have
+# no comment.id, so they share one per-PR group and simply serialize.
 concurrency:
-  group: pr-agent-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
+  group: pr-agent-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}-${{ github.event.comment.id }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -41,3 +46,7 @@ jobs:
           GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
           GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "true"
+
+          # Default PR_ACTIONS omits "synchronize", so pushes to an open PR run
+          # the action but publish nothing. List it explicitly to re-run on push.
+          GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review", "synchronize"]'

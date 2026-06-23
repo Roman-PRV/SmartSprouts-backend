@@ -23,4 +23,9 @@ class AdditionTableService extends ArithmeticGameService
     {
         return (string) trans('games.addition_table.level_title', ['n' => $level]);
     }
+
+    protected function imageDirectory(): ?string
+    {
+        return 'icons/arithmetic/addition';
+    }
 }
