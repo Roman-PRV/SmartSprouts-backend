@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $title
  * @property string $title_audio_url
  * @property string|null $image_url
+ * @property string|null $progress Virtual: player's per-level progress, set by LevelProgressService on list endpoints
  *
  * @OA\Schema(
  * schema="Level",
@@ -22,13 +23,6 @@ use Illuminate\Database\Eloquent\Model;
  * @OA\Property(property="id", type="integer", example=1),
  * @OA\Property(property="title", type="string", example="Level 1"),
  * @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/storage/levels/level1.png")
- * )
- *
- * @OA\Schema(
- *   schema="LevelCollection",
- *   type="array",
- *
- *   @OA\Items(ref="#/components/schemas/Level")
  * )
  *
  * @OA\Schema(

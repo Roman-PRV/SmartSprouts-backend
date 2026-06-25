@@ -80,6 +80,108 @@ class LevelControllerTest extends TestCase
         $this->assertEqualsCanonicalizing(['First level', 'Second level'], $titles);
     }
 
+    public function test_index_includes_progress_from_last_attempt(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'title' => json_encode(['en' => 'L2']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'title' => json_encode(['en' => 'L3']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        DB::table('game_results')->insert([
+            // level 1: last attempt perfect -> mastered
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+            // level 2: completed but not perfect -> not_perfect
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 2, 'locale' => 'en', 'score' => 1, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+            // level 3: only another user's perfect attempt -> must stay not_started for $user
+            ['user_id' => $otherUser->id, 'game_id' => $game->id, 'level_id' => 3, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+
+        $byId = collect($response->json())->keyBy('id');
+        $this->assertSame('mastered', $byId[1]['progress']);
+        $this->assertSame('not_perfect', $byId[2]['progress']);
+        $this->assertSame('not_started', $byId[3]['progress']);
+    }
+
+    public function test_index_progress_uses_last_attempt_not_best(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        // Older perfect attempt followed by a newer imperfect one: the last wins.
+        DB::table('game_results')->insert([
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now()->subDay(), 'updated_at' => now()->subDay()],
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 2, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+        $this->assertSame('not_perfect', $response->json('0.progress'));
+    }
+
+    public function test_index_zero_question_attempt_is_not_mastered(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        // A degenerate 0-question attempt must not read as a perfect run (0 === 0).
+        DB::table('game_results')->insert([
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 0, 'total_questions' => 0, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+        $this->assertSame('not_perfect', $response->json('0.progress'));
+    }
+
+    public function test_index_progress_does_not_leak_across_games(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+        $otherGame = Game::factory()->create(['table_prefix' => 'true_false_text']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        // Perfect attempt for the SAME level_id but a DIFFERENT game. level_id is
+        // unique only within a game, so the game_id filter must keep this out.
+        DB::table('game_results')->insert([
+            ['user_id' => $user->id, 'game_id' => $otherGame->id, 'level_id' => 1, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+        $this->assertSame('not_started', $response->json('0.progress'));
+    }
+
     public function test_show_returns_single_level_with_file_url_and_statements(): void
     {
         Storage::fake('public', ['url' => config('app.url').'/storage']);

@@ -214,7 +214,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/LevelCollection"
+                                    "$ref": "#/components/schemas/LevelDescriptionCollection"
                                 }
                             }
                         }
@@ -432,13 +432,6 @@
                         "description": "Localized level title",
                         "type": "string",
                         "example": "Multiply by 3"
-                    },
-                    "title_audio_url": {
-                        "description": "Title audio URL (not yet generated for arithmetic)",
-                        "type": "string",
-                        "format": "uri",
-                        "example": null,
-                        "nullable": true
                     },
                     "image_url": {
                         "description": "Level cover image URL",
@@ -1236,6 +1229,45 @@
                 },
                 "type": "object"
             },
+            "LevelDescriptionCollection": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/LevelDescription"
+                }
+            },
+            "LevelDescription": {
+                "title": "LevelDescription",
+                "description": "Level summary for the player level grid",
+                "properties": {
+                    "id": {
+                        "description": "Transform the resource into an array.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Level 1"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "items_count": {
+                        "description": "Present on list endpoint",
+                        "type": "integer"
+                    },
+                    "progress": {
+                        "description": "Player's progress from their most recent attempt on this level",
+                        "type": "string",
+                        "enum": [
+                            "mastered",
+                            "not_perfect",
+                            "not_started"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
             "ProfileStats": {
                 "title": "Profile Statistics",
                 "properties": {
@@ -1346,12 +1378,6 @@
                     }
                 },
                 "type": "object"
-            },
-            "LevelCollection": {
-                "type": "array",
-                "items": {
-                    "$ref": "#/components/schemas/Level"
-                }
             },
             "ErrorResponse": {
                 "properties": {
