@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Exceptions\TableMissingException;
 use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
+use App\Models\User;
 use App\Services\GameServiceFactory;
+use App\Services\LevelProgressService;
 use App\Services\ResourceResolver;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -23,6 +26,7 @@ class LevelController extends Controller
     public function __construct(
         protected GameServiceFactory $factory,
         protected ResourceResolver $resources,
+        protected LevelProgressService $progress,
     ) {}
 
     /**
@@ -48,7 +52,7 @@ class LevelController extends Controller
      *         response=200,
      *         description="List of levels",
      *
-     *         @OA\JsonContent(ref="#/components/schemas/LevelCollection")
+     *         @OA\JsonContent(ref="#/components/schemas/LevelDescriptionCollection")
      *     ),
      *
      *     @OA\Response(
@@ -66,7 +70,7 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function index(Game $game): JsonResource|JsonResponse
+    public function index(Request $request, Game $game): JsonResource|JsonResponse
     {
         try {
             $service = $this->factory->for($game);
@@ -76,6 +80,10 @@ class LevelController extends Controller
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
+
+        /** @var User $user */
+        $user = $request->user();
+        $this->progress->decorate($user, $game, $levels);
 
         return LevelDescriptionResource::collection($levels);
     }
