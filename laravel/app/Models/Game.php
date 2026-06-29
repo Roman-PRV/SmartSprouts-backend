@@ -9,18 +9,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * @property list<string> $categories
+ *
  * @OA\Schema(
  * schema="Game",
  * type="object",
  * title="Game",
- * required={"id", "key", "icon_url", "is_active", "title", "description"},
+ * required={"id", "key", "icon_url", "is_active", "title", "description", "categories"},
  *
  * @OA\Property(property="id", type="string", example="1"),
  * @OA\Property(property="key", type="string", example="find_the_wrong"),
  * @OA\Property(property="title", type="string", description="Full title of the game.", example="Find The Wrong"),
  * @OA\Property(property="description", type="string", description="Short description of the game.", example="Find the incorrect statement among the options."),
  * @OA\Property(property="icon_url", type="string", format="uri", example="https://example.com/storage/icons/game1.png"),
- * @OA\Property(property="is_active", type="boolean", example=true)
+ * @OA\Property(property="is_active", type="boolean", example=true),
+ * @OA\Property(
+ *     property="categories",
+ *     type="array",
+ *     description="Learning areas the game belongs to (a game may have several).",
+ *     example={"logic", "reading"},
+ *
+ *     @OA\Items(type="string", enum={"math", "reading", "logic"})
+ * )
  * )
  */
 class Game extends Model
@@ -32,10 +42,12 @@ class Game extends Model
         'table_prefix',
         'icon_url',
         'is_active',
+        'categories',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'categories' => 'array',
     ];
 
     /**

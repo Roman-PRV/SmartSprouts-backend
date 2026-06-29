@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GameCategory;
 use App\Http\Resources\GameResource;
 use App\Models\Game;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Validation\Rule;
 
 class GameController extends Controller
 {
@@ -14,9 +17,18 @@ class GameController extends Controller
      * @OA\Get(
      *     path="/api/games",
      *     summary="Get list of active games",
-     *     description="Returns a list of games that are marked as active.",
+     *     description="Returns a list of games that are marked as active, optionally filtered by category.",
      *     operationId="getActiveGames",
      *     tags={"Games"},
+     *
+     *     @OA\Parameter(
+     *         name="category",
+     *         in="query",
+     *         required=false,
+     *         description="Return only games belonging to this learning area.",
+     *
+     *         @OA\Schema(type="string", enum={"math", "reading", "logic"})
+     *     ),
      *
      *     @OA\Response(
      *         response=200,
@@ -27,36 +39,39 @@ class GameController extends Controller
      *
      *             @OA\Items(ref="#/components/schemas/Game")
      *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid category value"
      *     )
      * )
      */
-    public function index(): JsonResource
+    public function index(Request $request): JsonResource
     {
+        $validated = $request->validate([
+            'category' => ['sometimes', Rule::enum(GameCategory::class)],
+        ]);
+
         $games = Game::where('is_active', true)->get([
             'id',
             'key',
             'icon_url',
             'is_active',
+            'categories',
         ]);
+
+        // Filter in PHP rather than via whereJsonContains: the games table is tiny
+        // and SQLite (used in tests) has no JSON-contains operator. A category is
+        // present when the game's array includes it.
+        if (isset($validated['category'])) {
+            $games = $games
+                ->filter(fn (Game $game) => in_array($validated['category'], $game->categories ?? [], true))
+                ->values();
+        }
 
         return GameResource::collection($games);
     }
-
-    // /**
-    //  * Show the form for creating a new resource.
-    //  */
-    // public function create()
-    // {
-    //     //
-    // }
-
-    // /**
-    //  * Store a newly created resource in storage.
-    //  */
-    // public function store(Request $request)
-    // {
-    //     //
-    // }
 
     /**
      * Display the specified game details.
@@ -96,28 +111,4 @@ class GameController extends Controller
     {
         return new GameResource($game);
     }
-
-    // /**
-    //  * Show the form for editing the specified resource.
-    //  */
-    // public function edit(string $id)
-    // {
-    //     //
-    // }
-
-    // /**
-    //  * Update the specified resource in storage.
-    //  */
-    // public function update(Request $request, string $id)
-    // {
-    //     //
-    // }
-
-    // /**
-    //  * Remove the specified resource from storage.
-    //  */
-    // public function destroy(string $id)
-    // {
-    //     //
-    // }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\GameCategory;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Arr;
@@ -19,10 +20,11 @@ class GameFactory extends Factory
             'table_prefix' => Str::slug($this->faker->unique()->words(2, true), '_'),
             'icon_url' => $this->faker->boolean(70) ? 'games/icons/'.$this->faker->word().'.png' : '',
             'is_active' => $this->faker->boolean(80),
+            'categories' => [$this->faker->randomElement(GameCategory::cases())->value],
         ];
 
         if (! Schema::hasTable('games')) {
-            return Arr::only($attrs, ['key', 'table_prefix', 'icon_url', 'is_active']);
+            return Arr::only($attrs, ['key', 'table_prefix', 'icon_url', 'is_active', 'categories']);
         }
 
         $columns = Schema::getColumnListing('games');
