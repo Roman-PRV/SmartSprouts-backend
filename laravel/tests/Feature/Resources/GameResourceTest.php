@@ -35,6 +35,7 @@ class GameResourceTest extends TestCase
             'key' => 'find_the_wrong',
             'icon_url' => $filePath,
             'is_active' => true,
+            'categories' => ['logic', 'reading'],
         ]);
         $game->id = 1;
 
@@ -47,6 +48,7 @@ class GameResourceTest extends TestCase
             'description' => 'Choose the wrong item',
             'icon_url' => $expectedUrl,
             'is_active' => true,
+            'categories' => ['logic', 'reading'],
         ], $resource);
     }
 }

@@ -23,6 +23,7 @@ class GameResource extends JsonResource
             'description' => $labels['description'],
             'icon_url' => $game->icon_url,
             'is_active' => $game->is_active,
+            'categories' => $game->categories ?? [],
         ];
     }
 }
