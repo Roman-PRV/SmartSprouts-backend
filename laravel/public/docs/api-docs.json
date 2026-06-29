@@ -132,8 +132,24 @@
                     "Games"
                 ],
                 "summary": "Get list of active games",
-                "description": "Returns a list of games that are marked as active.",
+                "description": "Returns a list of games that are marked as active, optionally filtered by category.",
                 "operationId": "getActiveGames",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Return only games belonging to this learning area.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "math",
+                                "reading",
+                                "logic"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful response with list of games",
@@ -147,6 +163,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Invalid category value"
                     }
                 }
             }
@@ -945,44 +964,6 @@
                 },
                 "type": "object"
             },
-            "TrueFalseImage.Result": {
-                "description": "Validation result for a single statement in the True/False Image game",
-                "properties": {
-                    "statement_id": {
-                        "description": "ID of the evaluated statement",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "correct": {
-                        "description": "Whether the player's answer was correct",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "is_true": {
-                        "description": "The actual truth value of the statement",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "explanation": {
-                        "description": "Explanation for the correct answer",
-                        "type": "string",
-                        "example": "Cats have pointy ears"
-                    },
-                    "statement_audio_url": {
-                        "description": "Audio URL for the statement",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
-                    },
-                    "explanation_audio_url": {
-                        "description": "Audio URL for the explanation",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
             "TrueFalseImage.Statement": {
                 "title": "TrueFalseImage.Statement",
                 "description": "True/False Image Statement resource",
@@ -1068,44 +1049,6 @@
                         "items": {
                             "$ref": "#/components/schemas/TrueFalseText.Statement"
                         }
-                    }
-                },
-                "type": "object"
-            },
-            "TrueFalseText.Result": {
-                "description": "Validation result for a single statement in the True/False Text game",
-                "properties": {
-                    "statement_id": {
-                        "description": "ID of the evaluated statement",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "correct": {
-                        "description": "Whether the player's answer was correct",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "is_true": {
-                        "description": "The actual truth value of the statement",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "explanation": {
-                        "description": "Explanation for the correct answer",
-                        "type": "string",
-                        "example": "Cats have pointy ears"
-                    },
-                    "statement_audio_url": {
-                        "description": "Audio URL for the statement",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
-                    },
-                    "explanation_audio_url": {
-                        "description": "Audio URL for the explanation",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -1230,6 +1173,7 @@
                 "type": "object"
             },
             "LevelDescriptionCollection": {
+                "description": "Player-facing level summary. `progress` is expected to be populated upstream by\nLevelProgressService::decorate(); when it is not (e.g. the undecorated\n`resources_default` show fallback) the field safely degrades to `not_started`\n— i.e. \"no progress data known\", never a played status.",
                 "type": "array",
                 "items": {
                     "$ref": "#/components/schemas/LevelDescription"
@@ -1322,7 +1266,8 @@
                     "icon_url",
                     "is_active",
                     "title",
-                    "description"
+                    "description",
+                    "categories"
                 ],
                 "properties": {
                     "id": {
@@ -1351,6 +1296,22 @@
                     "is_active": {
                         "type": "boolean",
                         "example": true
+                    },
+                    "categories": {
+                        "description": "Learning areas the game belongs to (a game may have several).",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "math",
+                                "reading",
+                                "logic"
+                            ]
+                        },
+                        "example": [
+                            "logic",
+                            "reading"
+                        ]
                     }
                 },
                 "type": "object"
