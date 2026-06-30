@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Game;
 use App\Rules\SupportedLocaleKeys;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Validates an admin "update level" request. Same shape as StoreLevelRequest
- * except the image is optional — when absent, the existing image stays.
+ * Validates an admin "update level" request. Same game-aware shape as
+ * StoreLevelRequest, but the image is always optional on update — when absent,
+ * the existing image stays.
  */
 class UpdateLevelRequest extends FormRequest
 {
@@ -37,6 +39,14 @@ class UpdateLevelRequest extends FormRequest
      *         @OA\Property(property="es", type="string", maxLength=255, example="Cocina")
      *     ),
      *     @OA\Property(
+     *         property="text",
+     *         type="object",
+     *         description="Localized body text (TrueFalseText only; required there).",
+     *         @OA\Property(property="uk", type="string"),
+     *         @OA\Property(property="en", type="string"),
+     *         @OA\Property(property="es", type="string")
+     *     ),
+     *     @OA\Property(
      *         property="image",
      *         type="string",
      *         format="binary",
@@ -49,12 +59,33 @@ class UpdateLevelRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'title' => ['required', 'array', new SupportedLocaleKeys],
             'title.uk' => 'required|string|max:255',
             'title.en' => 'required|string|max:255',
             'title.es' => 'required|string|max:255',
             'image' => 'nullable|file|mimes:jpeg,png,webp|max:5120',
         ];
+
+        if ($this->routeGamePrefix() === 'true_false_text') {
+            return $rules + [
+                'text' => ['required', 'array', new SupportedLocaleKeys],
+                'text.uk' => 'required|string',
+                'text.en' => 'required|string',
+                'text.es' => 'required|string',
+            ];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * The table_prefix of the route-bound game, or null when not resolvable.
+     */
+    private function routeGamePrefix(): ?string
+    {
+        $game = $this->route('game');
+
+        return $game instanceof Game ? $game->table_prefix : null;
     }
 }

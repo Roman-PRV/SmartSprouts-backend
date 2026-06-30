@@ -15,8 +15,6 @@ class TtsAudioGeneratorService
 
     private const FALLBACK_ENTITY_TYPE = 'unknown';
 
-    private const HASH_LENGTH = 8;
-
     public function __construct(
         private readonly TtsProviderInterface $ttsProvider,
         private readonly TtsStorageService $storageService,
@@ -80,7 +78,7 @@ class TtsAudioGeneratorService
         $attributeBaseName = $model->getTtsSourceAttribute($context->getAttribute());
 
         $text = $context->getText() ?? '';
-        $hash = substr(md5($text.$context->getLocale()), 0, self::HASH_LENGTH);
+        $hash = TtsPathHash::forText($text, $context->getLocale());
 
         /** @var int $id */
         $id = $model->getKey();

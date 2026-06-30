@@ -88,6 +88,12 @@ return [
     |
     */
 
+    'tts' => [
+        'unknown_field' => 'The selected audio field is not valid for this entity.',
+        'unsupported_locale' => 'The selected locale is not supported.',
+        'empty_text' => 'There is no text to generate audio from for this locale.',
+    ],
+
     'custom' => [
         'attribute-name' => [
             'rule-name' => 'custom-message',

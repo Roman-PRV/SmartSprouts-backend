@@ -88,6 +88,12 @@ return [
     |
     */
 
+    'tts' => [
+        'unknown_field' => 'Обране аудіополе недоступне для цієї сутності.',
+        'unsupported_locale' => 'Обрана мова не підтримується.',
+        'empty_text' => 'Немає тексту для генерації озвучення цією мовою.',
+    ],
+
     'custom' => [
         'attribute-name' => [
             'rule-name' => 'custom-message',
