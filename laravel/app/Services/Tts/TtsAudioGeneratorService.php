@@ -36,6 +36,18 @@ class TtsAudioGeneratorService
                 return null;
             }
 
+            // Queued jobs (observer + manual regeneration) leave the text null
+            // and rely on the model-extracted value resolved above. Thread it
+            // back into the context so synthesis, the storage-path hash, and the
+            // staleness check all use the same real text instead of an empty
+            // string.
+            $context = TtsAudioContext::make(
+                $context->getModel(),
+                $context->getAttribute(),
+                $context->getLocale(),
+                $text,
+            );
+
             /** @var string|null $path */
             $path = $this->resolveAudioPath($context);
 

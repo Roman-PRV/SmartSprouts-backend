@@ -143,9 +143,14 @@ class TtsAudioGeneratorServiceTest extends TestCase
 
     // ──────────────────────────────────────────────
     // Scenario 4: Text not in context, extracted from model
+    //
+    // Queued jobs (observer + manual regeneration) build the context with a
+    // null text and rely on the generator extracting it from the model. The
+    // extracted text must reach the provider — not an empty string (which the
+    // provider rejects with HTTP 422).
     // ──────────────────────────────────────────────
 
-    public function test_extracts_text_from_model_when_not_in_context(): void
+    public function test_synthesizes_extracted_model_text_when_context_text_is_null(): void
     {
         $model = $this->createMock(TtsMockModel::class);
         $model->method('getKey')->willReturn(42);
@@ -163,6 +168,9 @@ class TtsAudioGeneratorServiceTest extends TestCase
         $this->ttsProvider
             ->expects($this->once())
             ->method('synthesize')
+            ->with($this->callback(
+                static fn (TtsRequestDTO $request): bool => $request->text === 'Text from model'
+            ))
             ->willReturn($ttsResult);
 
         $this->storageService
