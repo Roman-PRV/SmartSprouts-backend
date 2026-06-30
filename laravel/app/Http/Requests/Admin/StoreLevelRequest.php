@@ -54,7 +54,7 @@ class StoreLevelRequest extends FormRequest
      *         property="image",
      *         type="string",
      *         format="binary",
-     *         description="Cover image (jpeg/png/webp, max 5 MB). Required except for TrueFalseText."
+     *         description="Cover image (jpeg/png/webp, max 10 MB). Required except for TrueFalseText."
      *     )
      * )
      *
@@ -75,12 +75,12 @@ class StoreLevelRequest extends FormRequest
                 'text.uk' => 'required|string',
                 'text.en' => 'required|string',
                 'text.es' => 'required|string',
-                'image' => 'nullable|file|mimes:jpeg,png,webp|max:5120',
+                'image' => 'nullable|file|mimes:jpeg,png,webp|max:10240',
             ];
         }
 
         return $rules + [
-            'image' => 'required|file|mimes:jpeg,png,webp|max:5120',
+            'image' => 'required|file|mimes:jpeg,png,webp|max:10240',
         ];
     }
 

@@ -51,7 +51,7 @@ class UpdateLevelRequest extends FormRequest
      *         type="string",
      *         format="binary",
      *         nullable=true,
-     *         description="Optional replacement cover image (jpeg/png/webp, max 5 MB). Omit to keep the existing one."
+     *         description="Optional replacement cover image (jpeg/png/webp, max 10 MB). Omit to keep the existing one."
      *     )
      * )
      *
@@ -64,7 +64,7 @@ class UpdateLevelRequest extends FormRequest
             'title.uk' => 'required|string|max:255',
             'title.en' => 'required|string|max:255',
             'title.es' => 'required|string|max:255',
-            'image' => 'nullable|file|mimes:jpeg,png,webp|max:5120',
+            'image' => 'nullable|file|mimes:jpeg,png,webp|max:10240',
         ];
 
         if ($this->routeGamePrefix() === 'true_false_text') {
