@@ -100,6 +100,9 @@ Route::middleware([
     });
 
 // ── Admin — statements (generic, dispatched by game prefix) ─────────────────────
+// {statement} lookups are scoped to the game-from-URL's table (the prefix selects
+// the model), so a statement id from another game simply 404s. No GameMatches
+// ownership middleware is needed here, unlike find-the-wrong's per-record check.
 
 Route::middleware(['auth:sanctum', EnsureAdmin::class])
     ->prefix('admin/games/{game}')

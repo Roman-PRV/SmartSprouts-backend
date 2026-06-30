@@ -70,6 +70,6 @@ class TtsAudioStatusService
 
     private function diskName(): string
     {
-        return ConfigHelper::getString('games.upload_disk', 'public');
+        return ConfigHelper::uploadDisk();
     }
 }

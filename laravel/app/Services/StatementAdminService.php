@@ -40,7 +40,7 @@ class StatementAdminService
     public function create(int $levelId, array $data): Model
     {
         $statement = $this->newStatement();
-        $statement->level()->getRelated()->newQuery()->findOrFail($levelId);
+        $this->assertLevelExists($statement, $levelId);
 
         $statement->setAttribute('level_id', $levelId);
         $statement->setAttribute('is_true', $data['is_true']);
@@ -118,6 +118,19 @@ class StatementAdminService
     }
 
     /**
+     * Ensure the parent level exists for THIS game before inserting. Resolves the
+     * level through the statement's own belongsTo relation, so the lookup is
+     * scoped to the correct game's table; a missing or foreign id surfaces as a
+     * 404 instead of a raw FK violation.
+     *
+     * @param  Model&StatementModelInterface  $statement
+     */
+    private function assertLevelExists(Model $statement, int $levelId): void
+    {
+        $statement->level()->getRelated()->newQuery()->findOrFail($levelId);
+    }
+
+    /**
      * @return Model&StatementModelInterface
      */
     private function newStatement(): Model
@@ -127,6 +140,6 @@ class StatementAdminService
 
     private function diskName(): string
     {
-        return ConfigHelper::getString('games.upload_disk', 'public');
+        return ConfigHelper::uploadDisk();
     }
 }
