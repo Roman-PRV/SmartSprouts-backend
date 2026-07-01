@@ -56,21 +56,14 @@ abstract class AbstractTrueFalseLevelAdminService implements LevelAdminServiceIn
     }
 
     /**
-     * Single level with its statements eager-loaded, for the admin editor.
-     * findOrFail surfaces a 404 for the caller.
+     * Single level for the admin editor. Statements are NOT eager-loaded here:
+     * the per-game show resource reads the relation directly (lazy-loads on
+     * access), so callers that don't need statements — regenerateAudio, delete —
+     * pay nothing. findOrFail surfaces a 404 for the caller.
      */
     public function find(int $levelId): Level
     {
-        /** @var Level&TrueFalseLevelModelInterface $level */
-        $level = ($this->modelClass())::query()->findOrFail($levelId);
-
-        // Preload statements for the per-game resource that embeds them. Loaded
-        // via the relation method rather than with('statements') because the
-        // generic builder's model is the base Level, which doesn't declare the
-        // relation — so the string form would not type-check.
-        $level->setRelation('statements', $level->statements()->get());
-
-        return $level;
+        return ($this->modelClass())::query()->findOrFail($levelId);
     }
 
     /**

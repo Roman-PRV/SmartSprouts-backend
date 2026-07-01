@@ -60,6 +60,30 @@ class TrueFalseImageLevelAdminTest extends TestCase
         Storage::disk('public')->assertExists($level->storageDirectory().'/image.png');
     }
 
+    public function test_store_accepts_image_up_to_10mb(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        // Larger than the old 5 MB cap, within the 10 MB limit that matches the
+        // frontend, nginx and PHP. Regression guard for the layer mismatch.
+        $response = $this->actingAs($admin)->postJson($this->route, [
+            'title' => ['uk' => 'Кухня', 'en' => 'Kitchen', 'es' => 'Cocina'],
+            'image' => UploadedFile::fake()->create('cover.png', 8000, 'image/png'),
+        ]);
+
+        $response->assertStatus(201);
+    }
+
+    public function test_store_rejects_image_over_10mb(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->postJson($this->route, [
+            'title' => ['uk' => 'a', 'en' => 'b', 'es' => 'c'],
+            'image' => UploadedFile::fake()->create('cover.png', 11000, 'image/png'),
+        ])->assertStatus(422)->assertJsonValidationErrors('image');
+    }
+
     public function test_store_requires_image_for_image_game(): void
     {
         $admin = User::factory()->admin()->create();
