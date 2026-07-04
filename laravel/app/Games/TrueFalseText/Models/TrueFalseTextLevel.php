@@ -43,6 +43,6 @@ class TrueFalseTextLevel extends Level implements TranslatableLevelInterface, Tr
 
     public function statements(): HasMany
     {
-        return $this->hasMany(TrueFalseTextStatement::class, 'level_id');
+        return $this->hasMany(TrueFalseTextStatement::class, 'level_id')->orderBy('id');
     }
 }

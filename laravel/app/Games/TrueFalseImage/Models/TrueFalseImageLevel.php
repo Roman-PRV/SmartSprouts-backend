@@ -39,6 +39,6 @@ class TrueFalseImageLevel extends Level implements TranslatableLevelInterface, T
 
     public function statements(): HasMany
     {
-        return $this->hasMany(TrueFalseImageStatement::class, 'level_id');
+        return $this->hasMany(TrueFalseImageStatement::class, 'level_id')->orderBy('id');
     }
 }
