@@ -932,6 +932,40 @@
                 },
                 "type": "object"
             },
+            "Admin.TrueFalseImage.Level": {
+                "title": "Admin TrueFalseImage Level",
+                "properties": {
+                    "id": {
+                        "description": "Admin editor shape for a TrueFalseImage level: full title translations, the\ncover image URL, per-locale title audio status, and the embedded statements\n(each via the shared StatementAdminResource). Used by the single-level read\nendpoint; the levels list uses the generic LevelAdminResource.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "title_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "statements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Admin.Statement"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "TrueFalseImage.Level": {
                 "title": "TrueFalseImage.Level",
                 "description": "True/False Image Level resource",
@@ -995,6 +1029,52 @@
                         "type": "string",
                         "format": "uri",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.TrueFalseText.Level": {
+                "title": "Admin TrueFalseText Level",
+                "properties": {
+                    "id": {
+                        "description": "Admin editor shape for a TrueFalseText level: full title and text\ntranslations, optional cover image URL, per-locale audio status for both the\ntitle and the text body, and the embedded statements.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "text": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "title_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "text_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "statements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Admin.Statement"
+                        }
                     }
                 },
                 "type": "object"
@@ -1088,6 +1168,26 @@
                 },
                 "type": "object"
             },
+            "Admin.RegenerateAudioRequest": {
+                "title": "Admin Regenerate Audio Request",
+                "description": "Selects which audio field and locale to regenerate.",
+                "required": [
+                    "field",
+                    "locale"
+                ],
+                "properties": {
+                    "field": {
+                        "description": "Body for a per-(field, locale) TTS regeneration request, shared by the level\nand statement admin endpoints. Only the surface shape is validated here;\nwhether the field is a real audio attribute of the target model — and whether\nthe locale is supported — is the model-aware job of TtsRegenerationService,\nwhich surfaces a 422 for unknown values.",
+                        "type": "string",
+                        "example": "statement_audio_url"
+                    },
+                    "locale": {
+                        "type": "string",
+                        "example": "en"
+                    }
+                },
+                "type": "object"
+            },
             "Admin.StoreLevelRequest": {
                 "title": "Admin Store Level Request",
                 "description": "Multipart/form-data payload for creating a new game level.",
@@ -1122,10 +1222,73 @@
                         },
                         "type": "object"
                     },
+                    "text": {
+                        "description": "Localized body text (TrueFalseText only; required there).",
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "image": {
-                        "description": "Cover image (jpeg/png/webp, max 5 MB).",
+                        "description": "Cover image (jpeg/png/webp, max 10 MB). Required except for TrueFalseText.",
                         "type": "string",
                         "format": "binary"
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.StoreStatementRequest": {
+                "title": "Admin Store Statement Request",
+                "required": [
+                    "statement",
+                    "is_true"
+                ],
+                "properties": {
+                    "statement": {
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "description": "Validates an admin \"create statement\" request, shared by both true/false\ngames (the statement shape is identical). `statement` is required in every\nlocale (it drives TTS); `explanation` is optional and per-locale independent.",
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "explanation": {
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "is_true": {
+                        "type": "boolean",
+                        "example": true
                     }
                 },
                 "type": "object"
@@ -1163,11 +1326,134 @@
                         },
                         "type": "object"
                     },
+                    "text": {
+                        "description": "Localized body text (TrueFalseText only; required there).",
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "image": {
-                        "description": "Optional replacement cover image (jpeg/png/webp, max 5 MB). Omit to keep the existing one.",
+                        "description": "Optional replacement cover image (jpeg/png/webp, max 10 MB). Omit to keep the existing one.",
                         "type": "string",
                         "format": "binary",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.UpdateStatementRequest": {
+                "title": "Admin Update Statement Request",
+                "required": [
+                    "statement",
+                    "is_true"
+                ],
+                "properties": {
+                    "statement": {
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "description": "Validates an admin \"update statement\" request, shared by both true/false\ngames. Same shape as the store request; `is_true` is required so the toggle\nalways has an explicit value on save.",
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "explanation": {
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "is_true": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.Statement": {
+                "title": "Admin Statement",
+                "description": "Admin-side true/false statement with localized text and per-locale audio status.",
+                "properties": {
+                    "id": {
+                        "description": "Admin shape for a true/false statement, shared by both games (the statement\nform is identical across them). Emits the full translations map for the\neditable text fields plus a per-locale `{ url, is_stale }` audio block for\neach TTS field, so the form can edit every locale and light up the\nregenerate button without recomputing any hash on the client.\n\nReads are side-effect free: audio status comes from MediaUrlGenerator +\nthe stored path hash, never from Tts::getOrGenerate.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "level_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_true": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "statement": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "explanation": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "statement_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "explanation_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.AudioStatus": {
+                "title": "Admin Audio Status",
+                "description": "Per-locale TTS audio status.",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "is_stale": {
+                        "type": "boolean",
+                        "example": false
                     }
                 },
                 "type": "object"

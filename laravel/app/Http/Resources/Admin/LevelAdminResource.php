@@ -30,6 +30,7 @@ class LevelAdminResource extends JsonResource
             'title' => $level->getTranslations('title'),
             'image_url' => $level->image_url,
             'items_count' => $this->whenCounted('items'),
+            'statements_count' => $this->whenCounted('statements'),
         ];
     }
 }

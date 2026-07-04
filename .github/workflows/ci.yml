@@ -80,6 +80,15 @@ jobs:
       - name: Check code style (Pint)
         run: ./vendor/bin/pint --test
 
+      - name: Verify OpenAPI docs are in sync
+        run: |
+          php artisan l5-swagger:generate
+          if ! git diff --quiet -- public/docs/api-docs.json; then
+            echo "::error::public/docs/api-docs.json is out of date. Run 'php artisan l5-swagger:generate' and commit the result."
+            git --no-pager diff -- public/docs/api-docs.json
+            exit 1
+          fi
+
   build-push:
     name: Build & push image to GHCR
     needs: test

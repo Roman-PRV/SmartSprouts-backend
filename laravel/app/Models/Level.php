@@ -72,7 +72,7 @@ class Level extends Model
         $path = MediaUrl::normalizePath($this->attributes['image_url'] ?? null);
 
         if ($path !== '') {
-            return MediaUrl::diskUrl(ConfigHelper::getString('games.upload_disk', 'public'), $path);
+            return MediaUrl::diskUrl(ConfigHelper::uploadDisk(), $path);
         }
 
         return MediaUrl::diskUrl(

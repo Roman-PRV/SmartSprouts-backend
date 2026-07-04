@@ -2,7 +2,8 @@
 
 namespace App\Games\TrueFalseText\Models;
 
-use App\Contracts\TtsAudioInterface;
+use App\Contracts\StatementModelInterface;
+use App\Traits\HasStorageDirectory;
 use App\Traits\HasTtsAudio;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,11 +17,14 @@ use Spatie\Translatable\HasTranslations;
  * @property bool $is_true
  * @property string|null $explanation
  */
-class TrueFalseTextStatement extends Model implements TtsAudioInterface
+class TrueFalseTextStatement extends Model implements StatementModelInterface
 {
     use HasFactory;
+    use HasStorageDirectory;
     use HasTranslations;
     use HasTtsAudio;
+
+    public const STORAGE_ROOT = 'games/true_false_text/statements';
 
     protected $table = 'true_false_text_statements';
 
