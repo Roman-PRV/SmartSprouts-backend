@@ -1238,7 +1238,7 @@
                         "type": "object"
                     },
                     "image": {
-                        "description": "Cover image (jpeg/png/webp, max 5 MB). Required except for TrueFalseText.",
+                        "description": "Cover image (jpeg/png/webp, max 10 MB). Required except for TrueFalseText.",
                         "type": "string",
                         "format": "binary"
                     }
@@ -1342,7 +1342,7 @@
                         "type": "object"
                     },
                     "image": {
-                        "description": "Optional replacement cover image (jpeg/png/webp, max 5 MB). Omit to keep the existing one.",
+                        "description": "Optional replacement cover image (jpeg/png/webp, max 10 MB). Omit to keep the existing one.",
                         "type": "string",
                         "format": "binary",
                         "nullable": true
