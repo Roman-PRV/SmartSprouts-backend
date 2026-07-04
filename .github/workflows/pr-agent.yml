@@ -33,7 +33,7 @@ jobs:
       # Pinned to a release tag for reproducibility (matching the action-version
       # pinning in ci.yml); bump deliberately, see github.com/qodo-ai/pr-agent/releases.
       - name: PR Agent
-        uses: qodo-ai/pr-agent@v0.36.1
+        uses: qodo-ai/pr-agent@v0.38.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
