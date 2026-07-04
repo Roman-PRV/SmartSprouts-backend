@@ -23,6 +23,15 @@ class ConfigHelper
     }
 
     /**
+     * The disk used for game media uploads (env-overridable: dev=public,
+     * prod=s3/R2). Centralizes the config key and default in one place.
+     */
+    public static function uploadDisk(): string
+    {
+        return self::getString('games.upload_disk', 'public');
+    }
+
+    /**
      * Get required string from config. Throws exception if missing or empty.
      *
      * @throws \RuntimeException

@@ -18,12 +18,21 @@ interface LevelAdminServiceInterface
     public function list(): Collection;
 
     /**
-     * Image is required on create — enforced by the type, not by a runtime
-     * check in implementations.
+     * Single level with its game-specific relations eager-loaded, for the admin
+     * editor. findOrFail surfaces a 404 for the caller.
+     */
+    public function find(int $levelId): Level;
+
+    /**
+     * Image requiredness is enforced per game at the request boundary
+     * (StoreLevelRequest is game-aware: required for image/find-the-wrong,
+     * optional for text), so the contract accepts a nullable file. The
+     * validated $data carries the per-game fields (title, plus text for the
+     * text game); each implementation reads only what it needs.
      *
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data, UploadedFile $image): Level;
+    public function create(array $data, ?UploadedFile $image): Level;
 
     /**
      * Image is optional on update — when null, the existing image is left

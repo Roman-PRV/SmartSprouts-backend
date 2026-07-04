@@ -46,6 +46,7 @@ RUN composer dump-autoload --optimize \
 
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/www.conf     /usr/local/etc/php-fpm.d/www.conf
+COPY docker/uploads.ini  /usr/local/etc/php/conf.d/uploads.ini
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

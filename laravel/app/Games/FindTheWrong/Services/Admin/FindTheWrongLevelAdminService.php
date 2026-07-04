@@ -56,13 +56,15 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
      *
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data, UploadedFile $image): Level
+    public function create(array $data, ?UploadedFile $image): Level
     {
         $level = FindTheWrongLevel::create([
             'title' => $data['title'],
         ]);
 
-        $level->update(['image_url' => $this->storeImage($image, $level)]);
+        if ($image !== null) {
+            $level->update(['image_url' => $this->storeImage($image, $level)]);
+        }
 
         return $level;
     }
@@ -171,6 +173,6 @@ class FindTheWrongLevelAdminService implements LevelAdminServiceInterface
      */
     private function diskName(): string
     {
-        return ConfigHelper::getString('games.upload_disk', 'public');
+        return ConfigHelper::uploadDisk();
     }
 }

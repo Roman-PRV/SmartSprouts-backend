@@ -3,18 +3,23 @@
 namespace App\Games\TrueFalseImage\Models;
 
 use App\Contracts\TranslatableLevelInterface;
+use App\Contracts\TrueFalseLevelModelInterface;
 use App\Contracts\TtsAudioInterface;
 use App\Models\Level;
+use App\Traits\HasStorageDirectory;
 use App\Traits\HasTtsAudio;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
-class TrueFalseImageLevel extends Level implements TranslatableLevelInterface, TtsAudioInterface
+class TrueFalseImageLevel extends Level implements TranslatableLevelInterface, TrueFalseLevelModelInterface, TtsAudioInterface
 {
     use HasFactory;
+    use HasStorageDirectory;
     use HasTranslations;
     use HasTtsAudio;
+
+    public const STORAGE_ROOT = 'games/true_false_image/levels';
 
     protected $table = 'true_false_image_levels';
 
@@ -34,6 +39,6 @@ class TrueFalseImageLevel extends Level implements TranslatableLevelInterface, T
 
     public function statements(): HasMany
     {
-        return $this->hasMany(TrueFalseImageStatement::class, 'level_id');
+        return $this->hasMany(TrueFalseImageStatement::class, 'level_id')->orderBy('id');
     }
 }

@@ -5,6 +5,10 @@ namespace App\Providers;
 use App\Events\TtsAudioRequestedEvent;
 use App\Games\FindTheWrong\Models\FindTheWrongItem;
 use App\Games\FindTheWrong\Models\FindTheWrongLevel;
+use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
+use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
+use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
+use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Listeners\GenerateMissingAudioListener;
 use App\Observers\ProactiveTtsObserver;
 use Illuminate\Auth\Events\Registered;
@@ -35,6 +39,10 @@ class EventServiceProvider extends ServiceProvider
     protected $observers = [
         FindTheWrongItem::class => [ProactiveTtsObserver::class],
         FindTheWrongLevel::class => [ProactiveTtsObserver::class],
+        TrueFalseImageLevel::class => [ProactiveTtsObserver::class],
+        TrueFalseImageStatement::class => [ProactiveTtsObserver::class],
+        TrueFalseTextLevel::class => [ProactiveTtsObserver::class],
+        TrueFalseTextStatement::class => [ProactiveTtsObserver::class],
     ];
 
     /**
