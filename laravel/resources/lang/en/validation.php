@@ -75,6 +75,7 @@ return [
 
     'arithmetic' => [
         'answers_coverage' => 'The submitted answers must cover every equation in the level exactly once.',
+        'unknown_equation' => 'The submitted answers reference an equation that does not belong to this level.',
     ],
 
     /*

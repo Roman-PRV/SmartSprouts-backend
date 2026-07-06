@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\TableMissingException;
 use App\Http\Resources\LevelDescriptionResource;
 use App\Models\Game;
 use App\Models\User;
 use App\Services\GameServiceFactory;
 use App\Services\LevelProgressService;
 use App\Services\ResourceResolver;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use InvalidArgumentException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @OA\Tag(
@@ -70,16 +66,10 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function index(Request $request, Game $game): JsonResource|JsonResponse
+    public function index(Request $request, Game $game): JsonResource
     {
-        try {
-            $service = $this->factory->for($game);
-            $levels = $service->fetchAllLevels();
-        } catch (TableMissingException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        $service = $this->factory->for($game);
+        $levels = $service->fetchAllLevels();
 
         /** @var User $user */
         $user = $request->user();
@@ -138,18 +128,10 @@ class LevelController extends Controller
      *     )
      * )
      */
-    public function show(Game $game, int $levelId): JsonResource|JsonResponse
+    public function show(Game $game, int $levelId): JsonResource
     {
-        try {
-            $service = $this->factory->for($game);
-            $level = $service->fetchLevel($levelId);
-        } catch (TableMissingException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        } catch (NotFoundHttpException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        }
+        $service = $this->factory->for($game);
+        $level = $service->fetchLevel($levelId);
 
         return $this->resources->resourceFor($game, $level);
     }

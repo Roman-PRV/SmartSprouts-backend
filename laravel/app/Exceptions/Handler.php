@@ -47,6 +47,16 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        // Cross-cutting domain → HTTP mapping, so controllers don't repeat it and
+        // the JSON shape stays stable regardless of APP_DEBUG.
+        $this->renderable(function (TableMissingException $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        });
+
+        $this->renderable(function (GameNotConfiguredException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        });
     }
 
     /**
