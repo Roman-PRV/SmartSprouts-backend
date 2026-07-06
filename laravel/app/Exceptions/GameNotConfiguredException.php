@@ -2,16 +2,12 @@
 
 namespace App\Exceptions;
 
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use RuntimeException;
 
 /**
  * Raised when a game's server-side wiring is missing or broken — no service or
- * resource class is mapped for its table_prefix. Rendered as a 400 by the Handler.
+ * resource class is mapped for its table_prefix. Rendered as a 400 by the Handler
+ * and reported to the log, since it signals a server misconfiguration rather than
+ * a client error.
  */
-class GameNotConfiguredException extends HttpException
-{
-    public function __construct(string $message, int $code = 0, ?\Throwable $previous = null)
-    {
-        parent::__construct(400, $message, $previous, [], $code);
-    }
-}
+class GameNotConfiguredException extends RuntimeException {}
