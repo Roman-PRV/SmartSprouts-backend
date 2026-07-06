@@ -60,7 +60,7 @@ class LevelController extends Controller
      *
      *     @OA\Response(
      *         response=400,
-     *         description="Bad request",
+     *         description="Service misconfiguration for the game prefix",
      *
      *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
      *     )
@@ -122,7 +122,7 @@ class LevelController extends Controller
      *
      *     @OA\Response(
      *         response=400,
-     *         description="Bad request",
+     *         description="Service misconfiguration for the game prefix",
      *
      *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
      *     )
