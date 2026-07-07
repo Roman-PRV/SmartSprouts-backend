@@ -27,6 +27,11 @@ class GameResultService
         ]);
     }
 
+    /**
+     * Count the questions answered correctly.
+     *
+     * @param  array<int, array{correct: bool, ...}>  $results
+     */
     private function calculateScore(array $results): int
     {
         return collect($results)->where('correct', true)->count();
