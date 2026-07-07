@@ -44,5 +44,32 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Brute-force guard on login. First limit (5/min per email+ip) caps
+        // guesses against any single account without letting one shared NAT (a
+        // classroom or home) lock out siblings. Second limit (20/min per ip)
+        // blunts password spraying — one password tried across many accounts
+        // from one ip. Note: the throttle middleware counts every attempt,
+        // including a successful one, and does not clear on success; a
+        // deliberate trade-off for staying with the simple middleware approach.
+        RateLimiter::for('auth-login', function (Request $request) {
+            $email = mb_strtolower(trim((string) $request->input('email')));
+
+            return [
+                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinute(20)->by('login-ip|'.$request->ip()),
+            ];
+        });
+
+        // Registration guard, keyed by ip (the email varies per fake account).
+        // Tuned for batch onboarding — a teacher registering a class of up to
+        // ~30 from one school ip: 40/min absorbs a full class with headroom for
+        // retries, while the 120/hour tail still blocks sustained spam.
+        RateLimiter::for('auth-register', function (Request $request) {
+            return [
+                Limit::perMinute(40)->by((string) $request->ip()),
+                Limit::perHour(120)->by('register-hourly|'.$request->ip()),
+            ];
+        });
     }
 }
