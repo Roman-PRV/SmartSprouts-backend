@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\TableMissingException;
 use App\Models\Game;
 use App\Models\User;
 use App\Services\GameServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use InvalidArgumentException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * One submit endpoint for every game. The concrete game service is resolved
@@ -63,13 +60,7 @@ class AttemptController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        try {
-            $results = $this->factory->for($game)->submit($user, $game, $level, $request->all());
-        } catch (TableMissingException|NotFoundHttpException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        } catch (InvalidArgumentException $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        $results = $this->factory->for($game)->submit($user, $game, $level, $request->all());
 
         return response()->json($results, 200);
     }
