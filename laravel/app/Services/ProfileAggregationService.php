@@ -98,8 +98,10 @@ class ProfileAggregationService
     }
 
     /**
-     * Active game table-prefixes that have a registered service (and therefore a
-     * countable {prefix}_levels table).
+     * Active game table-prefixes that have a registered service. Not every such
+     * prefix has a {prefix}_levels table (arithmetic games are in-memory);
+     * aggregate() filters those out via Schema::hasTable. Ordered so the derived
+     * cache key is deterministic across the write and the observer's forget.
      *
      * @return Collection<int, string>
      */
@@ -109,6 +111,7 @@ class ProfileAggregationService
 
         return Game::query()
             ->where('is_active', true)
+            ->orderBy('table_prefix')
             ->pluck('table_prefix')
             ->filter(fn ($prefix) => is_string($prefix) && isset($allowedMap[$prefix]))
             ->values();

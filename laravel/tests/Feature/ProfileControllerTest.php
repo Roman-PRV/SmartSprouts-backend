@@ -208,7 +208,6 @@ class ProfileControllerTest extends TestCase
         $this->actingAs($user, 'sanctum')->getJson('/api/profile')
             ->assertOk()->assertJson(['stats' => ['totalLevels' => 2]]);
 
-        // Deleting it must forget it again.
         $second->delete();
 
         $this->actingAs($user, 'sanctum')->getJson('/api/profile')
