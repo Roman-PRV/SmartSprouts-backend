@@ -195,7 +195,7 @@ class ProfileControllerTest extends TestCase
         $user = User::factory()->create();
         Game::factory()->withPrefix('true_false_image')->create(['is_active' => true]);
 
-        TrueFalseImageLevel::create(['title' => ['en' => 'L1'], 'image_url' => 'img1.jpg']);
+        TrueFalseImageLevel::factory()->create();
 
         // First read caches the total (1) under the array store for this test.
         $this->actingAs($user, 'sanctum')->getJson('/api/profile')
@@ -203,7 +203,7 @@ class ProfileControllerTest extends TestCase
 
         // Creating a level through Eloquent must forget the cached total, not
         // serve the stale 1 until the TTL expires.
-        $second = TrueFalseImageLevel::create(['title' => ['en' => 'L2'], 'image_url' => 'img2.jpg']);
+        $second = TrueFalseImageLevel::factory()->create();
 
         $this->actingAs($user, 'sanctum')->getJson('/api/profile')
             ->assertOk()->assertJson(['stats' => ['totalLevels' => 2]]);
