@@ -4,7 +4,7 @@
   "description": "## Description",
   "main": "index.js",
   "scripts": {
-    "lint": "docker compose exec -T laravel php vendor/bin/phpstan analyse app --memory-limit=512M",
+    "lint": "docker compose exec -T laravel composer phpstan",
     "format": "docker compose exec -T laravel php vendor/bin/pint",
     "prepare": "husky install",
     "quality": "npm run format && npm run lint && npm run test",
