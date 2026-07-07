@@ -6,6 +6,7 @@ use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use App\Models\GameResult;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -46,19 +47,12 @@ class ProfileAggregationService
         $completedLevels = (int) ($aggregates?->completed_levels ?? 0);
         $totalQuestions = (int) ($aggregates?->total_questions ?? 0);
 
-        $allowedMap = ConfigHelper::getStringMap('games.services', []);
-
-        $prefixes = Game::query()
-            ->where('is_active', true)
-            ->pluck('table_prefix')
-            ->filter(fn ($prefix) => is_string($prefix) && isset($allowedMap[$prefix]));
+        $prefixes = self::activeLevelPrefixes();
 
         $totalLevels = 0;
         if ($prefixes->isNotEmpty()) {
-            $cacheKey = 'global_total_levels_'.md5($prefixes->implode('-'));
-
             /** @var int|string $cachedLevels */
-            $cachedLevels = Cache::remember($cacheKey, 3600, function () use ($prefixes): int {
+            $cachedLevels = Cache::remember(self::cacheKeyFor($prefixes), 3600, function () use ($prefixes): int {
                 $validPrefixes = [];
                 foreach ($prefixes as $prefix) {
                     $tableName = "{$prefix}_levels";
@@ -91,5 +85,40 @@ class ProfileAggregationService
                 ? round($totalScore / $totalQuestions * 100, 2)
                 : 0.0,
         ];
+    }
+
+    /**
+     * Cache key for the global total-levels count. Public so LevelCacheObserver
+     * can forget this exact key on level create/delete; derived from the active
+     * prefix set so toggling a game's activity also busts it.
+     */
+    public static function totalLevelsCacheKey(): string
+    {
+        return self::cacheKeyFor(self::activeLevelPrefixes());
+    }
+
+    /**
+     * Active game table-prefixes that have a registered service (and therefore a
+     * countable {prefix}_levels table).
+     *
+     * @return Collection<int, string>
+     */
+    private static function activeLevelPrefixes(): Collection
+    {
+        $allowedMap = ConfigHelper::getStringMap('games.services', []);
+
+        return Game::query()
+            ->where('is_active', true)
+            ->pluck('table_prefix')
+            ->filter(fn ($prefix) => is_string($prefix) && isset($allowedMap[$prefix]))
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, string>  $prefixes
+     */
+    private static function cacheKeyFor(Collection $prefixes): string
+    {
+        return 'global_total_levels_'.md5($prefixes->implode('-'));
     }
 }

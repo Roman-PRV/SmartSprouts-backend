@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -186,6 +187,32 @@ class ProfileControllerTest extends TestCase
                     'totalLevels' => 2,
                 ],
             ]);
+    }
+
+    /** @test */
+    public function total_levels_cache_is_busted_when_a_level_is_created_or_deleted(): void
+    {
+        $user = User::factory()->create();
+        Game::factory()->withPrefix('true_false_image')->create(['is_active' => true]);
+
+        TrueFalseImageLevel::create(['title' => ['en' => 'L1'], 'image_url' => 'img1.jpg']);
+
+        // First read caches the total (1) under the array store for this test.
+        $this->actingAs($user, 'sanctum')->getJson('/api/profile')
+            ->assertOk()->assertJson(['stats' => ['totalLevels' => 1]]);
+
+        // Creating a level through Eloquent must forget the cached total, not
+        // serve the stale 1 until the TTL expires.
+        $second = TrueFalseImageLevel::create(['title' => ['en' => 'L2'], 'image_url' => 'img2.jpg']);
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/profile')
+            ->assertOk()->assertJson(['stats' => ['totalLevels' => 2]]);
+
+        // Deleting it must forget it again.
+        $second->delete();
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/profile')
+            ->assertOk()->assertJson(['stats' => ['totalLevels' => 1]]);
     }
 
     /** @test */
