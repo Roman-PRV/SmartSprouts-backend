@@ -236,10 +236,18 @@ def _synthesize_sync(tts_model: TTS, text: str, speaker: str) -> bytes:
     voice = Voices.Lada.value  # Default
     speaker_clean = speaker.strip().lower()
 
+    matched = False
     for v in Voices:
         if v.name.lower() == speaker_clean:
             voice = v.value
+            matched = True
             break
+
+    if not matched:
+        logger.warning(
+            f"Unknown TTS speaker '{speaker}'; using default voice Lada. "
+            "Check UKRAINIAN_TTS_SPEAKER for a typo."
+        )
 
     if len(text) <= CHUNK_SIZE:
         return _process_chunk_to_mp3(tts_model, text, voice)

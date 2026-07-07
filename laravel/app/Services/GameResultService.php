@@ -9,6 +9,8 @@ class GameResultService
 {
     /**
      * Save game result for authenticated user.
+     *
+     * @param  array{results?: array<int, array{correct: bool, ...}>}  $results  Scored per-question results; only `correct` is read, the rest is stored as-is in `details`.
      */
     public function save(CheckAnswersDTO $dto, array $results): void
     {
