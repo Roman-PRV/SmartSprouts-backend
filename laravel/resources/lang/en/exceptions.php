@@ -35,4 +35,8 @@ return [
     'config' => [
         'required_missing' => 'Configuration value for key [:key] is required and must be a non-empty string.',
     ],
+    'auth' => [
+        'invalid_credentials' => 'Invalid credentials',
+        'logged_out' => 'Successfully logged out',
+    ],
 ];
