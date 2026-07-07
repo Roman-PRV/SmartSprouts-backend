@@ -35,4 +35,7 @@ return [
     'config' => [
         'required_missing' => 'El valor de configuración para la clave [:key] es obligatorio y debe ser una cadena no vacía.',
     ],
+    'auth' => [
+        'invalid_credentials' => 'Credenciales inválidas',
+    ],
 ];

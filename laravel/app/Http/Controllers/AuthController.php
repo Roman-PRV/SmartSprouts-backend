@@ -49,7 +49,7 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (! Auth::attempt($credentials)) {
-            return new JsonResponse(['message' => 'Invalid credentials'], 401);
+            return new JsonResponse(['message' => __('exceptions.auth.invalid_credentials')], 401);
         }
 
         /** @var User $user */

@@ -71,6 +71,24 @@ class AuthControllerTest extends TestCase
     }
 
     /** @test */
+    public function invalid_credentials_message_is_localized(): void
+    {
+        User::factory()->create([
+            'email' => 'loc@example.com',
+            'password' => bcrypt('Password123!'),
+        ]);
+
+        // A hardcoded English string would ignore Accept-Language and fail here.
+        $this->withHeaders(['Accept-Language' => 'uk'])
+            ->postJson('/api/auth/login', [
+                'email' => 'loc@example.com',
+                'password' => 'wrongpass',
+            ])
+            ->assertStatus(401)
+            ->assertJson(['message' => 'Невірні облікові дані']);
+    }
+
+    /** @test */
     public function login_is_throttled_after_five_attempts(): void
     {
         User::factory()->create([
