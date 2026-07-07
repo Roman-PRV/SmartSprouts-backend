@@ -249,7 +249,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Service misconfiguration for the game prefix",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -315,7 +315,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Service misconfiguration for the game prefix",
                         "content": {
                             "application/json": {
                                 "schema": {

@@ -14,7 +14,6 @@ use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -223,7 +222,7 @@ abstract class ArithmeticGameService implements GameServiceInterface
      * @return array{results: array<int, array{equation_id: int, operand_a: int, operand_b: int, operator: string, given_answer: int, expected_answer: int, correct: bool}>}
      *
      * @throws NotFoundHttpException
-     * @throws InvalidArgumentException
+     * @throws ValidationException
      */
     public function check(CheckAnswersDTO $dto): array
     {
@@ -237,9 +236,9 @@ abstract class ArithmeticGameService implements GameServiceInterface
             $equationId = (int) $answer['equation_id'];
 
             if (! isset($factsById[$equationId])) {
-                throw new InvalidArgumentException(
-                    "Equation {$equationId} does not belong to level {$dto->levelId}"
-                );
+                throw ValidationException::withMessages([
+                    'answers' => __('validation.arithmetic.unknown_equation'),
+                ]);
             }
 
             $fact = $factsById[$equationId];

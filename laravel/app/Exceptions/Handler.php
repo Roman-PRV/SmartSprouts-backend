@@ -47,6 +47,20 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        // Cross-cutting domain → HTTP mapping for these two exceptions, so the
+        // controllers don't repeat it and the response stays a clean {message} in
+        // every environment. TableMissingException carries its own status; the
+        // RuntimeException-based GameNotConfiguredException gets its 400 here. Other
+        // HttpExceptions (e.g. NotFoundHttpException) keep the framework's default
+        // rendering.
+        $this->renderable(function (TableMissingException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
+        });
+
+        $this->renderable(function (GameNotConfiguredException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        });
     }
 
     /**
