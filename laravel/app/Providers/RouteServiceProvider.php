@@ -53,7 +53,8 @@ class RouteServiceProvider extends ServiceProvider
         // including a successful one, and does not clear on success; a
         // deliberate trade-off for staying with the simple middleware approach.
         RateLimiter::for('auth-login', function (Request $request) {
-            $email = mb_strtolower(trim((string) $request->input('email')));
+            $raw = $request->input('email');
+            $email = is_string($raw) ? mb_strtolower(trim($raw)) : '';
 
             return [
                 Limit::perMinute(5)->by($email.'|'.$request->ip()),
@@ -70,6 +71,16 @@ class RouteServiceProvider extends ServiceProvider
                 Limit::perMinute(40)->by((string) $request->ip()),
                 Limit::perHour(120)->by('register-hourly|'.$request->ip()),
             ];
+        });
+
+        // Google OAuth callback also creates accounts, so it gets its own per-ip
+        // budget — a separate name means it doesn't share auth-register's bucket,
+        // so a class registering by email and OAuth logins from the same school
+        // ip don't compete for one limit. No hourly tail (unlike auth-register):
+        // an invalid callback fails before the external Google call, so it isn't
+        // a sustained-spam vector worth the extra limit.
+        RateLimiter::for('auth-oauth-callback', function (Request $request) {
+            return Limit::perMinute(40)->by('oauth-cb|'.$request->ip());
         });
     }
 }

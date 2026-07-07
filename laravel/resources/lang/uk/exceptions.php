@@ -37,5 +37,6 @@ return [
     ],
     'auth' => [
         'invalid_credentials' => 'Невірні облікові дані',
+        'logged_out' => 'Ви успішно вийшли',
     ],
 ];

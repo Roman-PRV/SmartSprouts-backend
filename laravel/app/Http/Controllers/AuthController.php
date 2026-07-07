@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -78,17 +79,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Log out the authenticated user.
+     * Log out the authenticated user on this device only.
+     *
+     * Revokes just the current access token, so signing out on one device
+     * leaves the user's other sessions intact. Revoking every token is reserved
+     * for a password change (see PasswordService).
      */
     public function logout(Request $request): JsonResponse
     {
-        /** @var User|null $user */
+        /** @var User $user */
         $user = $request->user();
 
-        if ($user !== null) {
-            $user->tokens()->delete();
+        $token = $user->currentAccessToken();
+
+        // Only a real bearer token can be revoked; a session-based TransientToken
+        // (Sanctum SPA mode) has no delete().
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
         }
 
-        return new JsonResponse(['message' => 'Successfully logged out'], 200);
+        return new JsonResponse(['message' => __('exceptions.auth.logged_out')], 200);
     }
 }

@@ -37,5 +37,6 @@ return [
     ],
     'auth' => [
         'invalid_credentials' => 'Invalid credentials',
+        'logged_out' => 'Successfully logged out',
     ],
 ];

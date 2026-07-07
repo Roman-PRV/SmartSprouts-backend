@@ -33,7 +33,7 @@ Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttl
 Route::middleware('auth:sanctum')->post('auth/logout', [AuthController::class, 'logout']);
 
 Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect']);
-Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('throttle:auth-register');
+Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('throttle:auth-oauth-callback');
 
 // ── Player ────────────────────────────────────────────────────────────────────
 
