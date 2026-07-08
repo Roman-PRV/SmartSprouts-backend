@@ -10,6 +10,7 @@ use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Listeners\GenerateMissingAudioListener;
+use App\Observers\LevelCacheObserver;
 use App\Observers\ProactiveTtsObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -38,10 +39,10 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $observers = [
         FindTheWrongItem::class => [ProactiveTtsObserver::class],
-        FindTheWrongLevel::class => [ProactiveTtsObserver::class],
-        TrueFalseImageLevel::class => [ProactiveTtsObserver::class],
+        FindTheWrongLevel::class => [ProactiveTtsObserver::class, LevelCacheObserver::class],
+        TrueFalseImageLevel::class => [ProactiveTtsObserver::class, LevelCacheObserver::class],
         TrueFalseImageStatement::class => [ProactiveTtsObserver::class],
-        TrueFalseTextLevel::class => [ProactiveTtsObserver::class],
+        TrueFalseTextLevel::class => [ProactiveTtsObserver::class, LevelCacheObserver::class],
         TrueFalseTextStatement::class => [ProactiveTtsObserver::class],
     ];
 

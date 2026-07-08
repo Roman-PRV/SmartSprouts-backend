@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\GameNotConfiguredException;
 use App\Helpers\ConfigHelper;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
-use InvalidArgumentException;
 
 class ResourceResolver
 {
@@ -25,7 +25,7 @@ class ResourceResolver
     /**
      * Return resource class name for a given Game instance using table_prefix.
      *
-     * @throws InvalidArgumentException
+     * @throws GameNotConfiguredException
      */
     public function resourceClassFor(Game $game): string
     {
@@ -38,11 +38,11 @@ class ResourceResolver
         }
 
         if ($resourceClass) {
-            throw new InvalidArgumentException("Resource class {$resourceClass} does not exist");
+            throw new GameNotConfiguredException("Resource class {$resourceClass} does not exist");
         }
 
         $errorKey = $key ?? 'null/undefined';
-        throw new InvalidArgumentException("No resource mapped for game table_prefix: {$errorKey}");
+        throw new GameNotConfiguredException("No resource mapped for game table_prefix: {$errorKey}");
     }
 
     /**

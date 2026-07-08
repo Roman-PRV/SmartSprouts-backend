@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Services\GameResultService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
-use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
@@ -172,7 +171,7 @@ class ArithmeticGameServiceTest extends TestCase
     /** @test */
     public function check_throws_for_an_unknown_equation_id(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(ValidationException::class);
 
         $this->service->check(new CheckAnswersDTO(
             userId: 1,
