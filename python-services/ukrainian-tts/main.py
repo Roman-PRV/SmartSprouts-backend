@@ -53,6 +53,9 @@ def get_env_int(name: str, default: int, min_value: int = 1) -> int:
 MAX_TEXT_LENGTH = get_env_int("TTS_MAX_TEXT_LENGTH", 2000)
 CHUNK_SIZE = get_env_int("TTS_CHUNK_SIZE", 200)
 
+DEFAULT_VOICE = Voices.Lada
+VOICE_BY_NAME = {voice.name.lower(): voice.value for voice in Voices}
+
 
 class SynthesizeRequest(BaseModel):
     """Request model for text synthesis."""
@@ -232,14 +235,17 @@ def _synthesize_sync(tts_model: TTS, text: str, speaker: str) -> bytes:
     Returns:
         MP3 audio data as bytes
     """
-    # Dynamic speaker mapping: search for speaker in Voices enum
-    voice = Voices.Lada.value  # Default
-    speaker_clean = speaker.strip().lower()
+    # Resolve the requested speaker to a voice; fall back to the default.
+    voice = VOICE_BY_NAME.get(speaker.strip().lower())
 
-    for v in Voices:
-        if v.name.lower() == speaker_clean:
-            voice = v.value
-            break
+    if voice is None:
+        logger.warning(
+            f"Unknown TTS speaker '{speaker}'; falling back to default voice "
+            f"'{DEFAULT_VOICE.name}'. Valid speakers: "
+            f"{', '.join(v.name for v in Voices)}. "
+            "If the request came from Laravel, check UKRAINIAN_TTS_SPEAKER."
+        )
+        voice = DEFAULT_VOICE.value
 
     if len(text) <= CHUNK_SIZE:
         return _process_chunk_to_mp3(tts_model, text, voice)
