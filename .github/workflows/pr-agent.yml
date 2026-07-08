@@ -1,0 +1,52 @@
+name: PR-Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:            # enables /review, /describe, /improve, /ask commands in PR comments
+    types: [created]
+
+# Never let one run cancel another. PR-Agent's own describe/improve output fires
+# issue_comment events; keying each comment run by comment.id keeps them in their
+# own groups so they are skipped by the job `if` instead of evicting each other
+# (or the in-flight review) from a single shared queue. pull_request events have
+# no comment.id, so they share one per-PR group and simply serialize.
+concurrency:
+  group: pr-agent-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}-${{ github.event.comment.id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr_agent:
+    # Skip bot-authored events to avoid feedback loops; only run comment events on PRs.
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Pinned to a release tag for reproducibility (matching the action-version
+      # pinning in ci.yml); bump deliberately, see github.com/qodo-ai/pr-agent/releases.
+      - name: PR Agent
+        uses: qodo-ai/pr-agent@v0.38.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # --- LLM: free Google Gemini (via litellm) ---
+          CONFIG.MODEL: "gemini/gemini-2.5-flash"
+          CONFIG.FALLBACK_MODELS: '["gemini/gemini-2.5-flash-lite"]'
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+          # --- auto-run on new PRs ---
+          GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
+          GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
+          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "true"
+
+          # Default PR_ACTIONS omits "synchronize", so pushes to an open PR run
+          # the action but publish nothing. List it explicitly to re-run on push.
+          GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review", "synchronize"]'

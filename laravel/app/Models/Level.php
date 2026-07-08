@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use App\Helpers\ConfigHelper;
+use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Filesystem\FilesystemAdapter;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
  * @property string $title
  * @property string $title_audio_url
  * @property string|null $image_url
+ * @property string|null $progress Virtual: player's per-level progress, set by LevelProgressService on list endpoints
  *
  * @OA\Schema(
  * schema="Level",
@@ -23,13 +23,6 @@ use Illuminate\Support\Facades\Storage;
  * @OA\Property(property="id", type="integer", example=1),
  * @OA\Property(property="title", type="string", example="Level 1"),
  * @OA\Property(property="image_url", type="string", format="uri", example="https://example.com/storage/levels/level1.png")
- * )
- *
- * @OA\Schema(
- *   schema="LevelCollection",
- *   type="array",
- *
- *   @OA\Items(ref="#/components/schemas/Level")
  * )
  *
  * @OA\Schema(
@@ -63,36 +56,28 @@ class Level extends Model
 {
     use HasFactory;
 
+    /**
+     * Resolve the public URL for this level's cover image.
+     *
+     * Trusts the stored path: when image_url is set the upload-disk URL is
+     * built directly, with no exists() probe. On a cloud disk (R2/S3) a probe
+     * would cost a HeadObject request per access — an N+1 over the network on
+     * list endpoints. A missing file therefore surfaces as a broken URL (404)
+     * instead of being silently masked; keeping stored paths valid is the data
+     * layer's responsibility. Only an empty path falls back to the configured
+     * default icon on the static disk.
+     */
     public function getImageUrlAttribute(): string
     {
-        $raw = $this->attributes['image_url'] ?? null;
-        $path = is_string($raw) ? ltrim($raw, '/') : '';
+        $path = MediaUrl::normalizePath($this->attributes['image_url'] ?? null);
 
         if ($path !== '') {
-            $uploadDiskName = ConfigHelper::getString('games.upload_disk', 'public');
-            /** @var FilesystemAdapter $uploadDisk */
-            $uploadDisk = Storage::disk($uploadDiskName);
-
-            if ($uploadDisk->exists($path)) {
-                return $this->absoluteUrl($uploadDisk->url($path));
-            }
+            return MediaUrl::diskUrl(ConfigHelper::uploadDisk(), $path);
         }
 
-        $staticDiskName = ConfigHelper::getString('games.default_icon_disk', 'static');
-        /** @var FilesystemAdapter $staticDisk */
-        $staticDisk = Storage::disk($staticDiskName);
-
-        $key = $path !== '' && $staticDisk->exists($path)
-            ? $path
-            : ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png');
-
-        return $this->absoluteUrl($staticDisk->url($key));
-    }
-
-    private function absoluteUrl(string $url): string
-    {
-        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
-            ? $url
-            : url($url);
+        return MediaUrl::diskUrl(
+            ConfigHelper::getString('games.default_icon_disk', 'static'),
+            ConfigHelper::getString('games.default_level_image', 'icons/default-icon.png'),
+        );
     }
 }

@@ -13,4 +13,14 @@ return [
         'title' => 'Verdadero o falso (texto)',
         'description' => 'Lee el texto y las afirmaciones, y marca cuáles son verdaderas',
     ],
+    'multiplication_table' => [
+        'title' => 'Tabla de multiplicar',
+        'description' => 'Practica la tabla de multiplicar, un factor a la vez',
+        'level_title' => 'Multiplica por :n',
+    ],
+    'addition_table' => [
+        'title' => 'Tabla de sumar',
+        'description' => 'Practica la suma, un número a la vez',
+        'level_title' => 'Suma :n',
+    ],
 ];

@@ -2,19 +2,19 @@
 
 namespace App\Games\TrueFalseImage\Services;
 
-use App\Contracts\GameServiceInterface;
 use App\DTO\CheckAnswersDTO;
 use App\Exceptions\TableMissingException;
+use App\Games\TrueFalse\Services\StatementGameService;
 use App\Games\TrueFalseImage\Models\TrueFalseImageLevel;
 use App\Games\TrueFalseImage\Models\TrueFalseImageStatement;
 use App\Helpers\MediaHelper;
 use App\Models\Level;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Schema;
-use InvalidArgumentException;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class TrueFalseImageService implements GameServiceInterface
+class TrueFalseImageService extends StatementGameService
 {
     /**
      * Fetch all levels for the game (no statements attached).
@@ -61,34 +61,11 @@ class TrueFalseImageService implements GameServiceInterface
     }
 
     /**
-     * Fetch statements for a given level id.
-     *
-     * @throws TableMissingException
-     * @throws InvalidArgumentException
-     */
-    public function fetchDataForLevel(int $levelId): Collection
-    {
-        $table = (new TrueFalseImageStatement)->getTable();
-
-        if (! Schema::hasTable($table)) {
-            throw new TableMissingException($table);
-        }
-
-        $statements = TrueFalseImageStatement::where('level_id', $levelId)->get();
-
-        if ($statements->isEmpty()) {
-            throw new InvalidArgumentException("No statements found for level {$levelId}");
-        }
-
-        return $statements;
-    }
-
-    /**
      * Check player answers for a level.
      *
      * @throws TableMissingException
      * @throws NotFoundHttpException
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function check(CheckAnswersDTO $dto): array
     {
@@ -112,7 +89,7 @@ class TrueFalseImageService implements GameServiceInterface
 
         foreach ($statementIds as $statementId) {
             if (! in_array($statementId, $existingStatementIds, true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'answers' => ["The statement {$statementId} does not belong to level {$dto->levelId}."],
                 ]);
             }

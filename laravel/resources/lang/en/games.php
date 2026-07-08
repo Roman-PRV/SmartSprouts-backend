@@ -13,4 +13,14 @@ return [
         'title' => 'True or False (Text)',
         'description' => 'Read the text and statements, and mark which ones are true',
     ],
+    'multiplication_table' => [
+        'title' => 'Multiplication Table',
+        'description' => 'Practise the multiplication table, one factor at a time',
+        'level_title' => 'Multiply by :n',
+    ],
+    'addition_table' => [
+        'title' => 'Addition Table',
+        'description' => 'Practise addition, one number at a time',
+        'level_title' => 'Add :n',
+    ],
 ];

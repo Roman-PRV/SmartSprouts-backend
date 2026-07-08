@@ -73,6 +73,11 @@ return [
         'attempt_count_mismatch' => 'The submitted items must exactly cover all items in the level (found + missed = total).',
     ],
 
+    'arithmetic' => [
+        'answers_coverage' => 'The submitted answers must cover every equation in the level exactly once.',
+        'unknown_equation' => 'The submitted answers reference an equation that does not belong to this level.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language Lines
@@ -83,6 +88,12 @@ return [
     | specify a specific custom language line for a given attribute rule.
     |
     */
+
+    'tts' => [
+        'unknown_field' => 'The selected audio field is not valid for this entity.',
+        'unsupported_locale' => 'The selected locale is not supported.',
+        'empty_text' => 'There is no text to generate audio from for this locale.',
+    ],
 
     'custom' => [
         'attribute-name' => [

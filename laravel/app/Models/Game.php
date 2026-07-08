@@ -3,23 +3,34 @@
 namespace App\Models;
 
 use App\Helpers\ConfigHelper;
+use App\Services\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * @property list<string> $categories
+ *
  * @OA\Schema(
  * schema="Game",
  * type="object",
  * title="Game",
- * required={"id", "key", "icon_url", "is_active", "title", "description"},
+ * required={"id", "key", "icon_url", "is_active", "title", "description", "categories"},
  *
  * @OA\Property(property="id", type="string", example="1"),
  * @OA\Property(property="key", type="string", example="find_the_wrong"),
  * @OA\Property(property="title", type="string", description="Full title of the game.", example="Find The Wrong"),
  * @OA\Property(property="description", type="string", description="Short description of the game.", example="Find the incorrect statement among the options."),
  * @OA\Property(property="icon_url", type="string", format="uri", example="https://example.com/storage/icons/game1.png"),
- * @OA\Property(property="is_active", type="boolean", example=true)
+ * @OA\Property(property="is_active", type="boolean", example=true),
+ * @OA\Property(
+ *     property="categories",
+ *     type="array",
+ *     description="Learning areas the game belongs to (a game may have several).",
+ *     example={"logic", "reading"},
+ *
+ *     @OA\Items(type="string", enum={"math", "reading", "logic"})
+ * )
  * )
  */
 class Game extends Model
@@ -31,31 +42,33 @@ class Game extends Model
         'table_prefix',
         'icon_url',
         'is_active',
+        'categories',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'categories' => 'array',
     ];
 
+    /**
+     * Resolve the public URL for this game's icon.
+     *
+     * Mirrors Level::getImageUrlAttribute(): the stored path is trusted and the
+     * URL is built without an exists() probe. A missing file surfaces as a
+     * broken URL (404) instead of being masked; only an empty path falls back
+     * to the configured default icon. Icons live on the static (local,
+     * git-committed) disk, so there is no cloud round-trip either way — the
+     * point here is behavioural consistency with the Level accessor.
+     */
     public function getIconUrlAttribute(): string
     {
-        $diskName = ConfigHelper::getString('games.default_icon_disk', 'static');
+        $path = MediaUrl::normalizePath($this->attributes['icon_url'] ?? null);
 
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
-
-        $raw = $this->attributes['icon_url'] ?? null;
-        $path = is_string($raw) ? ltrim($raw, '/') : '';
-
-        $key = $path !== '' && $disk->exists($path)
+        $key = $path !== ''
             ? $path
             : ConfigHelper::getString('games.default_icon', 'icons/default-icon.png');
 
-        $url = $disk->url($key);
-
-        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
-            ? $url
-            : url($url);
+        return MediaUrl::diskUrl(ConfigHelper::getString('games.default_icon_disk', 'static'), $key);
     }
 
     public function gameResults(): HasMany

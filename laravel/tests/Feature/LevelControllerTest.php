@@ -80,10 +80,111 @@ class LevelControllerTest extends TestCase
         $this->assertEqualsCanonicalizing(['First level', 'Second level'], $titles);
     }
 
+    public function test_index_includes_progress_from_last_attempt(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'title' => json_encode(['en' => 'L2']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'title' => json_encode(['en' => 'L3']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        DB::table('game_results')->insert([
+            // level 1: last attempt perfect -> mastered
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+            // level 2: completed but not perfect -> not_perfect
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 2, 'locale' => 'en', 'score' => 1, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+            // level 3: only another user's perfect attempt -> must stay not_started for $user
+            ['user_id' => $otherUser->id, 'game_id' => $game->id, 'level_id' => 3, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+
+        $byId = collect($response->json())->keyBy('id');
+        $this->assertSame('mastered', $byId[1]['progress']);
+        $this->assertSame('not_perfect', $byId[2]['progress']);
+        $this->assertSame('not_started', $byId[3]['progress']);
+    }
+
+    public function test_index_progress_uses_last_attempt_not_best(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        // Older perfect attempt followed by a newer imperfect one: the last wins.
+        DB::table('game_results')->insert([
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now()->subDay(), 'updated_at' => now()->subDay()],
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 2, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+        $this->assertSame('not_perfect', $response->json('0.progress'));
+    }
+
+    public function test_index_zero_question_attempt_is_not_mastered(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        // A degenerate 0-question attempt must not read as a perfect run (0 === 0).
+        DB::table('game_results')->insert([
+            ['user_id' => $user->id, 'game_id' => $game->id, 'level_id' => 1, 'locale' => 'en', 'score' => 0, 'total_questions' => 0, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+        $this->assertSame('not_perfect', $response->json('0.progress'));
+    }
+
+    public function test_index_progress_does_not_leak_across_games(): void
+    {
+        $game = Game::factory()->create(['table_prefix' => 'true_false_image']);
+        $otherGame = Game::factory()->create(['table_prefix' => 'true_false_text']);
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'L1']), 'image_url' => '', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        // Perfect attempt for the SAME level_id but a DIFFERENT game. level_id is
+        // unique only within a game, so the game_id filter must keep this out.
+        DB::table('game_results')->insert([
+            ['user_id' => $user->id, 'game_id' => $otherGame->id, 'level_id' => 1, 'locale' => 'en', 'score' => 3, 'total_questions' => 3, 'details' => null, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/games/{$game->id}/levels");
+
+        $response->assertStatus(200);
+        $this->assertSame('not_started', $response->json('0.progress'));
+    }
+
     public function test_show_returns_single_level_with_file_url_and_statements(): void
     {
-        Storage::fake('static', ['url' => config('app.url')]);
-        Storage::disk('static')->put('levels/first.png', 'dummy');
+        Storage::fake('public', ['url' => config('app.url').'/storage']);
 
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
@@ -142,7 +243,7 @@ class LevelControllerTest extends TestCase
             ->assertJson([
                 'id' => 1,
                 'title' => 'First level',
-                'image_url' => 'http://localhost/levels/first.png',
+                'image_url' => 'http://localhost/storage/levels/first.png',
             ]);
 
         $response->assertJsonFragment([
@@ -166,264 +267,54 @@ class LevelControllerTest extends TestCase
         $this->assertCount(2, $response->json('statements'));
     }
 
-    public function test_check_missing_game_returns_404(): void
+    public function test_image_url_is_built_without_existence_probe(): void
     {
-        $response = $this->actingAs(User::factory()->create())
-            ->postJson('/api/games/99999/levels/1/check', [
-                'answers' => [
-                    ['statement_id' => 1, 'answer' => true],
-                ],
-            ]);
+        // Upload disk faked but the file is deliberately NOT written: the
+        // accessor must still return the constructed URL (404 at fetch time),
+        // never a silent default-icon swap. The frontend handles the 404.
+        Storage::fake('public', ['url' => config('app.url').'/storage']);
 
-        $response->assertStatus(404);
-    }
-
-    public function test_check_invalid_payload_returns_422(): void
-    {
-        $game = Game::factory()->create([
-            'table_prefix' => 'true_false_image',
-        ]);
-
-        // Missing required fields
-        $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", []);
-
-        $response->assertStatus(422);
-
-        // Invalid answer type
-        $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
-                'answers' => [
-                    ['statement_id' => 1, 'answer' => 'not a boolean'],
-                ],
-            ]);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_check_statement_from_different_level_returns_422(): void
-    {
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
         ]);
 
         DB::table('true_false_image_levels')->truncate();
-        DB::table('true_false_image_statements')->truncate();
-
-        DB::table('true_false_image_levels')->insert([
-            [
-                'id' => 1,
-                'title' => json_encode(['en' => 'Level 1', 'es' => 'Nivel 1', 'uk' => 'Рівень 1']),
-                'image_url' => 'level1.jpg',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => 2,
-                'title' => json_encode(['en' => 'Level 2', 'es' => 'Nivel 2', 'uk' => 'Рівень 2']),
-                'image_url' => 'level2.jpg',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
-
-        DB::table('true_false_image_statements')->insert([
-            'id' => 20,
-            'level_id' => 2,  // Statement belongs to level 2
-            'statement' => json_encode(['en' => 'Statement from level 2', 'es' => 'Declaración del nivel 2', 'uk' => 'Твердження з рівня 2']),
-            'is_true' => true,
-            'explanation' => json_encode(['en' => 'Explanation', 'es' => 'Explicación', 'uk' => 'Пояснення']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Try to check level 1 with statement from level 2
-        $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
-                'answers' => [
-                    ['statement_id' => 20, 'answer' => true],
-                ],
-            ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['answers']);
-    }
-
-    public function test_check_correct_answers_returns_200(): void
-    {
-        $game = Game::factory()->create([
-            'table_prefix' => 'true_false_image',
-        ]);
-
-        DB::table('true_false_image_levels')->truncate();
-        DB::table('true_false_image_statements')->truncate();
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => json_encode(['en' => 'Test Level', 'es' => 'Nivel de prueba', 'uk' => 'Тестовий рівень']),
-            'image_url' => 'test.jpg',
+            'title' => json_encode(['en' => 'Lvl', 'es' => 'Nivel', 'uk' => 'Рівень']),
+            'image_url' => 'levels/missing.png',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        DB::table('true_false_image_statements')->insert([
-            [
-                'id' => 10,
-                'level_id' => 1,
-                'statement' => json_encode(['en' => 'Statement 1', 'es' => 'Declaración 1', 'uk' => 'Твердження 1']),
-                'is_true' => true,
-                'explanation' => json_encode(['en' => 'Explanation 1', 'es' => 'Explicación 1', 'uk' => 'Пояснення 1']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => 11,
-                'level_id' => 1,
-                'statement' => json_encode(['en' => 'Statement 2', 'es' => 'Declaración 2', 'uk' => 'Твердження 2']),
-                'is_true' => false,
-                'explanation' => json_encode(['en' => 'Explanation 2', 'es' => 'Explicación 2', 'uk' => 'Пояснення 2']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
-
-        $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
-                'answers' => [
-                    ['statement_id' => 10, 'answer' => true],
-                    ['statement_id' => 11, 'answer' => false],
-                ],
-            ]);
-
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'results' => [
-                    ['statement_id', 'correct', 'is_true', 'explanation'],
-                ],
-            ])
-            ->assertJson([
-                'results' => [
-                    [
-                        'statement_id' => 10,
-                        'correct' => true,
-                        'is_true' => true,
-                        'explanation' => 'Explanation 1',
-                    ],
-                    [
-                        'statement_id' => 11,
-                        'correct' => true,
-                        'is_true' => false,
-                        'explanation' => 'Explanation 2',
-                    ],
-                ],
-            ]);
+        $this->actingAs(User::factory()->create())
+            ->getJson("/api/games/{$game->id}/levels/1")
+            ->assertStatus(200)
+            ->assertJson(['image_url' => 'http://localhost/storage/levels/missing.png']);
     }
 
-    public function test_check_incorrect_answers_returns_200(): void
+    public function test_empty_image_url_falls_back_to_default_icon(): void
     {
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
         ]);
 
         DB::table('true_false_image_levels')->truncate();
-        DB::table('true_false_image_statements')->truncate();
 
         DB::table('true_false_image_levels')->insert([
             'id' => 1,
-            'title' => json_encode(['en' => 'Test Level']),
-            'image_url' => 'test.jpg',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('true_false_image_statements')->insert([
-            'id' => 10,
-            'level_id' => 1,
-            'statement' => json_encode(['en' => 'Statement', 'es' => 'Declaración', 'uk' => 'Твердження']),
-            'is_true' => true,
-            'explanation' => json_encode(['en' => 'Explanation', 'es' => 'Explicación', 'uk' => 'Пояснення']),
+            'title' => json_encode(['en' => 'Lvl', 'es' => 'Nivel', 'uk' => 'Рівень']),
+            'image_url' => '',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
-                'answers' => [
-                    ['statement_id' => 10, 'answer' => false], // Wrong answer
-                ],
-            ]);
+            ->getJson("/api/games/{$game->id}/levels/1");
 
-        $response->assertStatus(200)
-            ->assertJson([
-                'results' => [
-                    [
-                        'statement_id' => 10,
-                        'correct' => false,
-                        'is_true' => true,
-                    ],
-                ],
-            ]);
-    }
-
-    public function test_check_mixed_answers_returns_proper_results(): void
-    {
-        $game = Game::factory()->create([
-            'table_prefix' => 'true_false_image',
-        ]);
-
-        DB::table('true_false_image_levels')->truncate();
-        DB::table('true_false_image_statements')->truncate();
-
-        DB::table('true_false_image_levels')->insert([
-            'id' => 1,
-            'title' => json_encode(['en' => 'Test Level']),
-            'image_url' => 'test.jpg',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('true_false_image_statements')->insert([
-            [
-                'id' => 10,
-                'level_id' => 1,
-                'statement' => json_encode(['en' => 'Statement 1']),
-                'is_true' => true,
-                'explanation' => json_encode(['en' => 'Explanation 1']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => 11,
-                'level_id' => 1,
-                'statement' => json_encode(['en' => 'Statement 2']),
-                'is_true' => false,
-                'explanation' => json_encode(['en' => 'Explanation 2']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
-
-        $response = $this->actingAs(User::factory()->create())
-            ->postJson("/api/games/{$game->id}/levels/1/check", [
-                'answers' => [
-                    ['statement_id' => 10, 'answer' => true],  // Correct
-                    ['statement_id' => 11, 'answer' => true],  // Incorrect
-                ],
-            ]);
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'results' => [
-                    [
-                        'statement_id' => 10,
-                        'correct' => true,
-                    ],
-                    [
-                        'statement_id' => 11,
-                        'correct' => false,
-                    ],
-                ],
-            ]);
+        $response->assertStatus(200);
+        $this->assertStringContainsString('icons/default-icon.png', $response->json('image_url'));
     }
 
     /**
@@ -475,8 +366,7 @@ class LevelControllerTest extends TestCase
      */
     public function test_show_returns_level_in_requested_locale(string $locale, string $expectedTitle): void
     {
-        Storage::fake('static', ['url' => config('app.url')]);
-        Storage::disk('static')->put('levels/first.png', 'dummy');
+        Storage::fake('public', ['url' => config('app.url').'/storage']);
 
         $game = Game::factory()->create([
             'table_prefix' => 'true_false_image',
@@ -551,25 +441,12 @@ class LevelControllerTest extends TestCase
         $this->actingAs($user)->getJson("/api/games/{$game->id}/levels/abc")->assertStatus(404);
     }
 
-    public function test_non_numeric_level_id_on_check_returns_404(): void
-    {
-        $user = User::factory()->create();
-        $game = Game::factory()->create();
-
-        $this->actingAs($user)->postJson("/api/games/{$game->id}/levels/abc/check", [
-            'answers' => [['statement_id' => 1, 'answer' => true]],
-        ])->assertStatus(404);
-    }
-
     public function test_non_numeric_game_id_returns_404_for_level_routes(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)->getJson('/api/games/abc/levels')->assertStatus(404);
         $this->actingAs($user)->getJson('/api/games/abc/levels/1')->assertStatus(404);
-        $this->actingAs($user)->postJson('/api/games/abc/levels/1/check', [
-            'answers' => [['statement_id' => 1, 'answer' => true]],
-        ])->assertStatus(404);
     }
 
     public function test_unauthenticated_user_cannot_access_game_routes(): void
@@ -579,6 +456,5 @@ class LevelControllerTest extends TestCase
         $this->getJson('/api/games')->assertStatus(401);
         $this->getJson("/api/games/{$game->id}/levels")->assertStatus(401);
         $this->getJson("/api/games/{$game->id}/levels/1")->assertStatus(401);
-        $this->postJson("/api/games/{$game->id}/levels/1/check", [])->assertStatus(401);
     }
 }

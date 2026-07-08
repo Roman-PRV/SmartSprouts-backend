@@ -5,6 +5,7 @@ namespace Tests\Feature\Games\TrueFalseText\Services;
 use App\Games\TrueFalseText\Models\TrueFalseTextLevel;
 use App\Games\TrueFalseText\Models\TrueFalseTextStatement;
 use App\Games\TrueFalseText\Services\TrueFalseTextService;
+use App\Services\GameResultService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +18,7 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TrueFalseTextService;
+        $this->service = new TrueFalseTextService(new GameResultService);
         $this->app->setLocale('uk');
     }
 
@@ -56,10 +57,6 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
         // Test fetchLevel with statements
         $levelWithStatements = $this->service->fetchLevel(1);
         $this->assertCount(5, $levelWithStatements->statements);
-
-        // Test fetchDataForLevel
-        $statements = $this->service->fetchDataForLevel(1);
-        $this->assertCount(5, $statements);
     }
 
     /** @test */
@@ -98,14 +95,6 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
         $this->assertEquals('Integrity Test Level', $levelWithStatements->title);
         $this->assertCount(1, $levelWithStatements->statements);
         $this->assertEquals('This is a test statement', $levelWithStatements->statements->first()->statement);
-
-        // Fetch statements directly
-        $statements = $this->service->fetchDataForLevel($level->id);
-        $this->assertCount(1, $statements);
-        $this->assertTrue($statements->first()->is_true);
-        $this->assertEquals('This statement is true for testing', $statements->first()->explanation);
-        $this->assertEquals('stmt_uk.mp3', $statements->first()->statement_audio_url);
-        $this->assertEquals('expl_uk.mp3', $statements->first()->explanation_audio_url);
     }
 
     /** @test */
@@ -156,11 +145,6 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
         $fullLevel = $this->service->fetchLevel($levelWithStatements->id);
         $this->assertEquals('Full Level', $fullLevel->title);
         $this->assertCount(1, $fullLevel->statements);
-
-        // fetchDataForLevel should throw exception for level without statements
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("No statements found for level {$levelWithoutStatements->id}");
-        $this->service->fetchDataForLevel($levelWithoutStatements->id);
     }
 
     /** @test */
@@ -187,7 +171,7 @@ class TrueFalseTextServiceIntegrationTest extends TestCase
             'explanation' => 'This should be false',
         ]);
 
-        $statements = $this->service->fetchDataForLevel($level->id);
+        $statements = TrueFalseTextStatement::where('level_id', $level->id)->get();
 
         $trueStatement = $statements->firstWhere('statement', 'True statement');
         $falseStatement = $statements->firstWhere('statement', 'False statement');

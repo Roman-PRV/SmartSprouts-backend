@@ -12,16 +12,15 @@
         "/api/games/{game}/levels/{level}/attempts": {
             "post": {
                 "tags": [
-                    "FindTheWrong"
+                    "Attempts"
                 ],
-                "summary": "Submit a completed find-the-wrong attempt",
-                "description": "Validates and stores the player's finished attempt. Returns names, explanations and TTS audio for all found and missed items.",
-                "operationId": "034120c418cabff31c7942499dfedd86",
+                "summary": "Submit a completed attempt for a level",
+                "description": "Validates and scores the player's submission for the given game and level, stores the result, and returns the game-specific response. The request body and response shape depend on the game.",
+                "operationId": "e9dd96e4dbce72af90bf7c165a39c8aa",
                 "parameters": [
                     {
                         "name": "game",
                         "in": "path",
-                        "description": "Game ID (must be a find-the-wrong game)",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -31,11 +30,10 @@
                     {
                         "name": "level",
                         "in": "path",
-                        "description": "Level ID",
                         "required": true,
                         "schema": {
                             "type": "integer",
-                            "example": 5
+                            "example": 3
                         }
                     }
                 ],
@@ -44,40 +42,48 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/FindTheWrong.SubmitAttemptRequest"
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/TrueFalse.AttemptRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/Arithmetic.AttemptRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/FindTheWrong.AttemptRequest"
+                                    }
+                                ]
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Attempt stored; reveal data returned",
+                        "description": "Scored result (shape depends on the game)",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "score": {
-                                            "type": "integer",
-                                            "example": 3
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/TrueFalse.AttemptResponse"
                                         },
-                                        "total_questions": {
-                                            "type": "integer",
-                                            "example": 4
+                                        {
+                                            "$ref": "#/components/schemas/Arithmetic.AttemptResponse"
                                         },
-                                        "found_items": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/FindTheWrong.RevealItem"
-                                            }
-                                        },
-                                        "missed_items": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/FindTheWrong.RevealItem"
-                                            }
+                                        {
+                                            "$ref": "#/components/schemas/FindTheWrong.AttemptResponse"
                                         }
-                                    },
-                                    "type": "object"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Service misconfiguration for the game prefix",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }
@@ -88,9 +94,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Unauthenticated."
                                 }
                             }
                         }
@@ -101,9 +104,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Not found"
                                 }
                             }
                         }
@@ -132,8 +132,24 @@
                     "Games"
                 ],
                 "summary": "Get list of active games",
-                "description": "Returns a list of games that are marked as active.",
+                "description": "Returns a list of games that are marked as active, optionally filtered by category.",
                 "operationId": "getActiveGames",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Return only games belonging to this learning area.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "math",
+                                "reading",
+                                "logic"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful response with list of games",
@@ -147,6 +163,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Invalid category value"
                     }
                 }
             }
@@ -214,7 +233,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/LevelCollection"
+                                    "$ref": "#/components/schemas/LevelDescriptionCollection"
                                 }
                             }
                         }
@@ -230,7 +249,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Service misconfiguration for the game prefix",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -296,155 +315,11 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Service misconfiguration for the game prefix",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/games/{game}/levels/{level}/check": {
-            "post": {
-                "tags": [
-                    "Levels"
-                ],
-                "summary": "Check player answers for a level",
-                "description": "Validates submitted answers and returns whether each answer is correct. Returns validation errors (422) if the payload is invalid or statements don't belong to the specified level, and 404 if the game, level, or relevant table is not found.",
-                "operationId": "fec3cc50167f799271d0d3c1003ee102",
-                "parameters": [
-                    {
-                        "name": "game",
-                        "in": "path",
-                        "description": "Game identifier (route-model bound).",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "level",
-                        "in": "path",
-                        "description": "Level id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "description": "Player answers to validate",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CheckAnswersRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Validation results",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/TrueFalseImage.Result"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "results": [
-                                        {
-                                            "statement_id": 10,
-                                            "correct": true,
-                                            "is_true": true,
-                                            "explanation": "Because of Rayleigh scattering",
-                                            "statement_audio_url": "https://example.com/storage/audio/uk.mp3",
-                                            "explanation_audio_url": null
-                                        },
-                                        {
-                                            "statement_id": 11,
-                                            "correct": false,
-                                            "is_true": false,
-                                            "explanation": "Cats cannot fly naturally",
-                                            "statement_audio_url": null,
-                                            "explanation_audio_url": null
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Game or level not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "No query results for model [App\\Models\\Game] 99999"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error - invalid payload format, missing required fields, or statements don't belong to the specified level",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The answers field is required."
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "example": {
-                                                "answers": [
-                                                    "The statement 20 does not belong to level 1."
-                                                ],
-                                                "answers.0.answer": [
-                                                    "The answers.0.answer field is required."
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - service configuration error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "No game service configured for table prefix: invalid_prefix"
-                                        }
-                                    },
-                                    "type": "object"
                                 }
                             }
                         }
@@ -557,6 +432,138 @@
     },
     "components": {
         "schemas": {
+            "Arithmetic.Level": {
+                "title": "Arithmetic.Level",
+                "description": "Arithmetic game level (multiplication, addition, …).",
+                "required": [
+                    "id",
+                    "title",
+                    "image_url",
+                    "operator"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Level ID (1..10)",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "title": {
+                        "description": "Localized level title",
+                        "type": "string",
+                        "example": "Multiply by 3"
+                    },
+                    "image_url": {
+                        "description": "Level cover image URL",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/storage/icons/default-icon.png"
+                    },
+                    "operator": {
+                        "description": "Operation symbol for the level",
+                        "type": "string",
+                        "example": "×"
+                    },
+                    "equations": {
+                        "description": "Facts for the level; present only on the single-level view.",
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id",
+                                "operand_a",
+                                "operand_b",
+                                "result"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 4
+                                },
+                                "operand_a": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "operand_b": {
+                                    "type": "integer",
+                                    "example": 4
+                                },
+                                "result": {
+                                    "type": "integer",
+                                    "example": 12
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Arithmetic.AttemptRequest": {
+                "title": "Arithmetic Attempt Request",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "equation_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "equation_id": {
+                                    "description": "Shared engine for the arithmetic pair-match game family (multiplication,\naddition, …). Every game has an identical structure — ArithmeticConstants::LEVEL_COUNT\nlevels, level N being ArithmeticConstants::FACTS_PER_LEVEL facts of the form\n`N ∘ b` — so all read and check logic lives here. A concrete game supplies\nonly the operation via symbol(), apply() and levelTitle(); content is\ndeterministic, so there are no tables, item models or admin screens.",
+                                    "type": "integer",
+                                    "maximum": 10,
+                                    "minimum": 1,
+                                    "example": 4
+                                },
+                                "answer": {
+                                    "type": "integer",
+                                    "example": 12
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Arithmetic.AttemptResponse": {
+                "title": "Arithmetic Attempt Response",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "equation_id": {
+                                    "type": "integer"
+                                },
+                                "operand_a": {
+                                    "type": "integer"
+                                },
+                                "operand_b": {
+                                    "type": "integer"
+                                },
+                                "operator": {
+                                    "type": "string"
+                                },
+                                "given_answer": {
+                                    "type": "integer"
+                                },
+                                "expected_answer": {
+                                    "type": "integer"
+                                },
+                                "correct": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "Admin.FindTheWrong.StoreItemRequest": {
                 "title": "Admin Store FindTheWrong Item Request",
                 "description": "JSON payload for creating a new polygon item under a level.",
@@ -674,65 +681,6 @@
                 },
                 "type": "object"
             },
-            "FindTheWrong.SubmitAttemptRequest": {
-                "title": "FindTheWrong Submit Attempt Request",
-                "description": "Player's finished attempt at a level: which items were hit and missed.",
-                "required": [
-                    "duration_seconds",
-                    "found",
-                    "missed_item_ids"
-                ],
-                "properties": {
-                    "duration_seconds": {
-                        "type": "integer",
-                        "maximum": 3600,
-                        "minimum": 0,
-                        "example": 42
-                    },
-                    "found": {
-                        "description": "Items the player hit, with star rating computed on the client (1: hit only, 2: IoU >= 0.2, 3: IoU >= 0.5).",
-                        "type": "array",
-                        "items": {
-                            "required": [
-                                "item_id",
-                                "stars"
-                            ],
-                            "properties": {
-                                "item_id": {
-                                    "type": "integer",
-                                    "example": 10
-                                },
-                                "stars": {
-                                    "type": "integer",
-                                    "maximum": 3,
-                                    "minimum": 1,
-                                    "example": 3
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "missed_item_ids": {
-                        "description": "IDs of items the player did not hit. Together with `found`, must cover every item in the level exactly once.",
-                        "type": "array",
-                        "items": {
-                            "type": "integer",
-                            "example": 11
-                        }
-                    },
-                    "interaction_mode": {
-                        "description": "Input mode the player used (circle = draw loops, marker = tap). Recorded in result details for analytics; defaults to circle when absent.",
-                        "type": "string",
-                        "enum": [
-                            "circle",
-                            "marker"
-                        ],
-                        "example": "marker",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
             "FindTheWrong.Item": {
                 "title": "FindTheWrong.Item",
                 "description": "Public-facing polygon item without reveal-after-submit fields",
@@ -836,6 +784,188 @@
                 },
                 "type": "object"
             },
+            "FindTheWrong.AttemptRequest": {
+                "title": "FindTheWrong Attempt Request",
+                "required": [
+                    "duration_seconds",
+                    "found",
+                    "missed_item_ids"
+                ],
+                "properties": {
+                    "duration_seconds": {
+                        "type": "integer",
+                        "maximum": 3600,
+                        "minimum": 0,
+                        "example": 42
+                    },
+                    "found": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "item_id",
+                                "stars"
+                            ],
+                            "properties": {
+                                "item_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "stars": {
+                                    "type": "integer",
+                                    "maximum": 3,
+                                    "minimum": 1,
+                                    "example": 3
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "missed_item_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "example": 11
+                        }
+                    },
+                    "interaction_mode": {
+                        "type": "string",
+                        "enum": [
+                            "circle",
+                            "marker"
+                        ],
+                        "example": "marker",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "FindTheWrong.AttemptResponse": {
+                "title": "FindTheWrong Attempt Response",
+                "properties": {
+                    "score": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "total_questions": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "found_items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FindTheWrong.RevealItem"
+                        }
+                    },
+                    "missed_items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FindTheWrong.RevealItem"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalse.AttemptRequest": {
+                "title": "TrueFalse Attempt Request",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "statement_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "statement_id": {
+                                    "description": "Shared engine for the statement-based true/false games (image + text). They\nare mechanically identical and differ only in their backing models, so the\nsubmit flow (validate → score → persist) lives here once. Each game supplies\nits own reads and scoring via fetchAllLevels()/fetchLevel()/check(), which\ntouch the game-specific models.",
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "answer": {
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalse.AttemptResponse": {
+                "title": "TrueFalse Attempt Response",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "statement_id": {
+                                    "type": "integer"
+                                },
+                                "correct": {
+                                    "type": "boolean"
+                                },
+                                "is_true": {
+                                    "type": "boolean"
+                                },
+                                "explanation": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "statement_audio_url": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "nullable": true
+                                },
+                                "explanation_audio_url": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.TrueFalseImage.Level": {
+                "title": "Admin TrueFalseImage Level",
+                "properties": {
+                    "id": {
+                        "description": "Admin editor shape for a TrueFalseImage level: full title translations, the\ncover image URL, per-locale title audio status, and the embedded statements\n(each via the shared StatementAdminResource). Used by the single-level read\nendpoint; the levels list uses the generic LevelAdminResource.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "title_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "statements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Admin.Statement"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "TrueFalseImage.Level": {
                 "title": "TrueFalseImage.Level",
                 "description": "True/False Image Level resource",
@@ -864,44 +994,6 @@
                         "items": {
                             "$ref": "#/components/schemas/TrueFalseImage.Statement"
                         }
-                    }
-                },
-                "type": "object"
-            },
-            "TrueFalseImage.Result": {
-                "description": "Validation result for a single statement in the True/False Image game",
-                "properties": {
-                    "statement_id": {
-                        "description": "ID of the evaluated statement",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "correct": {
-                        "description": "Whether the player's answer was correct",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "is_true": {
-                        "description": "The actual truth value of the statement",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "explanation": {
-                        "description": "Explanation for the correct answer",
-                        "type": "string",
-                        "example": "Cats have pointy ears"
-                    },
-                    "statement_audio_url": {
-                        "description": "Audio URL for the statement",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
-                    },
-                    "explanation_audio_url": {
-                        "description": "Audio URL for the explanation",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -937,6 +1029,52 @@
                         "type": "string",
                         "format": "uri",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.TrueFalseText.Level": {
+                "title": "Admin TrueFalseText Level",
+                "properties": {
+                    "id": {
+                        "description": "Admin editor shape for a TrueFalseText level: full title and text\ntranslations, optional cover image URL, per-locale audio status for both the\ntitle and the text body, and the embedded statements.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "text": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "title_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "text_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "statements": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Admin.Statement"
+                        }
                     }
                 },
                 "type": "object"
@@ -995,44 +1133,6 @@
                 },
                 "type": "object"
             },
-            "TrueFalseText.Result": {
-                "description": "Validation result for a single statement in the True/False Text game",
-                "properties": {
-                    "statement_id": {
-                        "description": "ID of the evaluated statement",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "correct": {
-                        "description": "Whether the player's answer was correct",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "is_true": {
-                        "description": "The actual truth value of the statement",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "explanation": {
-                        "description": "Explanation for the correct answer",
-                        "type": "string",
-                        "example": "Cats have pointy ears"
-                    },
-                    "statement_audio_url": {
-                        "description": "Audio URL for the statement",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
-                    },
-                    "explanation_audio_url": {
-                        "description": "Audio URL for the explanation",
-                        "type": "string",
-                        "format": "uri",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
             "TrueFalseText.Statement": {
                 "title": "TrueFalseText.Statement",
                 "description": "True/False Text Statement resource",
@@ -1064,6 +1164,26 @@
                         "type": "string",
                         "format": "uri",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.RegenerateAudioRequest": {
+                "title": "Admin Regenerate Audio Request",
+                "description": "Selects which audio field and locale to regenerate.",
+                "required": [
+                    "field",
+                    "locale"
+                ],
+                "properties": {
+                    "field": {
+                        "description": "Body for a per-(field, locale) TTS regeneration request, shared by the level\nand statement admin endpoints. Only the surface shape is validated here;\nwhether the field is a real audio attribute of the target model — and whether\nthe locale is supported — is the model-aware job of TtsRegenerationService,\nwhich surfaces a 422 for unknown values.",
+                        "type": "string",
+                        "example": "statement_audio_url"
+                    },
+                    "locale": {
+                        "type": "string",
+                        "example": "en"
                     }
                 },
                 "type": "object"
@@ -1102,10 +1222,73 @@
                         },
                         "type": "object"
                     },
+                    "text": {
+                        "description": "Localized body text (TrueFalseText only; required there).",
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "image": {
-                        "description": "Cover image (jpeg/png/webp, max 5 MB).",
+                        "description": "Cover image (jpeg/png/webp, max 10 MB). Required except for TrueFalseText.",
                         "type": "string",
                         "format": "binary"
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.StoreStatementRequest": {
+                "title": "Admin Store Statement Request",
+                "required": [
+                    "statement",
+                    "is_true"
+                ],
+                "properties": {
+                    "statement": {
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "description": "Validates an admin \"create statement\" request, shared by both true/false\ngames (the statement shape is identical). `statement` is required in every\nlocale (it drives TTS); `explanation` is optional and per-locale independent.",
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "explanation": {
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "is_true": {
+                        "type": "boolean",
+                        "example": true
                     }
                 },
                 "type": "object"
@@ -1143,8 +1326,23 @@
                         },
                         "type": "object"
                     },
+                    "text": {
+                        "description": "Localized body text (TrueFalseText only; required there).",
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "image": {
-                        "description": "Optional replacement cover image (jpeg/png/webp, max 5 MB). Omit to keep the existing one.",
+                        "description": "Optional replacement cover image (jpeg/png/webp, max 10 MB). Omit to keep the existing one.",
                         "type": "string",
                         "format": "binary",
                         "nullable": true
@@ -1152,63 +1350,153 @@
                 },
                 "type": "object"
             },
-            "CheckAnswersRequest": {
-                "title": "Check Answers Request",
-                "description": "Request payload for validating player's answers. Includes automatically injected properties from route and authentication.",
+            "Admin.UpdateStatementRequest": {
+                "title": "Admin Update Statement Request",
                 "required": [
-                    "answers"
+                    "statement",
+                    "is_true"
                 ],
                 "properties": {
-                    "answers": {
-                        "description": "List of player's answers for each statement",
-                        "type": "array",
-                        "items": {
-                            "required": [
-                                "statement_id",
-                                "answer"
-                            ],
-                            "properties": {
-                                "statement_id": {
-                                    "description": "ID of the statement being answered",
-                                    "type": "integer",
-                                    "example": 10
-                                },
-                                "answer": {
-                                    "description": "Player's answer",
-                                    "type": "boolean",
-                                    "example": true
-                                }
+                    "statement": {
+                        "required": [
+                            "uk",
+                            "en",
+                            "es"
+                        ],
+                        "properties": {
+                            "uk": {
+                                "description": "Validates an admin \"update statement\" request, shared by both true/false\ngames. Same shape as the store request; `is_true` is required so the toggle\nalways has an explicit value on save.",
+                                "type": "string"
                             },
-                            "type": "object"
-                        }
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
                     },
-                    "user_id": {
-                        "description": "ID of the authenticated user (injected after validation)",
-                        "type": "integer",
-                        "readOnly": true
+                    "explanation": {
+                        "properties": {
+                            "uk": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": "string"
+                            },
+                            "es": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
                     },
-                    "level_id": {
-                        "description": "ID of the level from route (injected after validation)",
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "game": {
-                        "$ref": "#/components/schemas/Game"
+                    "is_true": {
+                        "type": "boolean",
+                        "example": true
                     }
                 },
-                "type": "object",
-                "example": {
-                    "answers": [
-                        {
-                            "statement_id": 10,
-                            "answer": true
-                        },
-                        {
-                            "statement_id": 11,
-                            "answer": false
+                "type": "object"
+            },
+            "Admin.Statement": {
+                "title": "Admin Statement",
+                "description": "Admin-side true/false statement with localized text and per-locale audio status.",
+                "properties": {
+                    "id": {
+                        "description": "Admin shape for a true/false statement, shared by both games (the statement\nform is identical across them). Emits the full translations map for the\neditable text fields plus a per-locale `{ url, is_stale }` audio block for\neach TTS field, so the form can edit every locale and light up the\nregenerate button without recomputing any hash on the client.\n\nReads are side-effect free: audio status comes from MediaUrlGenerator +\nthe stored path hash, never from Tts::getOrGenerate.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "level_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_true": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "statement": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
                         }
-                    ]
+                    },
+                    "explanation": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "statement_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    },
+                    "explanation_audio": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/Admin.AudioStatus"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.AudioStatus": {
+                "title": "Admin Audio Status",
+                "description": "Per-locale TTS audio status.",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true
+                    },
+                    "is_stale": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "LevelDescriptionCollection": {
+                "description": "Player-facing level summary. `progress` is expected to be populated upstream by\nLevelProgressService::decorate(); when it is not (e.g. the undecorated\n`resources_default` show fallback) the field safely degrades to `not_started`\n— i.e. \"no progress data known\", never a played status.",
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/LevelDescription"
                 }
+            },
+            "LevelDescription": {
+                "title": "LevelDescription",
+                "description": "Level summary for the player level grid",
+                "properties": {
+                    "id": {
+                        "description": "Transform the resource into an array.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Level 1"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "items_count": {
+                        "description": "Present on list endpoint",
+                        "type": "integer"
+                    },
+                    "progress": {
+                        "description": "Player's progress from their most recent attempt on this level",
+                        "type": "string",
+                        "enum": [
+                            "mastered",
+                            "not_perfect",
+                            "not_started"
+                        ]
+                    }
+                },
+                "type": "object"
             },
             "ProfileStats": {
                 "title": "Profile Statistics",
@@ -1264,7 +1552,8 @@
                     "icon_url",
                     "is_active",
                     "title",
-                    "description"
+                    "description",
+                    "categories"
                 ],
                 "properties": {
                     "id": {
@@ -1293,6 +1582,22 @@
                     "is_active": {
                         "type": "boolean",
                         "example": true
+                    },
+                    "categories": {
+                        "description": "Learning areas the game belongs to (a game may have several).",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "math",
+                                "reading",
+                                "logic"
+                            ]
+                        },
+                        "example": [
+                            "logic",
+                            "reading"
+                        ]
                     }
                 },
                 "type": "object"
@@ -1320,12 +1625,6 @@
                     }
                 },
                 "type": "object"
-            },
-            "LevelCollection": {
-                "type": "array",
-                "items": {
-                    "$ref": "#/components/schemas/Level"
-                }
             },
             "ErrorResponse": {
                 "properties": {
@@ -1365,8 +1664,8 @@
     },
     "tags": [
         {
-            "name": "FindTheWrong",
-            "description": "Find-the-wrong game — player endpoints"
+            "name": "Attempts",
+            "description": "Submit a completed level attempt"
         },
         {
             "name": "Levels",
