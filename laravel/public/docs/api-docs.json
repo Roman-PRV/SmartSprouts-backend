@@ -206,6 +206,38 @@
                 }
             }
         },
+        "/api/legal/versions": {
+            "get": {
+                "tags": [
+                    "Legal"
+                ],
+                "summary": "Get current legal document versions",
+                "description": "Returns the currently effective Terms of Service and Privacy Policy version identifiers.",
+                "operationId": "getLegalVersions",
+                "responses": {
+                    "200": {
+                        "description": "Current document versions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "terms_version": {
+                                            "type": "string",
+                                            "example": "2026-07-12"
+                                        },
+                                        "privacy_version": {
+                                            "type": "string",
+                                            "example": "2026-07-12"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/games/{game}/levels": {
             "get": {
                 "tags": [
@@ -1674,6 +1706,10 @@
         {
             "name": "Games",
             "description": "Games"
+        },
+        {
+            "name": "Legal",
+            "description": "Legal"
         },
         {
             "name": "Profile",

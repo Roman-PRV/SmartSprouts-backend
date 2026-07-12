@@ -7,6 +7,7 @@ use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilePasswordController;
@@ -34,6 +35,10 @@ Route::middleware('auth:sanctum')->post('auth/logout', [AuthController::class, '
 
 Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect']);
 Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('throttle:auth-oauth-callback');
+
+// ── Legal (public) ────────────────────────────────────────────────────────────
+
+Route::get('legal/versions', [LegalController::class, 'versions'])->name('legal.versions');
 
 // ── Player ────────────────────────────────────────────────────────────────────
 
