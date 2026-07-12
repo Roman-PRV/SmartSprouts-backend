@@ -3,15 +3,11 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 /**
- * @property string $name
- * @property string $email
- * @property string $password
  * @property bool $accepted_terms
  */
-class RegisterRequest extends FormRequest
+class AcceptConsentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,11 +25,7 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
-            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
-            // The single 18+/parent affirmation checkbox covering both legal
-            // documents; the exact wire name the frontend sends.
+            // Same wire name and affirmation semantics as at registration.
             'accepted_terms' => 'accepted',
         ];
     }

@@ -15,6 +15,7 @@ return [
 
     'failed_message' => 'Validación fallida',
     'unsupported_locale_keys' => 'El campo :attribute contiene claves de configuración regional no admitidas (:keys). Permitidas: :allowed.',
+    'accepted' => 'El campo :attribute debe ser aceptado.',
     'active_url' => 'El campo :attribute no es una URL válida.',
     'array' => 'El campo :attribute debe ser un arreglo.',
     'ascii' => 'El campo :attribute solo debe contener caracteres alfanuméricos y símbolos de un solo byte.',
