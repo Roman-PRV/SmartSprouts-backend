@@ -13,6 +13,10 @@ return new class extends Migration
      * (proof of consent for the defense of legal claims, GDPR Art. 17(3)(e)):
      * hence user_id is nullable with nullOnDelete, and email_hash is
      * reserved for the deletion flow (PRIVL-BE-03) to anonymize rows.
+     *
+     * One row per (user, type, version) is enforced by the unique index, so
+     * a check-then-act race can never duplicate evidence rows; anonymized
+     * rows do not collide (repeated NULLs are allowed in a unique index).
      */
     public function up(): void
     {
@@ -27,7 +31,7 @@ return new class extends Migration
             $table->string('user_agent', 500)->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'type', 'document_version']);
+            $table->unique(['user_id', 'type', 'document_version']);
         });
     }
 

@@ -114,6 +114,7 @@ return [
     */
 
     'attributes' => [
+        'accepted_terms' => 'terms of service',
         'email' => 'email address',
         'password' => 'password',
     ],

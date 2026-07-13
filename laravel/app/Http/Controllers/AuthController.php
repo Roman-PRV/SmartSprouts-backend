@@ -29,6 +29,7 @@ class AuthController extends Controller
          *     name: string,
          *     email: string,
          *     password: string,
+         *     accepted_terms: bool,
          * } $data */
         $data = $request->validated();
 

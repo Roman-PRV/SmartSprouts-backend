@@ -114,6 +114,7 @@ return [
     */
 
     'attributes' => [
+        'accepted_terms' => 'підтвердження умов',
         'email' => 'електронна пошта',
         'password' => 'пароль',
     ],
