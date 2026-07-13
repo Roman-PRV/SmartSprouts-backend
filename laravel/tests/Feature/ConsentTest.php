@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\UserConsent;
+use App\Services\ConsentService;
 use App\Services\GoogleAuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
@@ -187,6 +188,22 @@ class ConsentTest extends TestCase
             ->getJson('/api/auth/me')
             ->assertOk()
             ->assertJson(['consent_current' => true]);
+    }
+
+    /** @test */
+    public function record_acceptance_is_idempotent_per_version_even_past_the_controller_guard(): void
+    {
+        $user = User::factory()->create();
+        $service = app(ConsentService::class);
+
+        $service->recordAcceptance($user, '1.2.3.4', 'FirstAgent');
+        $service->recordAcceptance($user, '5.6.7.8', 'SecondAgent');
+
+        $this->assertDatabaseCount('user_consents', 2);
+        $this->assertDatabaseHas('user_consents', [
+            'user_id' => $user->id,
+            'ip_address' => '1.2.3.4',
+        ]);
     }
 
     /** @test */

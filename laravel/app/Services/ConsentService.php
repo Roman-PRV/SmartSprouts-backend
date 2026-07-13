@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\ConfigHelper;
 use App\Models\User;
 use App\Models\UserConsent;
+use Illuminate\Support\Facades\DB;
 
 class ConsentService
 {
@@ -12,22 +13,28 @@ class ConsentService
      * Record acceptance of the current Terms and Privacy Policy versions.
      *
      * One checkbox covers both documents, so both rows must land atomically:
-     * a partial acceptance would never satisfy hasCurrentConsent().
+     * a partial acceptance would never satisfy hasCurrentConsent(). Idempotent
+     * per version - firstOrCreate plus the unique (user, type, version) index
+     * keep retries and double-clicks from duplicating evidence rows.
      */
     public function recordAcceptance(User $user, ?string $ipAddress, ?string $userAgent): void
     {
         $acceptedAt = now();
 
-        \DB::transaction(function () use ($user, $ipAddress, $userAgent, $acceptedAt): void {
+        DB::transaction(function () use ($user, $ipAddress, $userAgent, $acceptedAt): void {
             foreach ($this->currentVersions() as $type => $version) {
-                UserConsent::query()->create([
-                    'user_id' => $user->id,
-                    'type' => $type,
-                    'document_version' => $version,
-                    'accepted_at' => $acceptedAt,
-                    'ip_address' => $ipAddress,
-                    'user_agent' => $userAgent === null ? null : mb_substr($userAgent, 0, 500),
-                ]);
+                UserConsent::query()->firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'type' => $type,
+                        'document_version' => $version,
+                    ],
+                    [
+                        'accepted_at' => $acceptedAt,
+                        'ip_address' => $ipAddress,
+                        'user_agent' => $userAgent === null ? null : mb_substr($userAgent, 0, 500),
+                    ],
+                );
             }
         });
     }

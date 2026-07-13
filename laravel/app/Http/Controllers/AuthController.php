@@ -10,6 +10,7 @@ use App\Services\ConsentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -34,7 +35,7 @@ class AuthController extends Controller
         // One transaction: a failed consent write must roll the user back,
         // otherwise a retry dies on the unique-email rule.
         /** @var User $user */
-        $user = \DB::transaction(function () use ($data, $request): User {
+        $user = DB::transaction(function () use ($data, $request): User {
             /** @var User $user */
             $user = User::query()->create([
                 'name' => $data['name'],
