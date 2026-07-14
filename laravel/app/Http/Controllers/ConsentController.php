@@ -68,14 +68,10 @@ class ConsentController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $isCurrent = $this->consentService->hasCurrentConsent($user);
-
-        if (! $isCurrent) {
-            $this->consentService->recordAcceptance($user, $request->ip(), $request->userAgent());
-        }
+        $recorded = $this->consentService->recordAcceptance($user, $request->ip(), $request->userAgent());
 
         return new JsonResponse([
             'consent_current' => true,
-        ], $isCurrent ? 200 : 201);
+        ], $recorded ? 201 : 200);
     }
 }

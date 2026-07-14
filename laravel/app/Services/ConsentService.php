@@ -16,14 +16,18 @@ class ConsentService
      * a partial acceptance would never satisfy hasCurrentConsent(). Idempotent
      * per version - firstOrCreate plus the unique (user, type, version) index
      * keep retries and double-clicks from duplicating evidence rows.
+     *
+     * @return bool Whether at least one new consent row was created.
      */
-    public function recordAcceptance(User $user, ?string $ipAddress, ?string $userAgent): void
+    public function recordAcceptance(User $user, ?string $ipAddress, ?string $userAgent): bool
     {
         $acceptedAt = now();
 
-        DB::transaction(function () use ($user, $ipAddress, $userAgent, $acceptedAt): void {
+        return DB::transaction(function () use ($user, $ipAddress, $userAgent, $acceptedAt): bool {
+            $recordedAny = false;
+
             foreach ($this->currentVersions() as $type => $version) {
-                UserConsent::query()->firstOrCreate(
+                $consent = UserConsent::query()->firstOrCreate(
                     [
                         'user_id' => $user->id,
                         'type' => $type,
@@ -35,7 +39,11 @@ class ConsentService
                         'user_agent' => $userAgent === null ? null : mb_substr($userAgent, 0, 500),
                     ],
                 );
+
+                $recordedAny = $recordedAny || $consent->wasRecentlyCreated;
             }
+
+            return $recordedAny;
         });
     }
 
