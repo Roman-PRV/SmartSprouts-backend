@@ -241,4 +241,21 @@ class ConsentTest extends TestCase
             'document_version' => '2020-01-01',
         ]);
     }
+
+    /** @test */
+    public function accepting_consents_after_a_single_document_bump_only_appends_the_changed_type(): void
+    {
+        $user = User::factory()->create();
+        UserConsent::factory()->for($user)->create();
+        UserConsent::factory()->for($user)->privacy()->create();
+
+        config(['legal.terms_version' => '2099-01-01']);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/profile/consents', ['accepted_terms' => true])
+            ->assertCreated();
+
+        $this->assertDatabaseCount('user_consents', 3);
+        $this->assertSame(1, $user->consents()->where('type', UserConsent::TYPE_PRIVACY)->count());
+    }
 }
