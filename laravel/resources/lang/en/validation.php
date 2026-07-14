@@ -15,6 +15,7 @@ return [
 
     'failed_message' => 'Validation failed',
     'unsupported_locale_keys' => 'The :attribute field contains unsupported locale keys (:keys). Allowed: :allowed.',
+    'accepted' => 'The :attribute field must be accepted.',
     'active_url' => 'The :attribute field must be a valid URL.',
     'array' => 'The :attribute field must be an array.',
     'ascii' => 'The :attribute field must only contain single-byte alphanumeric characters and symbols.',
@@ -113,6 +114,7 @@ return [
     */
 
     'attributes' => [
+        'accepted_terms' => 'terms of service',
         'email' => 'email address',
         'password' => 'password',
     ],

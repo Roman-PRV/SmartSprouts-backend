@@ -15,6 +15,7 @@ return [
 
     'failed_message' => 'Помилка валідації',
     'unsupported_locale_keys' => 'Поле :attribute містить непідтримувані ключі локалі (:keys). Дозволені: :allowed.',
+    'accepted' => 'Поле :attribute має бути прийняте.',
     'active_url' => 'Поле :attribute не є дійсною URL-адресою.',
     'array' => 'Поле :attribute має бути масивом.',
     'ascii' => 'Поле :attribute має містити лише однобайтові алфавітно-цифрові символи та символи.',
@@ -113,6 +114,7 @@ return [
     */
 
     'attributes' => [
+        'accepted_terms' => 'підтвердження умов',
         'email' => 'електронна пошта',
         'password' => 'пароль',
     ],

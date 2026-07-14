@@ -64,4 +64,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(GameResult::class);
     }
+
+    /**
+     * Append-only consent audit trail (terms/privacy acceptances).
+     */
+    public function consents(): HasMany
+    {
+        return $this->hasMany(UserConsent::class);
+    }
 }
