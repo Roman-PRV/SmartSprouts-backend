@@ -58,6 +58,12 @@ services:
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"   # Expose to host for local Redis inspection
 
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # web UI: http://localhost:8025
+
   # Self-hosted Ukrainian TTS — dev only. Enable via:
   #   docker compose --profile tts up
   # Production uses TTS_PROVIDER=elevenlabs and does not include this service.
