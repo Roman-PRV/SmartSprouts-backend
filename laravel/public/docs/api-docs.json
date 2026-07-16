@@ -9,6 +9,127 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/profile/deletion-code": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Request an account-deletion confirmation code",
+                "description": "Emails a one-time code to the account address. Only for password-less (Google-only) accounts; password accounts confirm deletion with their password.",
+                "operationId": "sendAccountDeletionCode",
+                "responses": {
+                    "200": {
+                        "description": "Code sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "A confirmation code has been sent to your email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "409": {
+                        "description": "Account has a password and must confirm with it"
+                    },
+                    "429": {
+                        "description": "Too many code requests"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/profile": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get authenticated user profile",
+                "description": "Returns user profile data with aggregated gameplay statistics.",
+                "operationId": "getUserProfile",
+                "responses": {
+                    "200": {
+                        "description": "Successful response with profile data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Profile"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Delete the authenticated account",
+                "description": "Erases the account and its data. Requires 'password' for password accounts or 'code' (one-time, emailed) for password-less accounts. Consent records are kept in anonymized form.",
+                "operationId": "deleteProfile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "password": {
+                                        "description": "For password accounts",
+                                        "type": "string",
+                                        "example": "secret123"
+                                    },
+                                    "code": {
+                                        "description": "For password-less accounts",
+                                        "type": "string",
+                                        "example": "483920"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Account deleted"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Wrong password or invalid/expired code"
+                    },
+                    "429": {
+                        "description": "Too many attempts"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games/{game}/levels/{level}/attempts": {
             "post": {
                 "tags": [
@@ -431,36 +552,6 @@
                         }
                     }
                 }
-            }
-        },
-        "/api/profile": {
-            "get": {
-                "tags": [
-                    "Profile"
-                ],
-                "summary": "Get authenticated user profile",
-                "description": "Returns user profile data with aggregated gameplay statistics.",
-                "operationId": "getUserProfile",
-                "responses": {
-                    "200": {
-                        "description": "Successful response with profile data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Profile"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
             }
         },
         "/api/profile/password": {

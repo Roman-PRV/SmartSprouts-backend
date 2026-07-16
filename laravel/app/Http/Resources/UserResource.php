@@ -28,6 +28,9 @@ class UserResource extends JsonResource
             'email' => $user->email,
             'avatar' => $user->avatar,
             'is_admin' => $user->is_admin,
+            // Lets the client pick the deletion confirmation UI: password
+            // prompt for password accounts, emailed one-time code otherwise.
+            'has_password' => $user->hasPassword(),
             'email_verified_at' => $user->email_verified_at,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
