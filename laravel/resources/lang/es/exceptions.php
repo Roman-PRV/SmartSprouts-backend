@@ -39,4 +39,9 @@ return [
         'invalid_credentials' => 'Credenciales inválidas',
         'logged_out' => 'Sesión cerrada correctamente',
     ],
+    'account_deletion' => [
+        'code_not_applicable' => 'Tu cuenta tiene contraseña; confirma la eliminación con ella en lugar de un código.',
+        'invalid_code' => 'El código de eliminación no es válido o ha expirado.',
+        'code_sent' => 'Se ha enviado un código de confirmación a tu correo.',
+    ],
 ];

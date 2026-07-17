@@ -39,4 +39,9 @@ return [
         'invalid_credentials' => 'Invalid credentials',
         'logged_out' => 'Successfully logged out',
     ],
+    'account_deletion' => [
+        'code_not_applicable' => 'Your account has a password; confirm deletion with it instead of a code.',
+        'invalid_code' => 'The deletion code is invalid or has expired.',
+        'code_sent' => 'A confirmation code has been sent to your email.',
+    ],
 ];

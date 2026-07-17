@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Append-only consent audit-trail entry.
  *
- * Rows are never updated or deleted. email_hash is reserved for the
- * account-deletion flow (PRIVL-BE-03), which will anonymize rows instead
- * of removing them; nothing populates it yet.
+ * Rows are never updated or deleted, with one exception: the account-deletion
+ * flow (AccountDeletionService) pseudonymizes them instead of removing them —
+ * email_hash (a keyed HMAC of the email) replaces the identity link and the
+ * IP/user-agent evidence is cleared.
  *
  * @property int $id
  * @property int|null $user_id
