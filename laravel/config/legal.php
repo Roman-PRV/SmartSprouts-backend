@@ -19,4 +19,13 @@ return [
 
     'privacy_version' => '2026-07-12',
 
+    /*
+    | Secret key for the HMAC over the email in anonymized consent rows.
+    | A keyed hash keeps the pseudonym reproducible (a complainant's address
+    | can be matched to their consent evidence) while a leaked database alone
+    | can't be dictionary-reversed. Deliberately NOT the app key: rotating
+    | APP_KEY must not sever the evidence link.
+    */
+    'email_hash_key' => env('LEGAL_HASH_KEY'),
+
 ];

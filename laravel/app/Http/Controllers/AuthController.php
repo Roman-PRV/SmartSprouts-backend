@@ -6,16 +6,22 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\ConsentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly ConsentService $consentService
+    ) {}
+
     /**
-     * Register a new user.
+     * Register a new user and record their legal-document consent.
      */
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -23,15 +29,25 @@ class AuthController extends Controller
          *     name: string,
          *     email: string,
          *     password: string,
+         *     accepted_terms: bool,
          * } $data */
         $data = $request->validated();
 
+        // One transaction: a failed consent write must roll the user back,
+        // otherwise a retry dies on the unique-email rule.
         /** @var User $user */
-        $user = User::query()->create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        $user = DB::transaction(function () use ($data, $request): User {
+            /** @var User $user */
+            $user = User::query()->create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+            ]);
+
+            $this->consentService->recordAcceptance($user, $request->ip(), $request->userAgent());
+
+            return $user;
+        });
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -67,6 +83,10 @@ class AuthController extends Controller
 
     /**
      * Get the authenticated user.
+     *
+     * consent_current tells the client whether the user has accepted the
+     * current legal-document versions; false triggers the blocking consent
+     * screen (Google signups, legacy accounts, version bumps).
      */
     public function me(Request $request): JsonResponse
     {
@@ -75,6 +95,7 @@ class AuthController extends Controller
 
         return new JsonResponse([
             'user' => new UserResource($user),
+            'consent_current' => $this->consentService->hasCurrentConsent($user),
         ]);
     }
 

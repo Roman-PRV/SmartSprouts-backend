@@ -18,6 +18,7 @@ class AuthControllerTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
+            'accepted_terms' => true,
         ]);
 
         $response->assertCreated();
@@ -133,6 +134,7 @@ class AuthControllerTest extends TestCase
                 'email' => "user{$i}@example.com",
                 'password' => 'Password123!',
                 'password_confirmation' => 'Password123!',
+                'accepted_terms' => true,
             ])->assertCreated();
         }
 
@@ -141,6 +143,7 @@ class AuthControllerTest extends TestCase
             'email' => 'user41@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
+            'accepted_terms' => true,
         ])->assertStatus(429);
     }
 
@@ -165,6 +168,7 @@ class AuthControllerTest extends TestCase
                 'email' => "user{$i}@example.com",
                 'password' => 'Password123!',
                 'password_confirmation' => 'Password123!',
+                'accepted_terms' => true,
             ]);
         }
 
@@ -180,6 +184,7 @@ class AuthControllerTest extends TestCase
             'name' => 'Edge User',
             'email' => 'edge@example.com',
             'password' => 'password123',
+            'accepted_terms' => true,
             // no password_confirmation
         ]);
 

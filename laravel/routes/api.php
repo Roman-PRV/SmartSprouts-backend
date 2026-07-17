@@ -1,10 +1,12 @@
 <?php
 
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
+use App\Http\Controllers\AccountDeletionController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\Admin\StatementController as AdminStatementController;
 use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\LegalController;
@@ -44,7 +46,14 @@ Route::get('legal/versions', [LegalController::class, 'versions'])->name('legal.
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::delete('profile', [AccountDeletionController::class, 'destroy'])
+        ->name('profile.destroy')
+        ->middleware('throttle:account-deletion');
+    Route::post('profile/deletion-code', [AccountDeletionController::class, 'sendCode'])
+        ->name('profile.deletion-code.send')
+        ->middleware('throttle:deletion-code');
     Route::put('profile/password', [ProfilePasswordController::class, 'update'])->name('profile.password.update');
+    Route::post('profile/consents', [ConsentController::class, 'store'])->name('profile.consents.store');
 
     Route::apiResource('games', GameController::class)->only(['index', 'show'])
         ->whereNumber('game');
