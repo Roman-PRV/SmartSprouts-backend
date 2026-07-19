@@ -69,6 +69,45 @@ class ConsentTest extends TestCase
         $this->assertNotNull($user->consents()->first()?->ip_address);
     }
 
+    // ─── consent_current in auth payloads ────────────────────────────────────
+
+    /** @test */
+    public function register_response_reports_consent_current_true(): void
+    {
+        $this->withMiddleware()->postJson('/api/auth/register', [
+            'name' => 'Fresh Parent',
+            'email' => 'fresh-consent@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+            'accepted_terms' => true,
+        ])
+            ->assertCreated()
+            ->assertJson(['consent_current' => true]);
+    }
+
+    /** @test */
+    public function login_response_reports_consent_current_for_the_account(): void
+    {
+        $user = User::factory()->create(['email' => 'legacy@example.com']);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'legacy@example.com',
+            'password' => 'password',
+        ])
+            ->assertOk()
+            ->assertJson(['consent_current' => false]);
+
+        UserConsent::factory()->for($user)->create();
+        UserConsent::factory()->for($user)->privacy()->create();
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'legacy@example.com',
+            'password' => 'password',
+        ])
+            ->assertOk()
+            ->assertJson(['consent_current' => true]);
+    }
+
     // ─── consent_current in the me payload ───────────────────────────────────
 
     /** @test */

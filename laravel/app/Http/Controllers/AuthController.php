@@ -55,6 +55,8 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
+            // Literal true: registration just recorded the acceptance.
+            'consent_current' => true,
         ], 201);
     }
 
@@ -78,6 +80,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
+            'consent_current' => $this->consentService->hasCurrentConsent($user),
         ], 200);
     }
 
