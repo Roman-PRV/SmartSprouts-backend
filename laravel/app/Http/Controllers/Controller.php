@@ -16,6 +16,13 @@ use Illuminate\Routing\Controller as BaseController;
  *         email="support@smartsprouts.local"
  *     )
  * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="sanctum",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="Token"
+ * )
  */
 class Controller extends BaseController
 {
