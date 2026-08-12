@@ -1,139 +1,226 @@
-# SmartSprouts Backed
+# SmartSprouts — Backend
 
-SmartSprouts Backend is a web application component developed for the SmartSprouts educational platform. Built on the Laravel 10 framework and the PHP programming language, it provides a reliable and scalable backend.
+[![Live demo](https://img.shields.io/badge/demo-smartsprouts.pp.ua-2ea44f)](https://smartsprouts.pp.ua)
+![Laravel](https://img.shields.io/badge/Laravel-10-FF2D20?logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-430%2B-brightgreen)
 
-## 1. Domain
+Backend of **SmartSprouts** — a trilingual (EN/UK/ES) educational gaming platform that helps children build cognitive skills. This Laravel 10 REST API powers an early-stage startup MVP, built with production-grade backend engineering: a multi-provider content pipeline, a self-hosted TTS microservice, async queue processing, and GDPR-style privacy compliance.
 
-This app helps children improve their cognitive skills.
-
----
-
-## 2. Tech Stack
-
-- Backend: Laravel 10
-- DB: MySQL 8.0
-- Containerization: Docker + Docker Compose
-- Testing: PHPUnit
-- Code Quality: Laravel Pint, PHPStan
-- Commit Control: Husky + Commitlint
-- API Documentation: Swagger (L5-Swagger)
+- 🌐 **Live demo:** https://smartsprouts.pp.ua
+- 💻 **Frontend (React SPA):** https://github.com/Roman-PRV/SmartSprouts-frontend
+- 📊 **At a glance:** 430+ tests · 27 migrations · 3 languages · OpenAPI-documented
 
 ---
 
-## 3. Installation
+## Tech Stack
 
-Clone the repository and install dependencies:
+| Layer | Technology | Why |
+|---|---|---|
+| **Core** | Laravel 10 · PHP 8.2 | Mature framework, clear domain boundaries |
+| **Auth** | Laravel Sanctum · Socialite (Google OAuth) | Token auth + social login; per-token revocation |
+| **Data** | MySQL 8 · Redis 7 | Relational core + cache and queues |
+| **Async** | Redis queues · dedicated queue-worker container | Slow work (TTS generation) offloaded off the request path |
+| **Content i18n** | spatie/laravel-translatable | Per-field game-content translations (en/uk/es) |
+| **AI & integrations** | DeepL · OpenAI · ElevenLabs · self-hosted TTS | Automated translation and generated speech |
+| **Storage** | Cloudflare R2 (S3-compatible, `s3` Flysystem driver + custom endpoint) | Media offloaded to object storage |
+| **API docs** | L5-Swagger (OpenAPI) | Contract-first; live "Authorize" via the Sanctum scheme |
+| **Infra / DevOps** | Docker Compose (app, queue worker, MySQL, Redis, Nginx) · Coolify (Traefik) | 5-service prod stack; dev adds a profile-gated TTS service |
+| **Testing** | PHPUnit 10 (SQLite in-memory) | 430+ tests across 55 suites |
+| **Quality** | PHPStan / Larastan (level 5) · Laravel Pint · Husky · commitlint | Local pre-commit gate + static analysis |
 
-```
-Backend component:
+---
+
+## Engineering Highlights
+
+- **Self-hosted TTS microservice** — Ukrainian speech synthesis runs in its own container, driven through a Redis queue and a dedicated worker; the provider is swapped by env (`TTS_PROVIDER`), so production uses ElevenLabs while local dev self-hosts Ukrainian-TTS and Kokoro.
+- **Multi-provider content pipeline** — game content is authored once and machine-translated (DeepL / OpenAI) into en/uk/es via `spatie/laravel-translatable`, with generated audio per language.
+- **Async by design** — slow work (audio generation) is offloaded to a dedicated `queue-worker` container, keeping request latency low.
+- **GDPR-style privacy** — a versioned consent audit trail, a blocking consent gate (including the Google OAuth path), and account deletion that anonymizes but retains consent records via a keyed HMAC.
+- **Contract-first API** — a full OpenAPI/Swagger spec with a working Sanctum "Authorize" flow across every protected endpoint.
+- **Auth** — Sanctum tokens plus Google OAuth (Socialite); the current token is revoked on logout, and all tokens are revoked on password change.
+
+---
+
+## Domain
+
+SmartSprouts helps children improve their cognitive skills through educational games. Accounts are held by an adult (parent or guardian) on behalf of a child.
+
+---
+
+## Getting Started
+
+Clone both repositories:
+
+```bash
 git clone git@github.com:Roman-PRV/SmartSprouts-backend.git
-
-Frontend component:
+# Frontend lives in the companion repository:
 git clone git@github.com:Roman-PRV/SmartSprouts-frontend.git
-See the instructions in the corresponding repository.
 ```
 
-## 4. Scripts
+The backend runs entirely in Docker. See [`DOCKER.md`](./DOCKER.md) for the full setup; in short, base services come from `docker-compose.yml` and dev overrides load automatically from `docker-compose.override.yml`. All Artisan/Composer commands run **inside the Laravel container**.
 
-- `lint` Runs PHPStan inside the Laravel container to perform static code analysis at level 5 (over `app`, `routes`, and `config`). Helps catch bugs and enforce code quality.
-- `format` Executes Laravel Pint inside the container to automatically format PHP code according to Laravel's coding standards.
-- `test` Runs Laravel's PHPUnit test suite inside the container to validate application logic and ensure everything works as expected.
-- `quality` Aggregates all quality checks: formatting (pint), static analysis (phpstan), and tests (phpunit). Ideal for pre-commit or CI pipelines.
-- `prepare` Initializes Husky Git hooks. Required once after installing dependencies to enable commit message and pre-commit checks.
-- `queue:restart` Restarts the Laravel queue worker inside the container. Required to apply PHP code changes to daemonized queue workers.
+---
 
-## 5. Database Schema
+## Scripts
+
+- `lint` — PHPStan (Larastan) static analysis at level 5 over `app`, `routes`, `config`.
+- `format` — Laravel Pint auto-formatting to Laravel coding standards.
+- `test` — the PHPUnit suite inside the Laravel container.
+- `quality` — aggregate gate: Pint + PHPStan + PHPUnit (pre-commit / CI).
+- `prepare` — initialize Husky git hooks (once, after install).
+- `queue:restart` — restart the queue worker to apply PHP changes to daemonized workers.
+
+---
+
+## Database Schema
+
+Domain and auth tables (standard Laravel `failed_jobs` / `password_reset_tokens` omitted for clarity). Translatable content is stored as JSON keyed by locale (`i18n`).
+
 ```mermaid
 erDiagram
 	direction TB
-	failed_jobs {
-		bigint id PK ""  
-		varchar uuid  "UNIQUE"  
-		text connection  ""  
-		text queue  ""  
-		longtext payload  ""  
-		longtext exception  ""  
-		timestamp failed_at  ""  
+	users {
+		bigint id PK
+		varchar name
+		varchar email "UNIQUE"
+		varchar google_id "UNIQUE, NULLABLE"
+		varchar avatar "NULLABLE"
+		boolean is_admin "default false"
+		varchar password "NULLABLE (Google accounts)"
+		timestamp email_verified_at "NULLABLE"
+		varchar remember_token
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	personal_access_tokens {
+		bigint id PK
+		varchar tokenable_type
+		bigint tokenable_id
+		varchar name
+		varchar token "UNIQUE"
+		text abilities "NULLABLE"
+		timestamp last_used_at "NULLABLE"
+		timestamp expires_at "NULLABLE"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	user_consents {
+		bigint id PK
+		bigint user_id FK "NULLABLE, nullOnDelete"
+		varchar email_hash "NULLABLE (keyed HMAC on anonymize)"
+		varchar type "terms or privacy"
+		varchar document_version
+		timestamp accepted_at
+		varchar ip_address "NULLABLE"
+		varchar user_agent "NULLABLE"
+		timestamp created_at
+		timestamp updated_at
 	}
 
 	games {
-		bigint id PK ""  
-		varchar table_prefix  "UNIQUE NULLABLE"  
-		varchar key  "UNIQUE"  
-		varchar icon_url  ""  
-		tinyint is_active  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	true_false_image_levels {
-		bigint id PK ""  
-		varchar title  ""  
-		varchar image_url  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	true_false_image_statements {
-		bigint id PK ""  
-		bigint level_id FK ""  
-		text statement  ""  
-		tinyint is_true  ""  
-		text explanation  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	true_false_text_levels {
-		bigint id PK ""  
-		varchar title  ""  
-		varchar image_url  ""  
-		text text  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	true_false_text_statements {
-		bigint id PK ""  
-		bigint level_id FK ""  
-		text statement  ""  
-		tinyint is_true  ""  
-		text explanation  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	users {
-		bigint id PK ""  
-		varchar name  ""  
-		varchar email  "UNIQUE"  
-		timestamp email_verified_at  ""  
-		varchar password  ""  
-		varchar remember_token  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
+		bigint id PK
+		varchar table_prefix "UNIQUE, NULLABLE"
+		varchar key "UNIQUE"
+		varchar icon_url
+		boolean is_active "default true"
+		json categories "NULLABLE"
+		timestamp created_at
+		timestamp updated_at
 	}
 
 	game_results {
-		bigint id PK ""
-		bigint user_id FK ""
-		bigint game_id FK ""
-		unsigned_integer level_id ""
-		varchar locale ""
-		unsigned_integer score ""
-		unsigned_integer total_questions ""
+		bigint id PK
+		bigint user_id FK
+		bigint game_id FK
+		unsigned_int level_id "per-game level, no FK"
+		varchar locale
+		unsigned_int score
+		unsigned_int total_questions
 		json details "NULLABLE"
-		timestamp created_at ""
-		timestamp updated_at ""
+		timestamp created_at
+		timestamp updated_at
 	}
 
-	true_false_image_levels||--o{true_false_image_statements:"has many"
-	true_false_text_levels||--o{true_false_text_statements:"has many"
-	users||--o{game_results:"has many"
-	games||--o{game_results:"has many"
+	true_false_image_levels {
+		bigint id PK
+		json title "i18n"
+		json title_audio_url "i18n, NULLABLE"
+		varchar image_url "NULLABLE"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	true_false_image_statements {
+		bigint id PK
+		bigint level_id FK
+		json statement "i18n"
+		json statement_audio_url "i18n, NULLABLE"
+		boolean is_true
+		json explanation "i18n, NULLABLE"
+		json explanation_audio_url "i18n, NULLABLE"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	true_false_text_levels {
+		bigint id PK
+		json title "i18n"
+		json title_audio_url "i18n, NULLABLE"
+		varchar image_url "NULLABLE"
+		json text "i18n"
+		json text_audio_url "i18n, NULLABLE"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	true_false_text_statements {
+		bigint id PK
+		bigint level_id FK
+		json statement "i18n"
+		json statement_audio_url "i18n, NULLABLE"
+		boolean is_true
+		json explanation "i18n, NULLABLE"
+		json explanation_audio_url "i18n, NULLABLE"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	find_the_wrong_levels {
+		bigint id PK
+		json title "i18n"
+		json title_audio_url "i18n"
+		varchar image_url "NULLABLE"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	find_the_wrong_items {
+		bigint id PK
+		bigint level_id FK
+		json polygon
+		json name "i18n"
+		json name_audio_url "i18n"
+		json explanation "i18n"
+		json explanation_audio_url "i18n"
+		timestamp created_at
+		timestamp updated_at
+	}
+
+	users ||--o{ personal_access_tokens : "has many"
+	users ||--o{ user_consents : "has many"
+	users ||--o{ game_results : "has many"
+	games ||--o{ game_results : "has many"
+	true_false_image_levels ||--o{ true_false_image_statements : "has many"
+	true_false_text_levels ||--o{ true_false_text_statements : "has many"
+	find_the_wrong_levels ||--o{ find_the_wrong_items : "has many"
 ```
 
-## 6. API Documentation
+---
+
+## API Documentation
 
 The API specification is available via Swagger UI.
 
@@ -147,7 +234,9 @@ To regenerate the local spec if it is out of date:
 php artisan l5-swagger:generate
 ```
 
-## 7. Folder Structure
+---
+
+## Folder Structure
 
 ```
 SmartSprouts-backend/
@@ -189,46 +278,31 @@ SmartSprouts-backend/
 └── package.json                    # Root NPM scripts (lint, test, queue:restart, …)
 ```
 
-## 8. Development Flow
+---
 
-### 8.1 Pull Request Flow
+## Development Flow
 
+We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0).
+
+**Pull request title**
 ```
 <type>: <ticket-title> <project-prefix>-<issue-number>
 ```
+Example: `feat: add dashboard screen ss-123`
 
-For the full list of types check [Conventional Commits](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional)
-
-Examples:
-
-- `feat: add dashboard screen ss-123`
-
-### 8.2 Branch Flow
-
+**Branch**
 ```
 <issue-number>-<type>-<short-desc>
 ```
+Examples: `123-feat-add-dashboard`, `34-fix-user-flow`
 
-Examples:
-
-- `123-feat-add-dashboard`
-- `12-feat-add-user-flow`
-- `34-fix-user-flow`
-
-### 8.3 Commit Flow
-
-We use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) to handle commit messages
-
+**Commit**
 ```
 <type>: <description> <project-prefix>-<issue-number>
 ```
+Examples: `feat: add dashboard component ss-45`, `fix: update dashboard card size ss-212`
 
-Examples:
-
-- `feat: add dashboard component ss-45`
-- `fix: update dashboard card size ss-212`
-
-### 8.4 Kokoro TTS (dev only)
+### Kokoro TTS (dev only)
 
 For Spanish and English TTS in local development, the project uses a self-hosted [Kokoro-82M](https://github.com/hexgrad/kokoro) container.
 
@@ -270,9 +344,7 @@ KOKORO_TTS_VOICE_ES=ef_dora
 
 > Kokoro provider is active **only** in `APP_ENV=local`. Production uses ElevenLabs.
 
----
-
-### 8.5 Ukrainian TTS
+### Ukrainian TTS
 
 Microservice for Ukrainian speech synthesis. Uses the [robinhad/ukrainian-tts](https://github.com/robinhad/ukrainian-tts) model.
 
@@ -297,6 +369,6 @@ Microservice for Ukrainian speech synthesis. Uses the [robinhad/ukrainian-tts](h
 
 ---
 
-## 9. Contributors:
+## Contributors
 
-- **Prokopenko Roman** github: _roman-prv_, discord: _@roman_27794_
+- **Prokopenko Roman** — GitHub: [roman-prv](https://github.com/Roman-PRV), Discord: _@roman_27794_
