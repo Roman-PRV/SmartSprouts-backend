@@ -254,9 +254,13 @@ SmartSprouts-backend/
 │   │   ├── Http/                   # Controllers, Requests, Resources, Middleware
 │   │   ├── Jobs/                   # Queue jobs (e.g. TTS generation)
 │   │   ├── Listeners/              # Event listeners
+│   │   ├── Mail/                   # Mailables (queued emails)
 │   │   ├── Models/                 # Eloquent models
+│   │   ├── Observers/              # Eloquent model observers
 │   │   ├── Providers/              # Service providers
+│   │   ├── Rules/                  # Custom validation rules
 │   │   ├── Services/               # Application services
+│   │   │   ├── Admin/              # Admin-facing services
 │   │   │   ├── Media/              # Media processing
 │   │   │   ├── Translation/        # Translation helpers
 │   │   │   └── Tts/                # TTS orchestration, storage, providers
@@ -273,6 +277,7 @@ SmartSprouts-backend/
 ├── nginx/                          # Nginx virtual host config
 ├── python-services/
 │   └── ukrainian-tts/              # Self-hosted Ukrainian TTS microservice
+├── postman/                        # Postman API collection
 ├── docker-compose.yml              # Base, prod-ready services (Coolify reads only this)
 ├── docker-compose.override.yml     # Dev overrides (auto-loaded by Docker Compose)
 └── package.json                    # Root NPM scripts (lint, test, queue:restart, …)
