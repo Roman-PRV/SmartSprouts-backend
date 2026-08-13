@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a3f7c2d1-8b4e-4f9a-bc6d-e2f1a0b3c5d8",
 		"name": "Find the Wrong — Player",
-		"description": "Smoke tests for player-facing endpoints: level read and attempt submit.\n\nAdaptive payloads — Happy Path and Negative Cases build request bodies dynamically based on actual items in the level (works with 1+ items).\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `1. Auth / Login` — token is auto-saved.\n3. Run `2. Discovery` folder top-to-bottom — game_id, level_id, and all_item_ids auto-saved.\n4. Step through `3. Happy Path`.\n5. Use `4. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}}.",
+		"description": "[Repointed] Uses the `SmartSprouts — Local` environment; there is no inline login — run the `Auth` collection first so `user_token` is populated.\n\nSmoke tests for player-facing endpoints: level read and attempt submit.\n\nAdaptive payloads — Happy Path and Negative Cases build request bodies dynamically based on actual items in the level (works with 1+ items).\n\nUsage:\n1. Select the `SmartSprouts — Local` environment (it carries base_url and the tokens).\n2. Run the `Auth` collection first to populate the token.\n3. Run `2. Discovery` folder top-to-bottom — game_id, level_id, and all_item_ids auto-saved.\n4. Step through `3. Happy Path`.\n5. Use `4. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{user_token}}.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -10,7 +10,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "{{token}}",
+				"value": "{{user_token}}",
 				"type": "string"
 			}
 		]
@@ -21,68 +21,28 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					"const url = pm.request.url.toString();",
-					"const isLogin = url.includes('/auth/login');",
-					"const missing = [];",
-					"if (!isLogin && !pm.collectionVariables.get('token')) missing.push('token (run \"1. Auth / Login\" first)');",
-					"if (url.includes('{{game_id}}') && !pm.collectionVariables.get('game_id')) missing.push('game_id (run \"2. Discovery / List games\" first)');",
-					"if (url.includes('{{level_id}}') && !pm.collectionVariables.get('level_id')) missing.push('level_id (run \"2. Discovery / List levels\" first)');",
-					"if (missing.length) console.warn('[Find the Wrong Player] Missing variables:\\n - ' + missing.join('\\n - '));"
+					"if (!pm.environment.get('user_token')) {",
+					"    console.warn('[Find the Wrong — Player] user_token is empty — run the \\\"Auth\\\" collection first (1. Tokens).');",
+					"}"
 				]
 			}
 		}
 	],
 	"variable": [
-		{ "key": "base_url", "value": "http://localhost:3000", "type": "string" },
-		{ "key": "email", "value": "player@example.com", "type": "string" },
-		{ "key": "password", "value": "password", "type": "string" },
-		{ "key": "token", "value": "", "type": "string" },
-		{ "key": "game_id", "value": "", "type": "string" },
-		{ "key": "level_id", "value": "", "type": "string" },
-		{ "key": "all_item_ids", "value": "[]", "type": "string", "description": "JSON array of every item ID in the level. Populated by Discovery." },
-		{ "key": "request_payload", "value": "{}", "type": "string", "description": "Per-request payload built in pre-request scripts. Sent as raw body." }
+		{
+			"key": "all_item_ids",
+			"value": "[]",
+			"type": "string",
+			"description": "JSON array of every item ID in the level. Populated by Discovery."
+		},
+		{
+			"key": "request_payload",
+			"value": "{}",
+			"type": "string",
+			"description": "Per-request payload built in pre-request scripts. Sent as raw body."
+		}
 	],
 	"item": [
-		{
-			"name": "1. Auth",
-			"item": [
-				{
-					"name": "Login (save token)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('200 OK', () => pm.response.to.have.status(200));",
-									"const data = pm.response.json();",
-									"pm.test('has access_token', () => pm.expect(data.access_token).to.be.a('string').and.not.empty);",
-									"pm.collectionVariables.set('token', data.access_token);",
-									"console.log('Token saved.');"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": { "type": "noauth" },
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "auth", "login"]
-						}
-					}
-				}
-			]
-		},
 		{
 			"name": "2. Discovery",
 			"item": [
@@ -99,7 +59,7 @@
 									"const ftw = list.find(g => g.key === 'find_the_wrong');",
 									"pm.test('find_the_wrong game exists', () => pm.expect(ftw).to.exist);",
 									"if (ftw) {",
-									"  pm.collectionVariables.set('game_id', String(ftw.id));",
+									"  pm.environment.set('game_id', String(ftw.id));",
 									"  console.log('Saved game_id =', ftw.id);",
 									"}"
 								],
@@ -109,11 +69,21 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/games",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games"
+							]
 						}
 					}
 				},
@@ -129,7 +99,7 @@
 									"const list = Array.isArray(body) ? body : (body.data || []);",
 									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
 									"if (list.length) {",
-									"  pm.collectionVariables.set('level_id', String(list[0].id));",
+									"  pm.environment.set('level_id', String(list[0].id));",
 									"  console.log('Saved level_id =', list[0].id);",
 									"}"
 								],
@@ -139,11 +109,23 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels"
+							]
 						}
 					}
 				},
@@ -169,11 +151,24 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}"
+							]
 						}
 					}
 				}
@@ -228,15 +223,36 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" },
-							{ "key": "Accept-Language", "value": "en" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept-Language",
+								"value": "en"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -279,14 +295,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -326,15 +360,36 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" },
-							{ "key": "Accept-Language", "value": "uk" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept-Language",
+								"value": "uk"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -371,14 +426,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				}
@@ -401,11 +474,19 @@
 						}
 					],
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -413,8 +494,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -449,14 +539,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/999999/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "999999", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"999999",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -491,14 +599,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/999999/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "999999", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"999999",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -537,14 +663,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -581,14 +725,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -610,8 +772,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -619,8 +787,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -659,14 +836,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				},
@@ -713,14 +908,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
-						"body": { "mode": "raw", "raw": "{{request_payload}}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{{request_payload}}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games", "{{game_id}}", "levels", "{{level_id}}", "attempts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"attempts"
+							]
 						}
 					}
 				}

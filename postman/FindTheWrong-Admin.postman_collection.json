@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "5b1f3a8c-7c2d-4a8f-9d6e-f1c2b3a4d5e6",
 		"name": "Find the Wrong — Admin",
-		"description": "Manual smoke tests for admin endpoints: levels CRUD and find-the-wrong items CRUD.\n\nUsage:\n1. Set `base_url`, `email`, `password` in collection variables (or environment).\n2. Run `Auth / Login` once — token is auto-saved.\n3. Run `Discovery / Find find_the_wrong game` and `Discovery / Find first level` — IDs auto-saved.\n4. Step through `Happy Path` folder.\n5. Use `Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{token}} from the collection level.",
+		"description": "[Repointed] Uses the `SmartSprouts — Local` environment; there is no inline login — run the `Auth` collection first so `admin_token` is populated.\n\nManual smoke tests for admin endpoints: levels CRUD and find-the-wrong items CRUD.\n\nUsage:\n1. Select the `SmartSprouts — Local` environment (it carries base_url and the tokens).\n2. Run the `Auth` collection first to populate the token.\n3. Run `Discovery / Find find_the_wrong game` and `Discovery / Find first level` — IDs auto-saved.\n4. Step through `Happy Path` folder.\n5. Use `Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{admin_token}} from the collection level.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -10,7 +10,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "{{token}}",
+				"value": "{{admin_token}}",
 				"type": "string"
 			}
 		]
@@ -21,138 +21,14 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					"// Collection-level guard: print a clear hint when required vars are empty.",
-					"// Variables are populated by earlier requests' Tests scripts (Login → Discovery → Create).",
-					"// Run requests top-to-bottom, or use Collection Runner.",
-					"const reqUrl = pm.request.url.toString();",
-					"const isLogin = reqUrl.includes('/auth/login');",
-					"const needsGame = reqUrl.includes('{{game_id}}') || reqUrl.includes('{{other_game_id}}');",
-					"const needsLevel = reqUrl.includes('{{level_id}}');",
-					"const needsItem = reqUrl.includes('{{item_id}}');",
-					"const missing = [];",
-					"if (!isLogin && !pm.collectionVariables.get('token')) missing.push('token (run \"1. Auth / Login\" first)');",
-					"if (needsGame && !pm.collectionVariables.get('game_id')) missing.push('game_id (run \"2. Discovery / List games\" first)');",
-					"if (reqUrl.includes('{{other_game_id}}') && !pm.collectionVariables.get('other_game_id')) missing.push('other_game_id (run \"2. Discovery / List games\" — needs a non-find_the_wrong game in DB)');",
-					"if (needsLevel && !pm.collectionVariables.get('level_id')) missing.push('level_id (run \"2. Discovery / List levels\" first)');",
-					"if (needsItem && !pm.collectionVariables.get('item_id')) missing.push('item_id (run \"3. Items / Create item\" first)');",
-					"if (missing.length) {",
-					"    console.warn('[Find the Wrong Admin] Missing variables:\\n - ' + missing.join('\\n - '));",
-					"    console.warn('Tip: right-click the collection → Run collection to execute everything top-to-bottom.');",
+					"if (!pm.environment.get('admin_token')) {",
+					"    console.warn('[Find the Wrong — Admin] admin_token is empty — run the \\\"Auth\\\" collection first (1. Tokens).');",
 					"}"
 				]
 			}
 		}
 	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:3000",
-			"type": "string"
-		},
-		{
-			"key": "email",
-			"value": "admin@example.com",
-			"type": "string"
-		},
-		{
-			"key": "password",
-			"value": "password",
-			"type": "string"
-		},
-		{
-			"key": "token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "game_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "level_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "item_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "other_game_id",
-			"value": "",
-			"type": "string"
-		}
-	],
 	"item": [
-		{
-			"name": "1. Auth",
-			"item": [
-				{
-					"name": "Login (save token)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('200 OK', () => pm.response.to.have.status(200));",
-									"const data = pm.response.json();",
-									"pm.test('has access_token', () => pm.expect(data.access_token).to.be.a('string').and.not.empty);",
-									"pm.collectionVariables.set('token', data.access_token);",
-									"console.log('Token saved');"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": { "type": "noauth" },
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "auth", "login"]
-						}
-					}
-				},
-				{
-					"name": "Who am I",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('200 OK', () => pm.response.to.have.status(200));",
-									"const body = pm.response.json();",
-									"// /api/auth/me returns { user: { ...UserResource } }",
-									"const user = body.user || body;",
-									"pm.test('is_admin true', () => pm.expect(user.is_admin).to.be.true);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
-						"url": {
-							"raw": "{{base_url}}/api/auth/me",
-							"host": ["{{base_url}}"],
-							"path": ["api", "auth", "me"]
-						}
-					}
-				}
-			]
-		},
 		{
 			"name": "2. Discovery",
 			"item": [
@@ -172,11 +48,11 @@
 									"const other = list.find(g => g.key && g.key !== 'find_the_wrong');",
 									"pm.test('find_the_wrong game exists', () => pm.expect(ftw).to.exist);",
 									"if (ftw) {",
-									"  pm.collectionVariables.set('game_id', String(ftw.id));",
+									"  pm.environment.set('game_id', String(ftw.id));",
 									"  console.log('Saved game_id =', ftw.id, '(' + ftw.key + ')');",
 									"}",
 									"if (other) {",
-									"  pm.collectionVariables.set('other_game_id', String(other.id));",
+									"  pm.environment.set('other_game_id', String(other.id));",
 									"  console.log('Saved other_game_id =', other.id, '(' + other.key + ')');",
 									"} else {",
 									"  console.warn('No non-find_the_wrong game found — \"Wrong game → 404\" test will fail.');",
@@ -188,11 +64,21 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/games",
-							"host": ["{{base_url}}"],
-							"path": ["api", "games"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"games"
+							]
 						}
 					}
 				},
@@ -208,7 +94,7 @@
 									"const list = Array.isArray(levels) ? levels : (levels.data || []);",
 									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
 									"if (list[0]) {",
-									"  pm.collectionVariables.set('level_id', String(list[0].id));",
+									"  pm.environment.set('level_id', String(list[0].id));",
 									"  console.log('level_id =', list[0].id);",
 									"}"
 								],
@@ -218,11 +104,24 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels"
+							]
 						}
 					}
 				}
@@ -245,7 +144,7 @@
 									"pm.test('name.uk persisted', () => pm.expect(item.name.uk).to.equal('Тарілка'));",
 									"pm.test('name.en persisted', () => pm.expect(item.name.en).to.equal('Plate'));",
 									"pm.test('explanation.es persisted', () => pm.expect(item.explanation.es).to.equal('Es un plato'));",
-									"pm.collectionVariables.set('item_id', String(item.id));",
+									"pm.environment.set('item_id', String(item.id));",
 									"console.log('item_id =', item.id);"
 								],
 								"type": "text/javascript"
@@ -255,8 +154,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -264,8 +169,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				},
@@ -290,8 +205,14 @@
 					"request": {
 						"method": "PATCH",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -299,8 +220,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "items", "{{item_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"items",
+								"{{item_id}}"
+							]
 						}
 					}
 				},
@@ -320,11 +250,25 @@
 					],
 					"request": {
 						"method": "DELETE",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "items", "{{item_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"items",
+								"{{item_id}}"
+							]
 						}
 					}
 				},
@@ -344,8 +288,14 @@
 					"request": {
 						"method": "PATCH",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -353,8 +303,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "items", "{{item_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"items",
+								"{{item_id}}"
+							]
 						}
 					}
 				}
@@ -377,11 +336,19 @@
 						}
 					],
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -389,8 +356,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				},
@@ -411,8 +388,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -420,8 +403,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{other_game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{other_game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{other_game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				},
@@ -443,8 +436,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -452,8 +451,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				},
@@ -475,8 +484,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -484,8 +499,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				},
@@ -507,8 +532,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -516,8 +547,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				},
@@ -540,8 +581,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "Accept", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -549,8 +596,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels",
+								"{{level_id}}",
+								"items"
+							]
 						}
 					}
 				}
@@ -579,11 +636,24 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "Accept", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
-							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"games",
+								"{{game_id}}",
+								"levels"
+							]
 						}
 					}
 				}
