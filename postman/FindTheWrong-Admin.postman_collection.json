@@ -7,13 +7,7 @@
 	},
 	"auth": {
 		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{admin_token}}",
-				"type": "string"
-			}
-		]
+		"bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
 	},
 	"event": [
 		{
@@ -30,7 +24,7 @@
 	],
 	"item": [
 		{
-			"name": "2. Discovery",
+			"name": "1. Discovery",
 			"item": [
 				{
 					"name": "List games (save find_the_wrong id)",
@@ -48,11 +42,11 @@
 									"const other = list.find(g => g.key && g.key !== 'find_the_wrong');",
 									"pm.test('find_the_wrong game exists', () => pm.expect(ftw).to.exist);",
 									"if (ftw) {",
-									"  pm.environment.set('game_id', String(ftw.id));",
+									"  pm.collectionVariables.set('ftwa_game_id', String(ftw.id));",
 									"  console.log('Saved game_id =', ftw.id, '(' + ftw.key + ')');",
 									"}",
 									"if (other) {",
-									"  pm.environment.set('other_game_id', String(other.id));",
+									"  pm.collectionVariables.set('ftwa_other_game_id', String(other.id));",
 									"  console.log('Saved other_game_id =', other.id, '(' + other.key + ')');",
 									"} else {",
 									"  console.warn('No non-find_the_wrong game found — \"Wrong game → 404\" test will fail.');",
@@ -64,21 +58,11 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
 							"raw": "{{base_url}}/api/games",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
 						}
 					}
 				},
@@ -94,7 +78,7 @@
 									"const list = Array.isArray(levels) ? levels : (levels.data || []);",
 									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
 									"if (list[0]) {",
-									"  pm.environment.set('level_id', String(list[0].id));",
+									"  pm.collectionVariables.set('ftwa_level_id', String(list[0].id));",
 									"  console.log('level_id =', list[0].id);",
 									"}"
 								],
@@ -104,31 +88,18 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "3. Items — Happy Path",
+			"name": "2. Items — Happy Path",
 			"item": [
 				{
 					"name": "Create item (save item_id)",
@@ -144,7 +115,7 @@
 									"pm.test('name.uk persisted', () => pm.expect(item.name.uk).to.equal('Тарілка'));",
 									"pm.test('name.en persisted', () => pm.expect(item.name.en).to.equal('Plate'));",
 									"pm.test('explanation.es persisted', () => pm.expect(item.explanation.es).to.equal('Es un plato'));",
-									"pm.environment.set('item_id', String(item.id));",
+									"pm.collectionVariables.set('ftwa_item_id', String(item.id));",
 									"console.log('item_id =', item.id);"
 								],
 								"type": "text/javascript"
@@ -154,33 +125,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [\n    [0.1, 0.1],\n    [0.4, 0.1],\n    [0.4, 0.4],\n    [0.1, 0.4]\n  ],\n  \"name\": {\n    \"uk\": \"Тарілка\",\n    \"en\": \"Plate\",\n    \"es\": \"Plato\"\n  },\n  \"explanation\": {\n    \"uk\": \"Це тарілка\",\n    \"en\": \"It's a plate\",\n    \"es\": \"Es un plato\"\n  }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				},
@@ -205,32 +160,17 @@
 					"request": {
 						"method": "PATCH",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [\n    [0.2, 0.2],\n    [0.5, 0.2],\n    [0.5, 0.5]\n  ],\n  \"name\": {\n    \"uk\": \"Чашка\"\n  }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"items",
-								"{{item_id}}"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/items/{{ftwa_item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "items", "{{ftwa_item_id}}"]
 						}
 					}
 				},
@@ -250,25 +190,11 @@
 					],
 					"request": {
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"items",
-								"{{item_id}}"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/items/{{ftwa_item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "items", "{{ftwa_item_id}}"]
 						}
 					}
 				},
@@ -288,39 +214,24 @@
 					"request": {
 						"method": "PATCH",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"name\": { \"uk\": \"X\" }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/items/{{item_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"items",
-								"{{item_id}}"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/items/{{ftwa_item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "items", "{{ftwa_item_id}}"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "4. Items — Negative Cases",
+			"name": "3. Items — Negative Cases",
 			"item": [
 				{
 					"name": "No auth → 401",
@@ -336,38 +247,20 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "noauth"
-						},
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [[0.1,0.1],[0.4,0.1],[0.4,0.4]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				},
@@ -388,33 +281,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [[0.1,0.1],[0.4,0.1],[0.4,0.4]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{other_game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{other_game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_other_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_other_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				},
@@ -436,33 +313,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [[0.1, 0.1], [0.2, 0.2]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				},
@@ -484,33 +345,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [[1.5, 0.1], [0.4, 0.1], [0.4, 0.4]],\n  \"name\": { \"uk\": \"x\", \"en\": \"x\", \"es\": \"x\" }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				},
@@ -532,33 +377,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"polygon\": [[0.1, 0.1], [0.4, 0.1], [0.4, 0.4]],\n  \"name\": { \"uk\": \"Тарілка\", \"en\": \"Plate\" }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				},
@@ -581,40 +410,24 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/items",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"items"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels/{{ftwa_level_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels", "{{ftwa_level_id}}", "items"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "5. Levels — Smoke",
+			"name": "4. Levels — Smoke",
 			"item": [
 				{
 					"name": "List levels (admin)",
@@ -636,28 +449,21 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"games",
-								"{{game_id}}",
-								"levels"
-							]
+							"raw": "{{base_url}}/api/admin/games/{{ftwa_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{ftwa_game_id}}", "levels"]
 						}
 					}
 				}
 			]
 		}
+	],
+	"variable": [
+		{ "key": "ftwa_game_id", "value": "", "type": "string" },
+		{ "key": "ftwa_level_id", "value": "", "type": "string" },
+		{ "key": "ftwa_item_id", "value": "", "type": "string" },
+		{ "key": "ftwa_other_game_id", "value": "", "type": "string" }
 	]
 }

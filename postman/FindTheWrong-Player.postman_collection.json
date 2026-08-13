@@ -2,18 +2,12 @@
 	"info": {
 		"_postman_id": "a3f7c2d1-8b4e-4f9a-bc6d-e2f1a0b3c5d8",
 		"name": "Find the Wrong — Player",
-		"description": "[Repointed] Uses the `SmartSprouts — Local` environment; there is no inline login — run the `Auth` collection first so `user_token` is populated.\n\nSmoke tests for player-facing endpoints: level read and attempt submit.\n\nAdaptive payloads — Happy Path and Negative Cases build request bodies dynamically based on actual items in the level (works with 1+ items).\n\nUsage:\n1. Select the `SmartSprouts — Local` environment (it carries base_url and the tokens).\n2. Run the `Auth` collection first to populate the token.\n3. Run `2. Discovery` folder top-to-bottom — game_id, level_id, and all_item_ids auto-saved.\n4. Step through `3. Happy Path`.\n5. Use `4. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{user_token}}.",
+		"description": "[Repointed] Uses the `SmartSprouts — Local` environment; there is no inline login — run the `Auth` collection first so `user_token` is populated.\n\nSmoke tests for player-facing endpoints: level read and attempt submit.\n\nAdaptive payloads — Happy Path and Negative Cases build request bodies dynamically based on actual items in the level (works with 1+ items).\n\nUsage:\n1. Select the `SmartSprouts — Local` environment (it carries base_url and the tokens).\n2. Run the `Auth` collection first to populate the token.\n3. Run `1. Discovery` folder top-to-bottom — game_id, level_id, and all_item_ids auto-saved.\n4. Step through `2. Happy Path`.\n5. Use `3. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{user_token}}.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
 		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{user_token}}",
-				"type": "string"
-			}
-		]
+		"bearer": [{ "key": "token", "value": "{{user_token}}", "type": "string" }]
 	},
 	"event": [
 		{
@@ -29,22 +23,14 @@
 		}
 	],
 	"variable": [
-		{
-			"key": "all_item_ids",
-			"value": "[]",
-			"type": "string",
-			"description": "JSON array of every item ID in the level. Populated by Discovery."
-		},
-		{
-			"key": "request_payload",
-			"value": "{}",
-			"type": "string",
-			"description": "Per-request payload built in pre-request scripts. Sent as raw body."
-		}
+		{ "key": "ftwp_game_id", "value": "", "type": "string" },
+		{ "key": "ftwp_level_id", "value": "", "type": "string" },
+		{ "key": "all_item_ids", "value": "[]", "type": "string", "description": "JSON array of every item ID in the level. Populated by Discovery." },
+		{ "key": "request_payload", "value": "{}", "type": "string", "description": "Per-request payload built in pre-request scripts. Sent as raw body." }
 	],
 	"item": [
 		{
-			"name": "2. Discovery",
+			"name": "1. Discovery",
 			"item": [
 				{
 					"name": "List games (save find_the_wrong id)",
@@ -59,7 +45,7 @@
 									"const ftw = list.find(g => g.key === 'find_the_wrong');",
 									"pm.test('find_the_wrong game exists', () => pm.expect(ftw).to.exist);",
 									"if (ftw) {",
-									"  pm.environment.set('game_id', String(ftw.id));",
+									"  pm.collectionVariables.set('ftwp_game_id', String(ftw.id));",
 									"  console.log('Saved game_id =', ftw.id);",
 									"}"
 								],
@@ -69,21 +55,11 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
 							"raw": "{{base_url}}/api/games",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
 						}
 					}
 				},
@@ -99,7 +75,7 @@
 									"const list = Array.isArray(body) ? body : (body.data || []);",
 									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
 									"if (list.length) {",
-									"  pm.environment.set('level_id', String(list[0].id));",
+									"  pm.collectionVariables.set('ftwp_level_id', String(list[0].id));",
 									"  console.log('Saved level_id =', list[0].id);",
 									"}"
 								],
@@ -109,23 +85,11 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels"]
 						}
 					}
 				},
@@ -151,31 +115,18 @@
 					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "3. Happy Path",
+			"name": "2. Happy Path",
 			"item": [
 				{
 					"name": "Submit attempt — all found (perfect score)",
@@ -223,36 +174,18 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept-Language",
-								"value": "en"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -295,32 +228,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -360,36 +278,18 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept-Language",
-								"value": "uk"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "uk" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -426,39 +326,24 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "4. Negative Cases",
+			"name": "3. Negative Cases",
 			"item": [
 				{
 					"name": "401 — no token",
@@ -474,37 +359,20 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "noauth"
-						},
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"duration_seconds\": 42,\n  \"found\": [],\n  \"missed_item_ids\": []\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -539,32 +407,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/999999/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"999999",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/999999/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "999999", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -599,32 +452,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/999999/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"999999",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/999999/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "999999", "attempts"]
 						}
 					}
 				},
@@ -663,32 +501,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -725,32 +548,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -772,32 +580,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"duration_seconds\": 42,\n  \"found\": [],\n  \"missed_item_ids\": []\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -836,32 +629,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -908,32 +686,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{ftwp_game_id}}/levels/{{ftwp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{ftwp_game_id}}", "levels", "{{ftwp_level_id}}", "attempts"]
 						}
 					}
 				}

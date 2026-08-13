@@ -2,18 +2,12 @@
 	"info": {
 		"_postman_id": "e5c1a9b7-6d20-4f83-9a41-2c8b7e0d3f19",
 		"name": "True/False — Player",
-		"description": "[Repointed] Uses the `SmartSprouts — Local` environment; there is no inline login — run the `Auth` collection first so `user_token` is populated.\n\nSmoke tests for the true/false player flow over the shared generic endpoints (read via LevelController, submit via AttemptController). Discovery-based: it finds a true_false_text game, a level that has statements, and plays it — so it runs against existing data with no seeding.\n\nKey point: the player level resource HIDES `is_true` (you must not be able to see the answer before submitting). This collection asserts that privacy, then submits guesses and checks the scoring SHAPE (200 + one result per statement). It cannot assert a perfect score, precisely because the correct answers aren't exposed to the player. The submit RESPONSE does include `is_true` — revealing it after answering is intended.\n\nSubmit body: `{ answers: [ { statement_id, answer(bool) } ] }`.\n\nUsage:\n1. Select the `SmartSprouts — Local` environment (it carries base_url and the tokens).\n2. Run the `Auth` collection first to populate the token.\n3. Run `2. Discovery` top-to-bottom — game_id, level_id, statement_ids auto-saved.\n4. Step through `3. Happy Path`; `4. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{user_token}}.",
+		"description": "[Repointed] Uses the `SmartSprouts — Local` environment; there is no inline login — run the `Auth` collection first so `user_token` is populated.\n\nSmoke tests for the true/false player flow over the shared generic endpoints (read via LevelController, submit via AttemptController). Discovery-based: it finds a true_false_text game, a level that has statements, and plays it — so it runs against existing data with no seeding.\n\nKey point: the player level resource HIDES `is_true` (you must not be able to see the answer before submitting). This collection asserts that privacy, then submits guesses and checks the scoring SHAPE (200 + one result per statement). It cannot assert a perfect score, precisely because the correct answers aren't exposed to the player. The submit RESPONSE does include `is_true` — revealing it after answering is intended.\n\nSubmit body: `{ answers: [ { statement_id, answer(bool) } ] }`.\n\nUsage:\n1. Select the `SmartSprouts — Local` environment (it carries base_url and the tokens).\n2. Run the `Auth` collection first to populate the token.\n3. Run `1. Discovery` top-to-bottom — game_id, level_id, statement_ids auto-saved.\n4. Step through `2. Happy Path`; `3. Negative Cases` for sanity checks.\n\nAll requests inherit Bearer auth via {{user_token}}.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
 		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{user_token}}",
-				"type": "string"
-			}
-		]
+		"bearer": [{ "key": "token", "value": "{{user_token}}", "type": "string" }]
 	},
 	"event": [
 		{
@@ -29,22 +23,14 @@
 		}
 	],
 	"variable": [
-		{
-			"key": "statement_ids",
-			"value": "[]",
-			"type": "string",
-			"description": "JSON array of the level's statement ids. Populated by Discovery."
-		},
-		{
-			"key": "request_payload",
-			"value": "{}",
-			"type": "string",
-			"description": "Per-request body built in pre-request scripts."
-		}
+		{ "key": "tfp_game_id", "value": "", "type": "string" },
+		{ "key": "tfp_level_id", "value": "", "type": "string" },
+		{ "key": "statement_ids", "value": "[]", "type": "string", "description": "JSON array of the level's statement ids. Populated by Discovery." },
+		{ "key": "request_payload", "value": "{}", "type": "string", "description": "Per-request body built in pre-request scripts." }
 	],
 	"item": [
 		{
-			"name": "2. Discovery",
+			"name": "1. Discovery",
 			"item": [
 				{
 					"name": "List games (save true_false_text id)",
@@ -60,7 +46,7 @@
 									"const game = list.find(g => g.key === 'true_false_text');",
 									"pm.test('true_false_text game exists', () => pm.expect(game).to.exist);",
 									"if (game) {",
-									"  pm.environment.set('game_id', String(game.id));",
+									"  pm.collectionVariables.set('tfp_game_id', String(game.id));",
 									"  console.log('Saved game_id =', game.id, '| title:', game.title);",
 									"}"
 								]
@@ -70,24 +56,13 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept-Language",
-								"value": "en"
-							}
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
 						],
 						"url": {
 							"raw": "{{base_url}}/api/games",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
 						}
 					}
 				},
@@ -104,7 +79,7 @@
 									"const list = Array.isArray(body) ? body : (body.data || []);",
 									"pm.test('at least one level', () => pm.expect(list.length).to.be.greaterThan(0));",
 									"if (list.length) {",
-									"  pm.environment.set('level_id', String(list[0].id));",
+									"  pm.collectionVariables.set('tfp_level_id', String(list[0].id));",
 									"  console.log('Saved level_id =', list[0].id, '| title:', list[0].title);",
 									"}"
 								]
@@ -114,26 +89,13 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept-Language",
-								"value": "en"
-							}
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
 						],
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels"]
 						}
 					}
 				},
@@ -164,34 +126,20 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept-Language",
-								"value": "en"
-							}
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
 						],
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels/{{tfp_level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels", "{{tfp_level_id}}"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "3. Happy Path",
+			"name": "2. Happy Path",
 			"item": [
 				{
 					"name": "Submit answers — all TRUE (shape check)",
@@ -233,36 +181,18 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept-Language",
-								"value": "en"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Accept-Language", "value": "en" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels/{{tfp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels", "{{tfp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -301,39 +231,24 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels/{{tfp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels", "{{tfp_level_id}}", "attempts"]
 						}
 					}
 				}
 			]
 		},
 		{
-			"name": "4. Negative Cases",
+			"name": "3. Negative Cases",
 			"item": [
 				{
 					"name": "401 — no token",
@@ -349,37 +264,20 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "noauth"
-						},
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"answers\": []\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels/{{tfp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels", "{{tfp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -418,32 +316,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/{{level_id}}/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"{{level_id}}",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels/{{tfp_level_id}}/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels", "{{tfp_level_id}}", "attempts"]
 						}
 					}
 				},
@@ -475,32 +358,17 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{{request_payload}}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/games/{{game_id}}/levels/99999999/attempts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"games",
-								"{{game_id}}",
-								"levels",
-								"99999999",
-								"attempts"
-							]
+							"raw": "{{base_url}}/api/games/{{tfp_game_id}}/levels/99999999/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games", "{{tfp_game_id}}", "levels", "99999999", "attempts"]
 						}
 					}
 				}

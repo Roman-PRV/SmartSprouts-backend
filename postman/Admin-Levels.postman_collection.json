@@ -27,7 +27,7 @@
 			"name": "1. Discovery",
 			"item": [
 				{
-					"name": "List games (save game_id + other_game_id)",
+					"name": "List games (save game_id)",
 					"event": [
 						{
 							"listen": "test",
@@ -38,11 +38,8 @@
 									"const body = pm.response.json();",
 									"const list = Array.isArray(body) ? body : (body.data || []);",
 									"const ftw = list.find(g => g.key === 'find_the_wrong');",
-									"const other = list.find(g => g.key && g.key !== 'find_the_wrong');",
 									"pm.test('find_the_wrong game exists', () => pm.expect(ftw, 'seed a find_the_wrong game').to.exist);",
-									"if (ftw) { pm.environment.set('game_id', String(ftw.id)); console.log('game_id =', ftw.id); }",
-									"if (other) { pm.environment.set('other_game_id', String(other.id)); console.log('other_game_id =', other.id); }",
-									"else { console.warn('No non-find_the_wrong game found — the GameMatches negative in other collections will not apply.'); }"
+									"if (ftw) { pm.collectionVariables.set('adm_game_id', String(ftw.id)); console.log('game_id =', ftw.id); }"
 								]
 							}
 						}
@@ -69,7 +66,7 @@
 									"const list = pm.response.json();",
 									"pm.test('array shape', () => pm.expect(list).to.be.an('array'));",
 									"if (list[0]) {",
-									"  pm.environment.set('level_id', String(list[0].id));",
+									"  pm.collectionVariables.set('adm_level_id', String(list[0].id));",
 									"  console.log('level_id =', list[0].id);",
 									"  pm.test('items_count present', () => pm.expect(list[0]).to.have.property('items_count'));",
 									"} else {",
@@ -83,9 +80,9 @@
 						"method": "GET",
 						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
 						}
 					}
 				}
@@ -103,7 +100,7 @@
 								"type": "text/javascript",
 								"exec": [
 									"pm.test('200 OK', () => pm.response.to.have.status(200));",
-									"pm.test('id matches', () => pm.expect(String(pm.response.json().id)).to.equal(pm.environment.get('level_id')));"
+									"pm.test('id matches', () => pm.expect(String(pm.response.json().id)).to.equal(pm.collectionVariables.get('adm_level_id')));"
 								]
 							}
 						}
@@ -112,9 +109,9 @@
 						"method": "GET",
 						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}"]
 						}
 					}
 				},
@@ -135,9 +132,9 @@
 						"method": "GET",
 						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/99999999",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/99999999",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "99999999"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "99999999"]
 						}
 					}
 				}
@@ -169,16 +166,33 @@
 						"body": {
 							"mode": "formdata",
 							"formdata": [
-								{ "key": "title[uk]", "value": "Кухня", "type": "text" },
-								{ "key": "title[en]", "value": "Kitchen", "type": "text" },
-								{ "key": "title[es]", "value": "Cocina", "type": "text" },
-								{ "key": "image", "type": "file", "src": [], "description": "Attach a jpeg/png/webp file (≤10 MB) — required for image games." }
+								{
+									"key": "title[uk]",
+									"value": "Кухня",
+									"type": "text"
+								},
+								{
+									"key": "title[en]",
+									"value": "Kitchen",
+									"type": "text"
+								},
+								{
+									"key": "title[es]",
+									"value": "Cocina",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": [],
+									"description": "Attach a jpeg/png/webp file (≤10 MB) — required for image games."
+								}
 							]
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
 						}
 					}
 				},
@@ -209,9 +223,9 @@
 							]
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{created_level_id}}",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{created_level_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{created_level_id}}"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{created_level_id}}"]
 						}
 					}
 				},
@@ -233,9 +247,9 @@
 						"method": "DELETE",
 						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{created_level_id}}",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{created_level_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{created_level_id}}"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{created_level_id}}"]
 						}
 					}
 				},
@@ -261,11 +275,14 @@
 							{ "key": "Content-Type", "value": "application/json" },
 							{ "key": "Accept", "value": "application/json" }
 						],
-						"body": { "mode": "raw", "raw": "{}" },
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
 						}
 					}
 				}
@@ -299,9 +316,9 @@
 							"raw": "{\n  \"field\": \"title_audio_url\",\n  \"locale\": \"en\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/audio/regenerate",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}/audio/regenerate",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "audio", "regenerate"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}", "audio", "regenerate"]
 						}
 					}
 				},
@@ -329,9 +346,9 @@
 							"raw": "{\n  \"field\": \"not_an_audio_field\",\n  \"locale\": \"en\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/audio/regenerate",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}/audio/regenerate",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "audio", "regenerate"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}", "audio", "regenerate"]
 						}
 					}
 				},
@@ -359,9 +376,9 @@
 							"raw": "{\n  \"field\": \"title_audio_url\",\n  \"locale\": \"zz\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels/{{level_id}}/audio/regenerate",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}/audio/regenerate",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels", "{{level_id}}", "audio", "regenerate"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}", "audio", "regenerate"]
 						}
 					}
 				}
@@ -392,9 +409,9 @@
 						"method": "GET",
 						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
 						}
 					}
 				},
@@ -416,9 +433,9 @@
 						"method": "GET",
 						"header": [{ "key": "Accept", "value": "application/json" }],
 						"url": {
-							"raw": "{{base_url}}/api/admin/games/{{game_id}}/levels",
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
 							"host": ["{{base_url}}"],
-							"path": ["api", "admin", "games", "{{game_id}}", "levels"]
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
 						}
 					}
 				}
@@ -426,6 +443,8 @@
 		}
 	],
 	"variable": [
+		{ "key": "adm_game_id", "value": "", "type": "string" },
+		{ "key": "adm_level_id", "value": "", "type": "string" },
 		{ "key": "created_level_id", "value": "", "type": "string" }
 	]
 }
