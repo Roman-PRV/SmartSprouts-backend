@@ -1,0 +1,450 @@
+{
+	"info": {
+		"_postman_id": "b4e2a7c9-1f60-4d38-9c04-8a5e2b1d0f93",
+		"name": "Admin — Levels (generic)",
+		"description": "Generic admin level CRUD + TTS audio regeneration, shared by every game via the slug-free `admin/games/{game}/levels` URL (the game is a numeric id; the dispatcher picks the per-game model).\n\nUsage:\n1. Select the `SmartSprouts — Local` environment.\n2. Run the `Auth` collection first so `admin_token` / `user_token` are populated.\n3. Run `1. Discovery` to fill `game_id` (a find_the_wrong game — needs a cover image) and `level_id`.\n4. Step through the rest, or use the Collection Runner.\n\nNotes reflected here:\n- Create/Update are `multipart/form-data`: `title[uk|en|es]` text parts + an `image` FILE part. **You must attach an image file** to those two requests (jpeg/png/webp, ≤10 MB) — a binary can't be shipped inside a collection.\n- Update is sent as POST + `_method=PATCH` so the file part survives Laravel's method spoofing (PHP won't parse multipart on a real PUT/PATCH).\n- `audio/regenerate` returns 202 and QUEUES a real TTS job — the happy path has a side effect; the negatives (unknown field/locale → 422) do not.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (!pm.environment.get('admin_token')) {",
+					"    console.warn('[Admin — Levels] admin_token is empty — run the \"Auth\" collection first (1. Tokens).');",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "1. Discovery",
+			"item": [
+				{
+					"name": "List games (save game_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const list = Array.isArray(body) ? body : (body.data || []);",
+									"const ftw = list.find(g => g.key === 'find_the_wrong');",
+									"pm.test('find_the_wrong game exists', () => pm.expect(ftw, 'seed a find_the_wrong game').to.exist);",
+									"if (ftw) { pm.collectionVariables.set('adm_game_id', String(ftw.id)); console.log('game_id =', ftw.id); }"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/games",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
+						}
+					}
+				},
+				{
+					"name": "List levels — admin (save level_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const list = pm.response.json();",
+									"pm.test('array shape', () => pm.expect(list).to.be.an('array'));",
+									"if (list[0]) {",
+									"  pm.collectionVariables.set('adm_level_id', String(list[0].id));",
+									"  console.log('level_id =', list[0].id);",
+									"  pm.test('items_count present', () => pm.expect(list[0]).to.have.property('items_count'));",
+									"} else {",
+									"  console.warn('No levels for this game — create one in \"3. Levels — write\" first.');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Levels — read",
+			"item": [
+				{
+					"name": "Show level (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('id matches', () => pm.expect(String(pm.response.json().id)).to.equal(pm.collectionVariables.get('adm_level_id')));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Show level — nonexistent (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/99999999",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "99999999"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Levels — write (form-data, attach a file)",
+			"item": [
+				{
+					"name": "Create level — attach image (201, save created_level_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const level = pm.response.json();",
+									"pm.test('has id', () => pm.expect(level.id).to.be.a('number'));",
+									"pm.collectionVariables.set('created_level_id', String(level.id));",
+									"console.log('created_level_id =', level.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title[uk]",
+									"value": "Кухня",
+									"type": "text"
+								},
+								{
+									"key": "title[en]",
+									"value": "Kitchen",
+									"type": "text"
+								},
+								{
+									"key": "title[es]",
+									"value": "Cocina",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": [],
+									"description": "Attach a jpeg/png/webp file (≤10 MB) — required for image games."
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
+						}
+					}
+				},
+				{
+					"name": "Update level — POST + _method=PATCH (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('title.uk updated', () => pm.expect(pm.response.json().title.uk).to.equal('Кухня (оновлено)'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "_method", "value": "PATCH", "type": "text" },
+								{ "key": "title[uk]", "value": "Кухня (оновлено)", "type": "text" },
+								{ "key": "title[en]", "value": "Kitchen (updated)", "type": "text" },
+								{ "key": "title[es]", "value": "Cocina (actualizada)", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{created_level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{created_level_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete created level (204)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));",
+									"pm.test('empty body', () => pm.expect(pm.response.text()).to.equal(''));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{created_level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{created_level_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Create level — empty body (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"const errors = pm.response.json().errors;",
+									"pm.test('title required', () => pm.expect(errors.title).to.exist);",
+									"pm.test('image required', () => pm.expect(errors.image).to.exist);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Audio regenerate",
+			"item": [
+				{
+					"name": "Regenerate title audio — queues TTS (202)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// SIDE EFFECT: enqueues a real TTS job for the queue worker to process.",
+									"pm.test('202 Accepted', () => pm.response.to.have.status(202));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"field\": \"title_audio_url\",\n  \"locale\": \"en\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}/audio/regenerate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}", "audio", "regenerate"]
+						}
+					}
+				},
+				{
+					"name": "Regenerate — unknown field (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"field\": \"not_an_audio_field\",\n  \"locale\": \"en\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}/audio/regenerate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}", "audio", "regenerate"]
+						}
+					}
+				},
+				{
+					"name": "Regenerate — unknown locale (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"field\": \"title_audio_url\",\n  \"locale\": \"zz\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels/{{adm_level_id}}/audio/regenerate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels", "{{adm_level_id}}", "audio", "regenerate"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Authorization",
+			"item": [
+				{
+					"name": "List levels — user token (403)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// EnsureAdmin rejects a non-admin authenticated user.",
+									"pm.test('403 Forbidden', () => pm.response.to.have.status(403));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{user_token}}", "type": "string" }]
+						},
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
+						}
+					}
+				},
+				{
+					"name": "List levels — no token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{adm_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{adm_game_id}}", "levels"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "adm_game_id", "value": "", "type": "string" },
+		{ "key": "adm_level_id", "value": "", "type": "string" },
+		{ "key": "created_level_id", "value": "", "type": "string" }
+	]
+}
