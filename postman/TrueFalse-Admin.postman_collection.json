@@ -1,0 +1,347 @@
+{
+	"info": {
+		"_postman_id": "d2f7b6a1-3c48-4e91-8b70-1a6c9e2f4d05",
+		"name": "True/False — Admin (statements)",
+		"description": "Generic admin statement CRUD + TTS regeneration for the true/false games. The statement shape is identical for `true_false_image` and `true_false_text`; the endpoints are dispatched by the numeric game id in the URL.\n\nThis collection targets `true_false_text` on purpose: its level needs no cover image, so the whole flow is pure JSON and self-contained — it creates its own level, exercises statements under it, and deletes the level at the end. For `true_false_image` the statement requests are byte-identical; only the level setup would need an attached image (see the `Admin — Levels` collection).\n\nUsage:\n1. Select the `SmartSprouts — Local` environment.\n2. Run the `Auth` collection first so `admin_token` is populated.\n3. Run this collection top-to-bottom (or via the Runner) — `1. Setup` seeds the ids the rest reuse.\n\nNote: `audio/regenerate` returns 202 and QUEUES a real TTS job (side effect); the negatives do not.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (!pm.environment.get('admin_token')) {",
+					"    console.warn('[True/False — Admin] admin_token is empty — run the \"Auth\" collection first (1. Tokens).');",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "1. Setup",
+			"item": [
+				{
+					"name": "Find true_false_text game (save tf_game_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"const list = Array.isArray(body) ? body : (body.data || []);",
+									"const tf = list.find(g => g.key === 'true_false_text');",
+									"pm.test('true_false_text game exists', () => pm.expect(tf, 'seed GameSeeder').to.exist);",
+									"if (tf) { pm.collectionVariables.set('tf_game_id', String(tf.id)); console.log('tf_game_id =', tf.id); }"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/games",
+							"host": ["{{base_url}}"],
+							"path": ["api", "games"]
+						}
+					}
+				},
+				{
+					"name": "Create a text level (save tf_level_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"pm.collectionVariables.set('tf_level_id', String(pm.response.json().id));",
+									"console.log('tf_level_id =', pm.response.json().id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": { \"uk\": \"Тварини\", \"en\": \"Animals\", \"es\": \"Animales\" },\n  \"text\": { \"uk\": \"Правда чи ні?\", \"en\": \"True or false?\", \"es\": \"¿Verdadero o falso?\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/levels",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "levels"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Statements — CRUD",
+			"item": [
+				{
+					"name": "Create statement (save tf_statement_id)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const s = pm.response.json();",
+									"pm.test('has id', () => pm.expect(s.id).to.be.a('number'));",
+									"pm.collectionVariables.set('tf_statement_id', String(s.id));",
+									"console.log('tf_statement_id =', s.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"statement\": { \"uk\": \"Кіт — це тварина\", \"en\": \"A cat is an animal\", \"es\": \"Un gato es un animal\" },\n  \"explanation\": { \"uk\": \"Так, кіт — ссавець\", \"en\": \"Yes, a cat is a mammal\", \"es\": \"Sí, un gato es un mamífero\" },\n  \"is_true\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/levels/{{tf_level_id}}/statements",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "levels", "{{tf_level_id}}", "statements"]
+						}
+					}
+				},
+				{
+					"name": "Update statement (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('is_true flipped', () => pm.expect(pm.response.json().is_true).to.eql(false));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"statement\": { \"uk\": \"Камінь — це тварина\", \"en\": \"A rock is an animal\", \"es\": \"Una roca es un animal\" },\n  \"explanation\": { \"uk\": \"Ні, камінь неживий\", \"en\": \"No, a rock is not alive\", \"es\": \"No, una roca no está viva\" },\n  \"is_true\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/statements/{{tf_statement_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "statements", "{{tf_statement_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Regenerate statement audio — queues TTS (202)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// SIDE EFFECT: enqueues a real TTS job for the queue worker.",
+									"pm.test('202 Accepted', () => pm.response.to.have.status(202));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"field\": \"statement_audio_url\",\n  \"locale\": \"en\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/statements/{{tf_statement_id}}/audio/regenerate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "statements", "{{tf_statement_id}}", "audio", "regenerate"]
+						}
+					}
+				},
+				{
+					"name": "Delete statement (204)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));",
+									"pm.test('empty body', () => pm.expect(pm.response.text()).to.equal(''));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/statements/{{tf_statement_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "statements", "{{tf_statement_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Statements — negative",
+			"item": [
+				{
+					"name": "Create — missing locale (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"pm.test('statement.es required', () => pm.expect(pm.response.json().errors['statement.es']).to.exist);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"statement\": { \"uk\": \"Тест\", \"en\": \"Test\" },\n  \"is_true\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/levels/{{tf_level_id}}/statements",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "levels", "{{tf_level_id}}", "statements"]
+						}
+					}
+				},
+				{
+					"name": "Create — missing is_true (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"pm.test('is_true required', () => pm.expect(pm.response.json().errors.is_true).to.exist);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"statement\": { \"uk\": \"Тест\", \"en\": \"Test\", \"es\": \"Prueba\" }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/levels/{{tf_level_id}}/statements",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "levels", "{{tf_level_id}}", "statements"]
+						}
+					}
+				},
+				{
+					"name": "Update — nonexistent statement (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"statement\": { \"uk\": \"X\", \"en\": \"X\", \"es\": \"X\" },\n  \"is_true\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/statements/99999999",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "statements", "99999999"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Cleanup",
+			"item": [
+				{
+					"name": "Delete the text level (204)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/admin/games/{{tf_game_id}}/levels/{{tf_level_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "games", "{{tf_game_id}}", "levels", "{{tf_level_id}}"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "tf_game_id", "value": "", "type": "string" },
+		{ "key": "tf_level_id", "value": "", "type": "string" },
+		{ "key": "tf_statement_id", "value": "", "type": "string" }
+	]
+}
