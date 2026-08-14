@@ -1,0 +1,502 @@
+{
+	"info": {
+		"_postman_id": "c1d9f4a2-7e63-4b80-9a15-3f2b8c0e6d47",
+		"name": "Account & Privacy",
+		"description": "Cross-cutting account/privacy surface: profile read, consent re-acceptance, password change (with token revocation), the public legal-versions endpoint, and both account-deletion paths.\n\nUsage:\n1. Select the `SmartSprouts — Local` environment.\n2. Run the `Auth` collection first so `user_token` is populated.\n3. Folders `1`–`3` reuse `user_token`. Folders `4`–`5` are self-contained: they register a throwaway user so the shared account is never mutated or deleted.\n\nSecurity notes reflected here:\n- Changing the password revokes ALL tokens (PasswordService::update), so the old token 401s afterwards.\n- `deletion-code` returns 409 for password accounts — the emailed code path is only for password-less (Google-only) accounts.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{user_token}}", "type": "string" }]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Folders 1-3 need the shared user token from the Auth collection.",
+					"if (!pm.environment.get('user_token')) {",
+					"    console.warn('[Account & Privacy] user_token is empty — run the \"Auth\" collection first (1. Tokens).');",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "1. Profile",
+			"item": [
+				{
+					"name": "Get profile (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('body is an object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Get profile — no token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Consent",
+			"item": [
+				{
+					"name": "Accept current terms (200/201)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 201', () => pm.expect([200, 201]).to.include(pm.response.code));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"accepted_terms\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile/consents",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile", "consents"]
+						}
+					}
+				},
+				{
+					"name": "Consent — not accepted (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"pm.test('accepted_terms error present', () => pm.expect(pm.response.json().errors.accepted_terms).to.exist);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"accepted_terms\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile/consents",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile", "consents"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Legal (public)",
+			"item": [
+				{
+					"name": "Get legal versions (200, no auth)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('body present', () => pm.expect(pm.response.json()).to.exist);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/legal/versions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "legal", "versions"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Password change (throwaway user)",
+			"item": [
+				{
+					"name": "Register throwaway (save pw_token)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.collectionVariables.set('pw_email', 'pw+' + Date.now() + '@example.com');"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"pm.collectionVariables.set('pw_token', pm.response.json().access_token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Password Probe\",\n  \"email\": \"{{pw_email}}\",\n  \"password\": \"Password123\",\n  \"password_confirmation\": \"Password123\",\n  \"accepted_terms\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Change password — wrong current (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+									"pm.test('current_password error present', () => pm.expect(pm.response.json().errors.current_password).to.exist);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{pw_token}}", "type": "string" }]
+						},
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"current_password\": \"WrongPass000\",\n  \"new_password\": \"NewPass123\",\n  \"new_password_confirmation\": \"NewPass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile/password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile", "password"]
+						}
+					}
+				},
+				{
+					"name": "Change password — success (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{pw_token}}", "type": "string" }]
+						},
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"current_password\": \"Password123\",\n  \"new_password\": \"NewPass123\",\n  \"new_password_confirmation\": \"NewPass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile/password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile", "password"]
+						}
+					}
+				},
+				{
+					"name": "Old token revoked after change (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// PasswordService::update revokes every token, so the pre-change token dies.",
+									"pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{pw_token}}", "type": "string" }]
+						},
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Re-login with new password (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('has access_token', () => pm.expect(pm.response.json().access_token).to.be.a('string'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{pw_email}}\",\n  \"password\": \"NewPass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Account deletion (destructive, throwaway user)",
+			"item": [
+				{
+					"name": "Register throwaway (save del_token)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.collectionVariables.set('del_email', 'del+' + Date.now() + '@example.com');"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"pm.collectionVariables.set('del_token', pm.response.json().access_token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Delete Probe\",\n  \"email\": \"{{del_email}}\",\n  \"password\": \"Password123\",\n  \"password_confirmation\": \"Password123\",\n  \"accepted_terms\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Send deletion code — password account (409)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// The emailed-code path is reserved for password-less (Google-only) accounts.",
+									"// A password account is told to confirm with its password instead.",
+									"pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{del_token}}", "type": "string" }]
+						},
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/profile/deletion-code",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile", "deletion-code"]
+						}
+					}
+				},
+				{
+					"name": "Delete account — wrong password (422)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{del_token}}", "type": "string" }]
+						},
+						"method": "DELETE",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"WrongPass000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Delete account — correct password (204)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));",
+									"pm.test('empty body', () => pm.expect(pm.response.text()).to.equal(''));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{ "key": "token", "value": "{{del_token}}", "type": "string" }]
+						},
+						"method": "DELETE",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"Password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profile"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "pw_email", "value": "", "type": "string" },
+		{ "key": "pw_token", "value": "", "type": "string" },
+		{ "key": "del_email", "value": "", "type": "string" },
+		{ "key": "del_token", "value": "", "type": "string" }
+	]
+}
