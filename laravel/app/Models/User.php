@@ -60,8 +60,25 @@ class User extends Authenticatable
         'is_admin' => 'boolean',
     ];
 
+    /**
+     * Whether the account confirms sensitive actions with a password
+     * (false for Google-only accounts, which use emailed one-time codes).
+     */
+    public function hasPassword(): bool
+    {
+        return $this->password !== null;
+    }
+
     public function gameResults(): HasMany
     {
         return $this->hasMany(GameResult::class);
+    }
+
+    /**
+     * Append-only consent audit trail (terms/privacy acceptances).
+     */
+    public function consents(): HasMany
+    {
+        return $this->hasMany(UserConsent::class);
     }
 }

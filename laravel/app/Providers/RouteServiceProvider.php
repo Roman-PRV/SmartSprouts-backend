@@ -82,5 +82,21 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('auth-oauth-callback', function (Request $request) {
             return Limit::perMinute(40)->by('oauth-cb|'.$request->ip());
         });
+
+        // Deletion-code brute-force guard. A 6-digit code has a million
+        // combinations; 5 attempts a minute caps a 10-minute code lifetime at
+        // ~50 guesses, while a legit user retyping a mistyped code never
+        // notices the limit. Keyed by user id — the endpoint is authenticated.
+        RateLimiter::for('account-deletion', function (Request $request) {
+            return Limit::perMinute(5)->by('account-deletion|'.($request->user()?->id ?: $request->ip()));
+        });
+
+        // Every request emails a fresh code, so this is an email-flood guard
+        // as much as an abuse guard: 3 codes per 10 minutes matches the code
+        // TTL — a user who lost the mail can re-request, a script can't drain
+        // the Brevo quota.
+        RateLimiter::for('deletion-code', function (Request $request) {
+            return Limit::perMinutes(10, 3)->by('deletion-code|'.($request->user()?->id ?: $request->ip()));
+        });
     }
 }

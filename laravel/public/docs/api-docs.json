@@ -9,6 +9,127 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/profile/deletion-code": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Request an account-deletion confirmation code",
+                "description": "Emails a one-time code to the account address. Only for password-less (Google-only) accounts; password accounts confirm deletion with their password.",
+                "operationId": "sendAccountDeletionCode",
+                "responses": {
+                    "200": {
+                        "description": "Code sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "A confirmation code has been sent to your email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "409": {
+                        "description": "Account has a password and must confirm with it"
+                    },
+                    "429": {
+                        "description": "Too many code requests"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/profile": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get authenticated user profile",
+                "description": "Returns user profile data with aggregated gameplay statistics.",
+                "operationId": "getUserProfile",
+                "responses": {
+                    "200": {
+                        "description": "Successful response with profile data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Profile"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Delete the authenticated account",
+                "description": "Erases the account and its data. Requires 'password' for password accounts or 'code' (one-time, emailed) for password-less accounts. Consent records are kept in anonymized form.",
+                "operationId": "deleteProfile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "password": {
+                                        "description": "For password accounts",
+                                        "type": "string",
+                                        "example": "secret123"
+                                    },
+                                    "code": {
+                                        "description": "For password-less accounts",
+                                        "type": "string",
+                                        "example": "483920"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Account deleted"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Wrong password or invalid/expired code"
+                    },
+                    "429": {
+                        "description": "Too many attempts"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games/{game}/levels/{level}/attempts": {
             "post": {
                 "tags": [
@@ -126,6 +247,307 @@
                 ]
             }
         },
+        "/api/auth/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
+                "description": "Creates an account, records acceptance of the current legal documents, and returns a Bearer token.",
+                "operationId": "register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "accepted_terms"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "Password123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "Password123!"
+                                    },
+                                    "accepted_terms": {
+                                        "description": "The 18+/guardian affirmation and acceptance of the legal documents; must be true.",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registered — Bearer token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "consent_current": {
+                                            "description": "Always true on registration (consent was just recorded); false elsewhere triggers the consent gate.",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed (e.g. affirmation not accepted or email taken)"
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Log in an existing user",
+                "description": "Verifies credentials and returns a Bearer token plus the account's current-consent status.",
+                "operationId": "login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Password123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged in — Bearer token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "consent_current": {
+                                            "description": "Whether the account accepted the current legal-document versions; false triggers the blocking consent gate.",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get the authenticated user",
+                "description": "Returns the current user and whether their legal-document consent is current.",
+                "operationId": "me",
+                "responses": {
+                    "200": {
+                        "description": "The authenticated user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "consent_current": {
+                                            "description": "False for Google signups, legacy accounts, and after a document version bump; triggers the consent gate.",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Log out on this device",
+                "description": "Revokes the current access token only; other sessions stay active.",
+                "operationId": "logout",
+                "responses": {
+                    "200": {
+                        "description": "Logged out",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully logged out"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/profile/consents": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Accept the current legal documents",
+                "description": "Records a versioned terms + privacy acceptance for the authenticated user. No-op when consent is already current.",
+                "operationId": "acceptConsents",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "accepted_terms"
+                                ],
+                                "properties": {
+                                    "accepted_terms": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Consent was already current; nothing recorded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "consent_current": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "Consent recorded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "consent_current": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Affirmation checkbox not accepted"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games": {
             "get": {
                 "tags": [
@@ -202,6 +624,38 @@
                     },
                     "404": {
                         "description": "Game not found"
+                    }
+                }
+            }
+        },
+        "/api/legal/versions": {
+            "get": {
+                "tags": [
+                    "Legal"
+                ],
+                "summary": "Get current legal document versions",
+                "description": "Returns the currently effective Terms of Service and Privacy Policy version identifiers.",
+                "operationId": "getLegalVersions",
+                "responses": {
+                    "200": {
+                        "description": "Current document versions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "terms_version": {
+                                            "type": "string",
+                                            "example": "2026-07-12"
+                                        },
+                                        "privacy_version": {
+                                            "type": "string",
+                                            "example": "2026-07-12"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -325,36 +779,6 @@
                         }
                     }
                 }
-            }
-        },
-        "/api/profile": {
-            "get": {
-                "tags": [
-                    "Profile"
-                ],
-                "summary": "Get authenticated user profile",
-                "description": "Returns user profile data with aggregated gameplay statistics.",
-                "operationId": "getUserProfile",
-                "responses": {
-                    "200": {
-                        "description": "Successful response with profile data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Profile"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
             }
         },
         "/api/profile/password": {
@@ -1544,6 +1968,52 @@
                 },
                 "type": "object"
             },
+            "User": {
+                "title": "User",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john@example.com"
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "https://example.com/avatar.png",
+                        "nullable": true
+                    },
+                    "is_admin": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "has_password": {
+                        "description": "False for Google-only accounts; the client uses it to choose the account-deletion confirmation UI.",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Game": {
                 "title": "Game",
                 "required": [
@@ -1660,6 +2130,13 @@
                 },
                 "type": "object"
             }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "bearerFormat": "Token",
+                "scheme": "bearer"
+            }
         }
     },
     "tags": [
@@ -1672,12 +2149,20 @@
             "description": "API for game levels"
         },
         {
+            "name": "Profile",
+            "description": "Profile"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
             "name": "Games",
             "description": "Games"
         },
         {
-            "name": "Profile",
-            "description": "Profile"
+            "name": "Legal",
+            "description": "Legal"
         }
     ]
 }
