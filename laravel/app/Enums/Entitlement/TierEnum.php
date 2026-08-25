@@ -2,7 +2,7 @@
 
 namespace App\Enums\Entitlement;
 
-use App\Exceptions\TierNotConfiguredException;
+use App\Exceptions\Entitlement\TierNotConfiguredException;
 
 /**
  * An access tier. The backing value is identity, not a display name — names come
@@ -70,8 +70,9 @@ enum TierEnum: string
     }
 
     /**
-     * Prefer a single accessor when checking one counter — the pair reads both
-     * config entries to answer about one.
+     * Both allowances at once, for the tier catalogue the plan page renders.
+     * Enforcement asks about one counter at a time and reads that counter's own
+     * accessor instead.
      *
      * @return array{completed: int|null, started: int|null}
      *

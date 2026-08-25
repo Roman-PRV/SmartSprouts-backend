@@ -3,7 +3,7 @@
 namespace Tests\Unit\Enums\Entitlement;
 
 use App\Enums\Entitlement\TierEnum;
-use App\Exceptions\TierNotConfiguredException;
+use App\Exceptions\Entitlement\TierNotConfiguredException;
 use Tests\TestCase;
 
 class TierEnumTest extends TestCase
