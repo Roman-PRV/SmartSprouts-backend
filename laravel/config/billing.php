@@ -25,6 +25,9 @@ return [
     |
     | completed_limit — distinct levels finished today
     | started_limit   — distinct levels opened today
+    | price_minor     — for display. The amount actually charged is the one on
+    |                   the provider's price, which is the source of truth; a
+    |                   scheduled reconciliation reports any drift between them
     */
     'tiers' => [
 

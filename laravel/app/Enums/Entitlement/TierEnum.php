@@ -86,15 +86,12 @@ enum TierEnum: string
     }
 
     /**
-     * For display. Not a guard before comparing one counter against its limit —
-     * null-check that counter's own accessor instead.
-     *
-     * The UNLIMITED case is a plan name, not a guarantee — config decides, so
-     * this can answer false for it if config gives that tier a limit.
+     * Not a guard before comparing one counter against its limit — null-check
+     * that counter's own accessor instead.
      *
      * @throws TierNotConfiguredException
      */
-    public function isUnlimited(): bool
+    public function hasNoDailyLimits(): bool
     {
         return $this->completedLimit() === null && $this->startedLimit() === null;
     }

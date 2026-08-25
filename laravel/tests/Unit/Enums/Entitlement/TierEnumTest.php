@@ -35,27 +35,27 @@ class TierEnumTest extends TestCase
     public function test_unlimited_tier_reports_null_limits_rather_than_a_large_number(): void
     {
         $this->assertSame(['completed' => null, 'started' => null], TierEnum::UNLIMITED->limits());
-        $this->assertTrue(TierEnum::UNLIMITED->isUnlimited());
+        $this->assertTrue(TierEnum::UNLIMITED->hasNoDailyLimits());
     }
 
-    public function test_bounded_tiers_are_not_unlimited(): void
+    public function test_bounded_tiers_have_daily_limits(): void
     {
-        $this->assertFalse(TierEnum::FREE->isUnlimited());
-        $this->assertFalse(TierEnum::PLUS->isUnlimited());
-        $this->assertFalse(TierEnum::PREMIUM->isUnlimited());
+        $this->assertFalse(TierEnum::FREE->hasNoDailyLimits());
+        $this->assertFalse(TierEnum::PLUS->hasNoDailyLimits());
+        $this->assertFalse(TierEnum::PREMIUM->hasNoDailyLimits());
     }
 
     /**
-     * isUnlimited() answers for the tier, not for one counter. A half-unbounded
-     * tier answers false while still holding a null, so callers must null-check
-     * the counter they are about to compare — `5 >= null` is true in PHP, which
-     * would block the account instead of letting it play.
+     * hasNoDailyLimits() answers for the tier, not for one counter. A tier with
+     * one bound and one null answers false while still holding that null, so
+     * callers must null-check the counter they are about to compare — `5 >= null`
+     * is true in PHP, which would block the account instead of letting it play.
      */
-    public function test_half_unbounded_tier_is_not_unlimited_but_still_holds_a_null(): void
+    public function test_half_unbounded_tier_still_holds_a_null(): void
     {
         config(['billing.tiers.premium.completed_limit' => null]);
 
-        $this->assertFalse(TierEnum::PREMIUM->isUnlimited());
+        $this->assertFalse(TierEnum::PREMIUM->hasNoDailyLimits());
         $this->assertNull(TierEnum::PREMIUM->completedLimit());
         $this->assertSame(40, TierEnum::PREMIUM->startedLimit());
     }
