@@ -45,6 +45,19 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    /*
+    | Paddle, the Merchant of Record. Declared here alongside the other vendor
+    | credentials so the payment service reads them through config rather than
+    | env(): config is cached in production, where an env() call outside a config
+    | file returns null with no error — an empty API key and a webhook that
+    | silently never verifies.
+    */
+    'paddle' => [
+        'environment' => env('PADDLE_ENVIRONMENT', 'sandbox'),
+        'api_key' => env('PADDLE_API_KEY'),
+        'webhook_secret' => env('PADDLE_WEBHOOK_SECRET'),
+    ],
+
     'frontend' => [
         'url' => env('FRONTEND_URL', 'http://localhost:3001'),
     ],
