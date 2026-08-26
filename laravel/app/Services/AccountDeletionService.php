@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Helpers\ConfigHelper;
+use App\Helpers\EmailHasher;
 use App\Mail\AccountDeletedMail;
 use App\Mail\AccountDeletionCodeMail;
 use App\Models\User;
@@ -77,7 +77,7 @@ class AccountDeletionService
 
         DB::transaction(function () use ($user): void {
             $user->consents()->update([
-                'email_hash' => $this->emailHash($user->email),
+                'email_hash' => EmailHasher::of($user->email),
                 'ip_address' => null,
                 'user_agent' => null,
             ]);
@@ -99,14 +99,6 @@ class AccountDeletionService
                 'exception' => $exception->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Keyed pseudonym of the email for anonymized consent rows.
-     */
-    private function emailHash(string $email): string
-    {
-        return hash_hmac('sha256', mb_strtolower($email), ConfigHelper::getRequiredString('legal.email_hash_key'));
     }
 
     /**
