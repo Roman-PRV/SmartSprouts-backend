@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Helpers\EmailHasher;
 use App\Mail\AccountDeletedMail;
 use App\Mail\AccountDeletionCodeMail;
 use App\Models\Game;
@@ -100,7 +101,7 @@ class AccountDeletionTest extends TestCase
             'details' => [],
         ]);
 
-        $emailHash = hash_hmac('sha256', mb_strtolower($user->email), 'testing-legal-hash-key');
+        $emailHash = EmailHasher::of($user->email);
 
         $this->actingAs($user, 'sanctum')
             ->deleteJson('/api/profile', ['password' => 'password'])
