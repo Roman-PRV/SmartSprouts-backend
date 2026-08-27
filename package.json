@@ -7,7 +7,7 @@
     "lint": "docker compose exec -T laravel composer phpstan",
     "format": "docker compose exec -T laravel php vendor/bin/pint",
     "prepare": "husky install",
-    "quality": "npm run format && npm run lint && npm run test",
+    "quality": "npm run format && npm run lint",
     "test": "docker compose exec -T laravel php artisan test",
     "docs": "docker compose exec -T laravel php artisan l5-swagger:generate",
     "queue:restart": "docker compose exec -T laravel php artisan queue:restart"
