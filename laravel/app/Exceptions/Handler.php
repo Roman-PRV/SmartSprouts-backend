@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use App\Enums\ErrorTypeEnum;
+use App\Exceptions\Entitlement\SubscriptionBlocksExemptionException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
@@ -22,10 +24,14 @@ class Handler extends ExceptionHandler
     /**
      * A list of the exception types that are not reported.
      *
+     * The exemption refusal is a business rule answered as a 409, not a failure:
+     * if reported, every normal admin action against a paying account looks
+     * like an incident.
+     *
      * @var array<int, class-string<\Throwable>>
      */
     protected $dontReport = [
-        //
+        SubscriptionBlocksExemptionException::class,
     ];
 
     /**
@@ -48,18 +54,24 @@ class Handler extends ExceptionHandler
             //
         });
 
-        // Cross-cutting domain → HTTP mapping for these two exceptions, so the
-        // controllers don't repeat it and the response stays a clean {message} in
-        // every environment. TableMissingException carries its own status; the
-        // RuntimeException-based GameNotConfiguredException gets its 400 here. Other
-        // HttpExceptions (e.g. NotFoundHttpException) keep the framework's default
-        // rendering.
+        // Cross-cutting domain → HTTP mapping, so the controllers don't repeat it
+        // and the response shape is the same in every environment.
+        // TableMissingException carries its own status; the RuntimeException-based
+        // GameNotConfiguredException gets its 400 here. Other HttpExceptions
+        // (e.g. NotFoundHttpException) keep the framework's default rendering.
         $this->renderable(function (TableMissingException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
         });
 
         $this->renderable(function (GameNotConfiguredException $e) {
             return response()->json(['message' => $e->getMessage()], 400);
+        });
+
+        $this->renderable(function (SubscriptionBlocksExemptionException $e) {
+            return response()->json([
+                'message' => __('exceptions.entitlement.exemption_blocked_by_subscription'),
+                'error_type' => ErrorTypeEnum::SUBSCRIPTION_STILL_GRANTS_TIER->value,
+            ], 409);
         });
     }
 

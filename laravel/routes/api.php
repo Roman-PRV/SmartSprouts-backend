@@ -2,6 +2,7 @@
 
 use App\Games\FindTheWrong\Http\Controllers\Admin\FindTheWrongItemController;
 use App\Http\Controllers\AccountDeletionController;
+use App\Http\Controllers\Admin\ExemptionController as AdminExemptionController;
 use App\Http\Controllers\Admin\LevelController as AdminLevelController;
 use App\Http\Controllers\Admin\StatementController as AdminStatementController;
 use App\Http\Controllers\AttemptController;
@@ -135,4 +136,18 @@ Route::middleware(['auth:sanctum', EnsureAdmin::class])
         Route::post('statements/{statement}/audio/regenerate', [AdminStatementController::class, 'regenerateAudio'])
             ->name('audio.regenerate')
             ->whereNumber('statement');
+    });
+
+// ── Admin — access exemptions (account-level, not game-level) ─────────────
+// {user} is the holder's id, not the exemption row's.
+
+Route::middleware(['auth:sanctum', EnsureAdmin::class])
+    ->prefix('admin')
+    ->name('admin.exemptions.')
+    ->group(function () {
+        Route::get('exemptions', [AdminExemptionController::class, 'index'])->name('index');
+        Route::post('exemptions', [AdminExemptionController::class, 'store'])->name('store');
+        Route::delete('exemptions/{user}', [AdminExemptionController::class, 'destroy'])
+            ->name('destroy')
+            ->whereNumber('user');
     });

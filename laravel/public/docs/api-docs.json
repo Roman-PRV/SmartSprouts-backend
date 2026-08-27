@@ -130,6 +130,127 @@
                 ]
             }
         },
+        "/api/admin/exemptions": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List accounts holding unlimited access without paying",
+                "description": "Accounts on the paid Unlimited tier are absent: they are customers, not exemptions, and both play without limits, so this listing is the only place the difference is visible.",
+                "operationId": "adminExemptionIndex",
+                "responses": {
+                    "200": {
+                        "description": "The current grants",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Admin.Exemption"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Admin privileges required"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Grant unlimited access without payment",
+                "description": "Re-granting to an account that is already exempt replaces the whole row rather than adding one: reason, note, grantor and date are all restated. A note omitted from the request is therefore cleared.",
+                "operationId": "adminExemptionStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Admin.StoreExemptionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Granted or restated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Admin.Exemption"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Admin privileges required"
+                    },
+                    "409": {
+                        "description": "The account holds a subscription that still grants a tier"
+                    },
+                    "422": {
+                        "description": "Validation failed"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/exemptions/{user}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Revoke unlimited access",
+                "operationId": "adminExemptionDestroy",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Revoked"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Admin privileges required"
+                    },
+                    "404": {
+                        "description": "The account holds no exemption"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games/{game}/levels/{level}/attempts": {
             "post": {
                 "tags": [
@@ -1612,6 +1733,35 @@
                 },
                 "type": "object"
             },
+            "Admin.StoreExemptionRequest": {
+                "title": "Admin Store Exemption Request",
+                "required": [
+                    "user_id",
+                    "reason"
+                ],
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "staff",
+                            "tester"
+                        ],
+                        "example": "tester"
+                    },
+                    "note": {
+                        "description": "Omitted on a re-grant, this clears the existing note.",
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Beta group",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "Admin.StoreLevelRequest": {
                 "title": "Admin Store Level Request",
                 "description": "Multipart/form-data payload for creating a new game level.",
@@ -1818,6 +1968,62 @@
                     "is_true": {
                         "type": "boolean",
                         "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "Admin.Exemption": {
+                "title": "Admin Access Exemption",
+                "properties": {
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 42
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "example": "t@example.com"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Test Parent"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "staff",
+                            "tester"
+                        ],
+                        "example": "tester"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Beta group, invited 2026-08-20",
+                        "nullable": true
+                    },
+                    "granted_by": {
+                        "description": "Null once the granting admin's own account is deleted; the grant itself survives.",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Admin"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "granted_at": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -2151,6 +2357,10 @@
         {
             "name": "Profile",
             "description": "Profile"
+        },
+        {
+            "name": "Admin",
+            "description": "Admin"
         },
         {
             "name": "Auth",

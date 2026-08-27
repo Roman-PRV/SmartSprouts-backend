@@ -44,4 +44,8 @@ return [
         'invalid_code' => 'The deletion code is invalid or has expired.',
         'code_sent' => 'A confirmation code has been sent to your email.',
     ],
+    'entitlement' => [
+        'exemption_not_found' => 'This account holds no access exemption.',
+        'exemption_blocked_by_subscription' => 'This account holds a subscription that still grants a tier. Resolve the subscription before granting an exemption.',
+    ],
 ];

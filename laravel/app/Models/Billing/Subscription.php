@@ -18,9 +18,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * exemptions ungrantable to everyone, since an exemption may not be granted to
  * an account that holds a subscription.
  *
- * Tier resolution reads tier and never pending_tier — reading the queued one
- * would apply a scheduled downgrade early.
- *
  * One row per account, reused across subscribe cycles, so provider_subscription_id
  * is overwritten when someone subscribes again and the previous identifier is
  * not kept anywhere. Money events are therefore resolved through

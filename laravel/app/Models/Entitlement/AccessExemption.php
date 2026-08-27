@@ -16,8 +16,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * reporting has to tell a paying Unlimited subscriber from a free grant. None
  * of that survives collapsing this into the tier enum.
  *
- * Mutually exclusive with a paid subscription in both directions, enforced in
- * the service layer.
+ * Mutually exclusive with a paid subscription. Only one direction is enforced
+ * so far — granting refuses an account whose subscription still grants a tier.
+ * The mirror check belongs to the subscribe path, which does not exist yet.
+ *
+ * One row holds the grant in force, not a history of grants. Re-granting
+ * overwrites every column, and revoking deletes the row, so nothing here
+ * answers who was exempt last month or who took it away.
  *
  * @property int $id
  * @property int $user_id
@@ -31,8 +36,8 @@ class AccessExemption extends Model
     use HasFactory;
 
     /**
-     * granted_at is the insert time, and a grant is not edited afterwards — it
-     * is revoked by deleting the row.
+     * granted_at carries the decision in force, moving when a grant is
+     * restated, so a separate updated_at would say the same thing twice.
      */
     public $timestamps = false;
 
