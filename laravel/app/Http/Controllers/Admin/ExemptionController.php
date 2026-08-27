@@ -50,13 +50,14 @@ class ExemptionController extends Controller
      * @OA\Post(
      *     path="/api/admin/exemptions",
      *     summary="Grant unlimited access without payment",
+     *     description="Re-granting to an account that is already exempt replaces the whole row rather than adding one: reason, note, grantor and date are all restated. A note omitted from the request is therefore cleared.",
      *     operationId="adminExemptionStore",
      *     tags={"Admin"},
      *     security={{"sanctum": {}}},
      *
      *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Admin.StoreExemptionRequest")),
      *
-     *     @OA\Response(response=201, description="Granted, or an existing grant restated under a new reason", @OA\JsonContent(ref="#/components/schemas/Admin.Exemption")),
+     *     @OA\Response(response=201, description="Granted or restated", @OA\JsonContent(ref="#/components/schemas/Admin.Exemption")),
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=403, description="Admin privileges required"),
      *     @OA\Response(response=409, description="The account holds a subscription that still grants a tier"),

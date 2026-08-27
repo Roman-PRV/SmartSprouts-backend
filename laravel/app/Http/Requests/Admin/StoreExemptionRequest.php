@@ -15,7 +15,7 @@ use Illuminate\Validation\Rules\Enum;
  *
  *     @OA\Property(property="user_id", type="integer", example=42),
  *     @OA\Property(property="reason", type="string", enum={"staff", "tester"}, example="tester"),
- *     @OA\Property(property="note", type="string", nullable=true, maxLength=500, example="Beta group")
+ *     @OA\Property(property="note", type="string", nullable=true, maxLength=500, description="Omitted on a re-grant, this clears the existing note.", example="Beta group")
  * )
  */
 class StoreExemptionRequest extends FormRequest
