@@ -82,7 +82,7 @@ class LevelDailyUsage extends Model
     protected function usageDate(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value): Carbon => Carbon::parse($value),
+            get: fn (?string $value): ?Carbon => $value === null ? null : Carbon::parse($value),
             set: fn (DateTimeInterface|string $value): string => Carbon::parse($value)->toDateString(),
         );
     }
