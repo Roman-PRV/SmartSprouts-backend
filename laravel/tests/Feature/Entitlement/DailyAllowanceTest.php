@@ -34,6 +34,12 @@ class DailyAllowanceTest extends TestCase
         $this->service = app(DailyUsageService::class);
     }
 
+    /** recordCompletion() must run inside a transaction — see DailyUsageService. */
+    private function complete(User $user, TierEnum $tier, int $gameId, int $levelId): bool
+    {
+        return DB::transaction(fn (): bool => $this->service->recordCompletion($user, $tier, $gameId, $levelId));
+    }
+
     /** @test */
     public function opening_a_new_level_consumes_only_the_start_allowance(): void
     {
@@ -57,7 +63,7 @@ class DailyAllowanceTest extends TestCase
         $game = Game::factory()->create();
 
         $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
-        $this->service->recordCompletion($user, $game->id, 1);
+        $this->complete($user, TierEnum::FREE, $game->id, 1);
 
         // Still one row: completing marks the existing row, it does not add one.
         $this->assertDatabaseCount('level_daily_usage', 1);
@@ -100,7 +106,7 @@ class DailyAllowanceTest extends TestCase
         // One completion exhausts Free's completion allowance while only one
         // of the three starts has been spent — the start limit has headroom.
         $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
-        $this->service->recordCompletion($user, $game->id, 1);
+        $this->complete($user, TierEnum::FREE, $game->id, 1);
 
         $this->expectException(DailyCompletedLimitExceededException::class);
 
@@ -125,7 +131,7 @@ class DailyAllowanceTest extends TestCase
 
         for ($levelId = 1; $levelId <= 5; $levelId++) {
             $this->service->recordOpen($user, TierEnum::UNLIMITED, $game->id, $levelId);
-            $this->service->recordCompletion($user, $game->id, $levelId);
+            $this->complete($user, TierEnum::UNLIMITED, $game->id, $levelId);
         }
 
         $this->assertDatabaseCount('level_daily_usage', 5);
@@ -159,9 +165,9 @@ class DailyAllowanceTest extends TestCase
         // Both completed: a null completed_limit is the only thing keeping this
         // from refusing on the completion counter instead.
         $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 1);
-        $this->service->recordCompletion($user, $game->id, 1);
+        $this->complete($user, TierEnum::PREMIUM, $game->id, 1);
         $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 2);
-        $this->service->recordCompletion($user, $game->id, 2);
+        $this->complete($user, TierEnum::PREMIUM, $game->id, 2);
 
         $this->expectException(DailyStartedLimitExceededException::class);
 
@@ -184,12 +190,12 @@ class DailyAllowanceTest extends TestCase
         $game = Game::factory()->create();
 
         $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
-        $this->service->recordCompletion($user, $game->id, 1);
+        $this->complete($user, TierEnum::FREE, $game->id, 1);
 
         $markedAt = LevelDailyUsage::query()->sole()->completed_at;
 
         $this->travel(5)->minutes();
-        $secondCall = $this->service->recordCompletion($user, $game->id, 1);
+        $secondCall = $this->complete($user, TierEnum::FREE, $game->id, 1);
 
         $this->assertFalse($secondCall);
         $this->assertEquals($markedAt, LevelDailyUsage::query()->sole()->completed_at);
@@ -201,7 +207,48 @@ class DailyAllowanceTest extends TestCase
         $user = User::factory()->create();
         $game = Game::factory()->create();
 
-        $this->assertFalse($this->service->recordCompletion($user, $game->id, 1));
+        $this->assertFalse($this->complete($user, TierEnum::FREE, $game->id, 1));
         $this->assertDatabaseCount('level_daily_usage', 0);
+    }
+
+    /**
+     * FR-005a: opening within the start allowance grants no entitlement to
+     * complete. Without this check, started_limit would be the real
+     * completion ceiling — Free would permit 3 completions where the tier
+     * promises 1.
+     *
+     * @test
+     */
+    public function completing_beyond_the_completion_limit_is_refused_even_when_all_levels_were_opened_first(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 2);
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 3);
+
+        $this->complete($user, TierEnum::FREE, $game->id, 1);
+
+        $this->expectException(DailyCompletedLimitExceededException::class);
+
+        try {
+            $this->complete($user, TierEnum::FREE, $game->id, 2);
+        } finally {
+            $this->assertNull(LevelDailyUsage::query()->where('level_id', 2)->sole()->completed_at);
+        }
+    }
+
+    /** @test */
+    public function recording_a_completion_outside_a_transaction_is_refused(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+
+        $this->expectException(LogicException::class);
+
+        $this->service->recordCompletion($user, TierEnum::FREE, $game->id, 1);
     }
 }

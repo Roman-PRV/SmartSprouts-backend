@@ -50,22 +50,51 @@ class DailyUsageService
     }
 
     /**
-     * Records only; the completion allowance is enforced in BE-05. Idempotent:
-     * an already-completed row is left untouched.
+     * Opens no transaction of its own — the opposite of recordOpen(). It must
+     * run inside one the caller opens, because a refused completion has to
+     * roll back the caller's own write (e.g. game_results) along with the mark.
      *
      * @return bool Whether a row was marked. False when there was nothing to
      *              mark: the level was already completed today, or no open
      *              was recorded for today at all.
+     *
+     * @throws DailyCompletedLimitExceededException
      */
-    public function recordCompletion(User $user, int $gameId, int $levelId): bool
+    public function recordCompletion(User $user, TierEnum $tier, int $gameId, int $levelId): bool
     {
-        $completedAt = now();
+        if (DB::transactionLevel() === 0) {
+            throw new LogicException('recordCompletion() must run inside the caller\'s transaction — its refusal has to roll back the caller\'s own write.');
+        }
 
-        return $this->usageOn($user, $completedAt->copy()->startOfDay())
+        $completedAt = now();
+        $usageDate = $completedAt->copy()->startOfDay();
+
+        $marked = $this->usageOn($user, $usageDate)
             ->where('game_id', $gameId)
             ->where('level_id', $levelId)
             ->whereNull('completed_at')
             ->update(['completed_at' => $completedAt]) > 0;
+
+        $completedLimit = $tier->completedLimit();
+
+        if (! $marked || $completedLimit === null) {
+            return $marked;
+        }
+
+        // The row just marked is itself the completion being checked, so `>`
+        // — the same reasoning as `started` in assertWithinAllowance().
+        $completedToday = $this->usageOn($user, $usageDate)
+            ->whereNotNull('completed_at')
+            ->lockForUpdate()
+            ->count();
+
+        if ($completedToday > $completedLimit) {
+            throw new DailyCompletedLimitExceededException(
+                "User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$completedLimit}.",
+            );
+        }
+
+        return true;
     }
 
     /**

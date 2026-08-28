@@ -8,6 +8,7 @@ use App\Models\Game;
 use App\Models\User;
 use App\Services\Entitlement\DailyUsageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class FreeReplayTest extends TestCase
@@ -54,7 +55,7 @@ class FreeReplayTest extends TestCase
         $game = Game::factory()->create();
 
         $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
-        $this->service->recordCompletion($user, $game->id, 1);
+        DB::transaction(fn (): bool => $this->service->recordCompletion($user, TierEnum::FREE, $game->id, 1));
 
         // Free's completion allowance is already spent; a genuinely new open
         // here would throw. A replay must not, because the unique-key
