@@ -55,9 +55,7 @@ class DailyUsageService
      */
     public function recordCompletion(User $user, int $gameId, int $levelId): bool
     {
-        return LevelDailyUsage::query()
-            ->where('user_id', $user->id)
-            ->where('usage_date', today())
+        return $this->usageOn($user, today())
             ->where('game_id', $gameId)
             ->where('level_id', $levelId)
             ->whereNull('completed_at')
@@ -102,7 +100,7 @@ class DailyUsageService
     {
         $startedLimit = $tier->startedLimit();
 
-        if ($startedLimit !== null && $this->todayUsage($user, $usageDate)->lockForUpdate()->count() > $startedLimit) {
+        if ($startedLimit !== null && $this->usageOn($user, $usageDate)->lockForUpdate()->count() > $startedLimit) {
             throw new DailyStartedLimitExceededException(
                 "User {$user->id} exceeded tier {$tier->value}'s daily start limit of {$startedLimit}.",
             );
@@ -110,7 +108,7 @@ class DailyUsageService
 
         $completedLimit = $tier->completedLimit();
 
-        if ($completedLimit !== null && $this->todayUsage($user, $usageDate)->whereNotNull('completed_at')->lockForUpdate()->count() >= $completedLimit) {
+        if ($completedLimit !== null && $this->usageOn($user, $usageDate)->whereNotNull('completed_at')->lockForUpdate()->count() >= $completedLimit) {
             throw new DailyCompletedLimitExceededException(
                 "User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$completedLimit}.",
             );
@@ -124,7 +122,7 @@ class DailyUsageService
      *
      * @return Builder<LevelDailyUsage>
      */
-    private function todayUsage(User $user, Carbon $usageDate): Builder
+    private function usageOn(User $user, Carbon $usageDate): Builder
     {
         return LevelDailyUsage::query()
             ->where('user_id', $user->id)
