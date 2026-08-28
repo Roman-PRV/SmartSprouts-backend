@@ -14,27 +14,13 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Counts today's distinct level opens and completions and enforces the two
- * daily allowances. Implements the insert-then-count transaction from
- * data-model.md (R3): counting before inserting would let two devices both
- * read "under the limit" and both proceed.
+ * daily allowances.
  */
 class DailyUsageService
 {
     /**
-     * Records the open unconditionally, then checks both allowances under the
-     * same transaction and rolls back the whole thing on either refusal. A
-     * tier with no daily limits never rolls back: assertWithinAllowance reads
-     * a null limit as "not enforced" and skips straight past it, so recording
-     * still happens — this table is the only source for the fair-use report
-     * (FR-007a) for exactly that tier.
-     *
-     * Runs up to three attempts: the allowance check below takes a locking
-     * read taken *after* the insert, so when the same account really does
-     * open two different levels at the same instant, each transaction holds
-     * its own new row and waits for the other's — a deadlock, which MySQL
-     * breaks by killing one. The retry re-runs it against the committed
-     * state and gets the right answer. Not a precaution: without it every
-     * genuine race is a 500.
+     * Inserts the row before counting, under the same transaction — counting
+     * first would be a check-then-act race between two devices (research.md R3).
      *
      * @return bool Whether this was a new open. False is a free replay.
      *
@@ -43,15 +29,11 @@ class DailyUsageService
      */
     public function recordOpen(User $user, TierEnum $tier, int $gameId, int $levelId): bool
     {
-        // Read once and pass it down: usage_date and opened_at must land on
-        // the same side of midnight as each other, and as the count taken
-        // below, or a row opened right at the boundary could be dated
-        // yesterday while counted as today's (or vice versa) and slip past
-        // the limit uncounted.
+        // One clock read: usage_date and opened_at must land on the same side of midnight.
         $openedAt = now();
         $usageDate = $openedAt->copy()->startOfDay();
 
-        return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt, $usageDate) {
+        return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt, $usageDate): bool {
             $isNew = $this->insert($user, $gameId, $levelId, $openedAt);
 
             if ($isNew) {
@@ -59,7 +41,7 @@ class DailyUsageService
             }
 
             return $isNew;
-        }, 3);
+        }, 3); // 3 attempts: the locking read below can deadlock and needs a retry.
     }
 
     /**
