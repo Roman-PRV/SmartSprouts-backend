@@ -10,20 +10,26 @@ use App\Models\Game;
 use App\Models\User;
 use App\Services\Entitlement\DailyUsageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use LogicException;
 use Tests\TestCase;
 
-/**
- * Free tier throughout: started_limit=3, completed_limit=1 (config/billing.php).
- */
 class DailyAllowanceTest extends TestCase
 {
     use RefreshDatabase;
 
     private DailyUsageService $service;
 
+    /** Pinned so repricing a tier cannot fail these; TierEnumTest covers the shipped numbers. */
     protected function setUp(): void
     {
         parent::setUp();
+
+        config()->set('billing.tiers.free', [
+            'completed_limit' => 1,
+            'started_limit' => 3,
+            'price_minor' => 0,
+        ]);
 
         $this->service = app(DailyUsageService::class);
     }
@@ -123,6 +129,47 @@ class DailyAllowanceTest extends TestCase
         }
 
         $this->assertDatabaseCount('level_daily_usage', 5);
+    }
+
+    /** @test */
+    public function recording_an_open_inside_an_outer_transaction_is_refused(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        $this->expectException(LogicException::class);
+
+        DB::transaction(function () use ($user, $game): void {
+            $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+        });
+    }
+
+    /** @test */
+    public function a_tier_with_one_null_limit_still_enforces_the_other(): void
+    {
+        config()->set('billing.tiers.premium', [
+            'completed_limit' => null,
+            'started_limit' => 2,
+            'price_minor' => 500,
+        ]);
+
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        // Both completed: a null completed_limit is the only thing keeping this
+        // from refusing on the completion counter instead.
+        $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 1);
+        $this->service->recordCompletion($user, $game->id, 1);
+        $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 2);
+        $this->service->recordCompletion($user, $game->id, 2);
+
+        $this->expectException(DailyStartedLimitExceededException::class);
+
+        try {
+            $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 3);
+        } finally {
+            $this->assertDatabaseCount('level_daily_usage', 2);
+        }
     }
 
     /**

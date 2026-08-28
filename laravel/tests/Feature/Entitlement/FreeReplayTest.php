@@ -20,6 +20,12 @@ class FreeReplayTest extends TestCase
     {
         parent::setUp();
 
+        config()->set('billing.tiers.free', [
+            'completed_limit' => 1,
+            'started_limit' => 3,
+            'price_minor' => 0,
+        ]);
+
         $this->service = app(DailyUsageService::class);
     }
 

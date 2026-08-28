@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 /**
  * Counts today's distinct level opens and completions and enforces the two
@@ -29,6 +30,10 @@ class DailyUsageService
      */
     public function recordOpen(User $user, TierEnum $tier, int $gameId, int $levelId): bool
     {
+        if (DB::transactionLevel() > 0) {
+            throw new LogicException('recordOpen() must not run inside an outer transaction — the deadlock retry it relies on is skipped when nested.');
+        }
+
         // One clock read: usage_date and opened_at must land on the same side of midnight.
         $openedAt = now();
         $usageDate = $openedAt->copy()->startOfDay();
@@ -45,21 +50,22 @@ class DailyUsageService
     }
 
     /**
-     * Marks completion on the row opened earlier today. Idempotent: a row
-     * already completed is left untouched, so a replayed completion never
-     * counts twice — completing is never gated or re-checked (FR-005).
+     * Records only; the completion allowance is enforced in BE-05. Idempotent:
+     * an already-completed row is left untouched.
      *
-     * @return bool Whether a row was marked. False means no open was recorded
-     *              for today — e.g. the level was opened just before the UTC
-     *              boundary and completed just after it.
+     * @return bool Whether a row was marked. False when there was nothing to
+     *              mark: the level was already completed today, or no open
+     *              was recorded for today at all.
      */
     public function recordCompletion(User $user, int $gameId, int $levelId): bool
     {
-        return $this->usageOn($user, today())
+        $completedAt = now();
+
+        return $this->usageOn($user, $completedAt->copy()->startOfDay())
             ->where('game_id', $gameId)
             ->where('level_id', $levelId)
             ->whereNull('completed_at')
-            ->update(['completed_at' => now()]) > 0;
+            ->update(['completed_at' => $completedAt]) > 0;
     }
 
     /**
@@ -107,13 +113,13 @@ class DailyUsageService
             ->lockForUpdate()
             ->first();
 
-        if ($startedLimit !== null && (int) $counts->started > $startedLimit) {
+        if ($startedLimit !== null && (int) ($counts?->started ?? 0) > $startedLimit) {
             throw new DailyStartedLimitExceededException(
                 "User {$user->id} exceeded tier {$tier->value}'s daily start limit of {$startedLimit}.",
             );
         }
 
-        if ($completedLimit !== null && (int) $counts->completed >= $completedLimit) {
+        if ($completedLimit !== null && (int) ($counts?->completed ?? 0) >= $completedLimit) {
             throw new DailyCompletedLimitExceededException(
                 "User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$completedLimit}.",
             );
@@ -121,16 +127,12 @@ class DailyUsageService
     }
 
     /**
-     * $usageDate must be the start of the day, not a live timestamp: the
-     * `date` cast stores usage_date as 'Y-m-d 00:00:00', and a DateTimeInterface
-     * binding is compared against that exact string, time component included.
-     *
      * @return Builder<LevelDailyUsage>
      */
     private function usageOn(User $user, Carbon $usageDate): Builder
     {
         return LevelDailyUsage::query()
             ->where('user_id', $user->id)
-            ->where('usage_date', $usageDate);
+            ->where('usage_date', $usageDate->toDateString());
     }
 }
