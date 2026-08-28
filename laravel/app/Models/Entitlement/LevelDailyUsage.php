@@ -29,7 +29,7 @@ use Illuminate\Support\Carbon;
  *
  * @property int $id
  * @property int $user_id
- * @property \Illuminate\Support\Carbon $usage_date
+ * @property \Illuminate\Support\Carbon|null $usage_date
  * @property int $game_id
  * @property int $level_id
  * @property \Illuminate\Support\Carbon $opened_at

@@ -5,6 +5,7 @@ namespace Tests\Feature\Entitlement;
 use App\Enums\Entitlement\TierEnum;
 use App\Exceptions\Entitlement\DailyCompletedLimitExceededException;
 use App\Exceptions\Entitlement\DailyStartedLimitExceededException;
+use App\Exceptions\Entitlement\LevelNotOpenedTodayException;
 use App\Models\Entitlement\LevelDailyUsage;
 use App\Models\Game;
 use App\Models\User;
@@ -201,14 +202,25 @@ class DailyAllowanceTest extends TestCase
         $this->assertEquals($markedAt, LevelDailyUsage::query()->sole()->completed_at);
     }
 
-    /** @test */
-    public function completing_a_level_with_no_open_recorded_today_marks_nothing(): void
+    /**
+     * A count against an absent row and a count under the limit are both 0,
+     * so skipping this check would let a client that never opens a level
+     * submit unlimited completions.
+     *
+     * @test
+     */
+    public function completing_a_level_with_no_open_recorded_today_is_refused(): void
     {
         $user = User::factory()->create();
         $game = Game::factory()->create();
 
-        $this->assertFalse($this->complete($user, TierEnum::FREE, $game->id, 1));
-        $this->assertDatabaseCount('level_daily_usage', 0);
+        $this->expectException(LevelNotOpenedTodayException::class);
+
+        try {
+            $this->complete($user, TierEnum::FREE, $game->id, 1);
+        } finally {
+            $this->assertDatabaseCount('level_daily_usage', 0);
+        }
     }
 
     /**

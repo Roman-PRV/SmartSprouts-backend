@@ -5,6 +5,7 @@ namespace App\Services\Entitlement;
 use App\Enums\Entitlement\TierEnum;
 use App\Exceptions\Entitlement\DailyCompletedLimitExceededException;
 use App\Exceptions\Entitlement\DailyStartedLimitExceededException;
+use App\Exceptions\Entitlement\LevelNotOpenedTodayException;
 use App\Models\Entitlement\LevelDailyUsage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,11 +54,13 @@ class DailyUsageService
      * Opens no transaction of its own — the opposite of recordOpen(). It must
      * run inside one the caller opens, because a refused completion has to
      * roll back the caller's own write (e.g. game_results) along with the mark.
+     * The caller's transaction must carry the deadlock retry — the two locks
+     * below can deadlock exactly as recordOpen()'s do.
      *
-     * @return bool Whether a row was marked. False when there was nothing to
-     *              mark: the level was already completed today, or no open
-     *              was recorded for today at all.
+     * @return bool Whether a row was marked. False means the level was
+     *              already completed today — a free replay.
      *
+     * @throws LevelNotOpenedTodayException
      * @throws DailyCompletedLimitExceededException
      */
     public function recordCompletion(User $user, TierEnum $tier, int $gameId, int $levelId): bool
@@ -69,16 +72,35 @@ class DailyUsageService
         $completedAt = now();
         $usageDate = $completedAt->copy()->startOfDay();
 
-        $marked = $this->usageOn($user, $usageDate)
+        // A count against an absent row and a count under the limit look
+        // identical — both are 0 — so the row's existence is checked directly
+        // rather than inferred from the update it would otherwise skip.
+        $row = $this->usageOn($user, $usageDate)
             ->where('game_id', $gameId)
             ->where('level_id', $levelId)
+            ->lockForUpdate()
+            ->first();
+
+        if ($row === null) {
+            throw new LevelNotOpenedTodayException(
+                "User {$user->id} submitted level {$levelId} without opening it today.",
+            );
+        }
+
+        // whereNull() keeps this atomic regardless of locking — 0 rows means replay.
+        $marked = LevelDailyUsage::query()
+            ->whereKey($row->getKey())
             ->whereNull('completed_at')
             ->update(['completed_at' => $completedAt]) > 0;
 
+        if (! $marked) {
+            return false;
+        }
+
         $completedLimit = $tier->completedLimit();
 
-        if (! $marked || $completedLimit === null) {
-            return $marked;
+        if ($completedLimit === null) {
+            return true;
         }
 
         // The row just marked is itself the completion being checked, so `>`
