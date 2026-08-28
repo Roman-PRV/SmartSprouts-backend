@@ -49,12 +49,13 @@ class DailyUsageService
         // yesterday while counted as today's (or vice versa) and slip past
         // the limit uncounted.
         $openedAt = now();
+        $usageDate = $openedAt->copy()->startOfDay();
 
-        return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt) {
+        return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt, $usageDate) {
             $isNew = $this->insert($user, $gameId, $levelId, $openedAt);
 
             if ($isNew) {
-                $this->assertWithinAllowance($user, $tier, $openedAt->toDateString());
+                $this->assertWithinAllowance($user, $tier, $usageDate);
             }
 
             return $isNew;
@@ -74,7 +75,7 @@ class DailyUsageService
     {
         return LevelDailyUsage::query()
             ->where('user_id', $user->id)
-            ->whereDate('usage_date', today())
+            ->where('usage_date', today())
             ->where('game_id', $gameId)
             ->where('level_id', $levelId)
             ->whereNull('completed_at')
@@ -115,7 +116,7 @@ class DailyUsageService
      * @throws DailyStartedLimitExceededException
      * @throws DailyCompletedLimitExceededException
      */
-    private function assertWithinAllowance(User $user, TierEnum $tier, string $usageDate): void
+    private function assertWithinAllowance(User $user, TierEnum $tier, Carbon $usageDate): void
     {
         $startedLimit = $tier->startedLimit();
 
@@ -135,16 +136,16 @@ class DailyUsageService
     }
 
     /**
-     * whereDate(), not where(): the `date` cast serialises usage_date with a
-     * time component for storage, so a plain string equality would silently
-     * match nothing against a bare 'Y-m-d' value.
+     * $usageDate must be the start of the day, not a live timestamp: the
+     * `date` cast stores usage_date as 'Y-m-d 00:00:00', and a DateTimeInterface
+     * binding is compared against that exact string, time component included.
      *
      * @return Builder<LevelDailyUsage>
      */
-    private function todayUsage(User $user, string $usageDate): Builder
+    private function todayUsage(User $user, Carbon $usageDate): Builder
     {
         return LevelDailyUsage::query()
             ->where('user_id', $user->id)
-            ->whereDate('usage_date', $usageDate);
+            ->where('usage_date', $usageDate);
     }
 }
