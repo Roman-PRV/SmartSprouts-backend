@@ -83,15 +83,11 @@ class DailyUsageService
     }
 
     /**
-     * The row just inserted is itself the start being checked, so `started`
-     * compares with `>`; `completed` is unaffected by this insert and
-     * compares with `>=`.
+     * `started` compares with `>` since the row just inserted counts as the
+     * start being checked; `completed` is unaffected by that insert, so `>=`.
      *
-     * Both counts are locking reads: a plain COUNT is a consistent snapshot
-     * that never sees another transaction's uncommitted insert, so two
-     * different levels opened at the same instant would both count "under
-     * the limit" and both commit. Locking the range forces the second
-     * transaction to wait for the first to finish before it counts.
+     * The count is a single locking read (FOR UPDATE): a plain COUNT wouldn't
+     * see another transaction's uncommitted insert (research.md R3).
      *
      * @throws DailyStartedLimitExceededException
      * @throws DailyCompletedLimitExceededException
@@ -99,16 +95,25 @@ class DailyUsageService
     private function assertWithinAllowance(User $user, TierEnum $tier, Carbon $usageDate): void
     {
         $startedLimit = $tier->startedLimit();
+        $completedLimit = $tier->completedLimit();
 
-        if ($startedLimit !== null && $this->usageOn($user, $usageDate)->lockForUpdate()->count() > $startedLimit) {
+        if ($startedLimit === null && $completedLimit === null) {
+            return;
+        }
+
+        $counts = $this->usageOn($user, $usageDate)
+            ->toBase()
+            ->selectRaw('count(*) as started, count(completed_at) as completed')
+            ->lockForUpdate()
+            ->first();
+
+        if ($startedLimit !== null && (int) $counts->started > $startedLimit) {
             throw new DailyStartedLimitExceededException(
                 "User {$user->id} exceeded tier {$tier->value}'s daily start limit of {$startedLimit}.",
             );
         }
 
-        $completedLimit = $tier->completedLimit();
-
-        if ($completedLimit !== null && $this->usageOn($user, $usageDate)->whereNotNull('completed_at')->lockForUpdate()->count() >= $completedLimit) {
+        if ($completedLimit !== null && (int) $counts->completed >= $completedLimit) {
             throw new DailyCompletedLimitExceededException(
                 "User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$completedLimit}.",
             );
