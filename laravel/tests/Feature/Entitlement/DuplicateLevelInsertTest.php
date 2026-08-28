@@ -9,7 +9,14 @@ use App\Services\Entitlement\DailyUsageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ConcurrentLevelOpenTest extends TestCase
+/**
+ * Covers only the unique-index arbitration of a repeated open of the SAME
+ * level (FR-006). The other half of FR-006 — two DIFFERENT levels opened at
+ * once, defended by the locking read in assertWithinAllowance — needs real
+ * row locking, which sqlite does not have, so it is not covered by an
+ * automated test (see issues/04-BE-daily-usage-engine.md).
+ */
+class DuplicateLevelInsertTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -22,18 +29,7 @@ class ConcurrentLevelOpenTest extends TestCase
         $this->service = app(DailyUsageService::class);
     }
 
-    /**
-     * True concurrency needs two database connections; the unique index is
-     * the arbiter regardless of timing, so calling twice back-to-back
-     * exercises the same collision a real two-device race would hit (FR-006).
-     *
-     * This does not exercise the other half of FR-006 — two different levels
-     * opened at the same instant, which the locking read in
-     * assertWithinAllowance defends against — because sqlite has no row
-     * locking and a single test process has no real concurrency either way.
-     *
-     * @test
-     */
+    /** @test */
     public function two_opens_of_the_same_level_produce_exactly_one_row(): void
     {
         $user = User::factory()->create();
