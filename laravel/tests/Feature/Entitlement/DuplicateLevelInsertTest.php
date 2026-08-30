@@ -15,6 +15,10 @@ use Tests\TestCase;
  * once, defended by the locking read in assertWithinAllowance — needs real
  * row locking, which sqlite does not have, so it is not covered by an
  * automated test (see issues/04-BE-daily-usage-engine.md).
+ *
+ * To verify by hand against MySQL, use DatabaseMigrations, not
+ * RefreshDatabase — the latter wraps non-:memory: tests in a transaction,
+ * which trips recordOpen()'s guard against running inside one.
  */
 class DuplicateLevelInsertTest extends TestCase
 {

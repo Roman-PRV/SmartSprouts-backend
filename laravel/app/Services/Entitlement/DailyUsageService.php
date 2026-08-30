@@ -57,6 +57,10 @@ class DailyUsageService
      * The caller's transaction must carry the deadlock retry — the two locks
      * below can deadlock exactly as recordOpen()'s do.
      *
+     * A level opened before midnight has no row for "today" once the clock
+     * turns, so it throws LevelNotOpenedTodayException here too — deliberate
+     * for now (DailyResetTest), not an oversight.
+     *
      * @return bool Whether a row was marked. False means the level was
      *              already completed today — a free replay.
      *

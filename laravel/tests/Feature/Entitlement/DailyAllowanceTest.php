@@ -119,9 +119,8 @@ class DailyAllowanceTest extends TestCase
     }
 
     /**
-     * Unlimited has no configured limit for either counter, so
-     * assertWithinAllowance never runs a count for it — recording still
-     * happens, past what Free's limits would have refused (FR-007a).
+     * Asserts the query log, not just the outcome: a count that ran but
+     * always passed would look the same in the data (FR-007a).
      *
      * @test
      */
@@ -130,11 +129,16 @@ class DailyAllowanceTest extends TestCase
         $user = User::factory()->create();
         $game = Game::factory()->create();
 
+        DB::enableQueryLog();
+
         for ($levelId = 1; $levelId <= 5; $levelId++) {
             $this->service->recordOpen($user, TierEnum::UNLIMITED, $game->id, $levelId);
             $this->complete($user, TierEnum::UNLIMITED, $game->id, $levelId);
         }
 
+        $ranACount = collect(DB::getQueryLog())->contains(fn (array $q): bool => str_contains($q['query'], 'count('));
+
+        $this->assertFalse($ranACount);
         $this->assertDatabaseCount('level_daily_usage', 5);
     }
 
