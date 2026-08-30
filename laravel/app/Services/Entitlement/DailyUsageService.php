@@ -22,7 +22,7 @@ class DailyUsageService
 {
     /**
      * Inserts the row before counting, under the same transaction — counting
-     * first would be a check-then-act race between two devices (research.md R3).
+     * first would be a check-then-act race between two devices.
      *
      * @return bool Whether this was a new open. False is a free replay.
      *
@@ -41,7 +41,7 @@ class DailyUsageService
         $usageDate = $openedAt->toDateString();
 
         return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt, $usageDate): bool {
-            $isNew = $this->insert($user, $gameId, $levelId, $openedAt);
+            $isNew = $this->insert($user, $gameId, $levelId, $usageDate, $openedAt);
 
             if ($isNew) {
                 $this->assertWithinAllowance($user, $tier, $usageDate);
@@ -108,22 +108,29 @@ class DailyUsageService
 
         // The row just marked is itself the completion being checked, so `>`
         // — the same reasoning as `started` in assertWithinAllowance().
-        if ($this->countsToday($user, $usageDate, locking: true)['completed'] > $completedLimit) {
+        if ($this->countsOn($user, $usageDate, locking: true)['completed'] > $completedLimit) {
             throw DailyCompletedLimitExceededException::exceededBy($user, $tier, $completedLimit);
         }
 
         return true;
     }
 
+    /** @return array{started: int, completed: int} */
+    public function countsToday(User $user): array
+    {
+        return $this->countsOn($user, now()->toDateString(), locking: false);
+    }
+
     /**
-     * $locking is for enforcement callers only (research.md R3) — a display
-     * read (GET /api/entitlement) should leave it false.
+     * Locking read (FOR UPDATE): a plain COUNT wouldn't see another
+     * transaction's uncommitted insert. Private — a caller outside a
+     * transaction gets no error, just a lock that does nothing.
      *
      * @return array{started: int, completed: int}
      */
-    public function countsToday(User $user, ?string $usageDate = null, bool $locking = false): array
+    private function countsOn(User $user, string $usageDate, bool $locking): array
     {
-        $query = $this->usageOn($user, $usageDate ?? now()->toDateString())
+        $query = $this->usageOn($user, $usageDate)
             ->toBase()
             ->selectRaw('count(*) as started, count(completed_at) as completed');
 
@@ -142,12 +149,12 @@ class DailyUsageService
     /**
      * @return bool False when the unique key already existed — a replay.
      */
-    private function insert(User $user, int $gameId, int $levelId, Carbon $openedAt): bool
+    private function insert(User $user, int $gameId, int $levelId, string $usageDate, Carbon $openedAt): bool
     {
         try {
             LevelDailyUsage::query()->create([
                 'user_id' => $user->id,
-                'usage_date' => $openedAt->toDateString(),
+                'usage_date' => $usageDate,
                 'game_id' => $gameId,
                 'level_id' => $levelId,
                 'opened_at' => $openedAt,
@@ -175,7 +182,7 @@ class DailyUsageService
             return;
         }
 
-        $counts = $this->countsToday($user, $usageDate, locking: true);
+        $counts = $this->countsOn($user, $usageDate, locking: true);
 
         if ($startedLimit !== null && $counts['started'] > $startedLimit) {
             throw DailyStartedLimitExceededException::exceededBy($user, $tier, $startedLimit);

@@ -2,8 +2,6 @@
 
 namespace App\Exceptions\Entitlement;
 
-use App\Enums\Entitlement\TierEnum;
-use App\Models\User;
 use RuntimeException;
 
 /**
@@ -11,7 +9,5 @@ use RuntimeException;
  */
 abstract class DailyLimitExceededException extends RuntimeException
 {
-    abstract public static function exceededBy(User $user, TierEnum $tier, int $limit): static;
-
     abstract public function limitKind(): string;
 }

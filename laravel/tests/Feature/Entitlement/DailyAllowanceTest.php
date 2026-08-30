@@ -267,4 +267,32 @@ class DailyAllowanceTest extends TestCase
 
         $this->service->recordCompletion($user, TierEnum::FREE, $game->id, 1);
     }
+
+    /** @test */
+    public function counts_today_reports_starts_and_completions(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 2);
+        $this->complete($user, TierEnum::FREE, $game->id, 1);
+
+        $this->assertSame(['started' => 2, 'completed' => 1], $this->service->countsToday($user));
+    }
+
+    /** @test */
+    public function counts_today_ignores_yesterdays_rows(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        LevelDailyUsage::factory()
+            ->for($user)
+            ->completed()
+            ->onDay(now()->subDay())
+            ->create(['game_id' => $game->id, 'level_id' => 1]);
+
+        $this->assertSame(['started' => 0, 'completed' => 0], $this->service->countsToday($user));
+    }
 }
