@@ -7,9 +7,7 @@ use App\Models\User;
 use RuntimeException;
 
 /**
- * limitKind() is the single source for details.limit_kind in the 403
- * response (contracts/entitlement-api.md) — the middleware and Handler.php
- * both read it instead of each mapping the concrete class themselves.
+ * limitKind() is the single source for details.limit_kind (contracts/entitlement-api.md).
  */
 abstract class DailyLimitExceededException extends RuntimeException
 {
