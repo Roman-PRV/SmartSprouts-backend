@@ -76,28 +76,25 @@ class DailyUsageService
         $completedAt = now();
         $usageDate = $completedAt->copy()->startOfDay();
 
-        // A count against an absent row and a count under the limit look
-        // identical — both are 0 — so the row's existence is checked directly
-        // rather than inferred from the update it would otherwise skip.
-        $row = $this->usageOn($user, $usageDate)
+        $usage = $this->usageOn($user, $usageDate)
             ->where('game_id', $gameId)
-            ->where('level_id', $levelId)
-            ->lockForUpdate()
-            ->first();
+            ->where('level_id', $levelId);
 
-        if ($row === null) {
-            throw new LevelNotOpenedTodayException(
-                "User {$user->id} submitted level {$levelId} without opening it today.",
-            );
-        }
-
-        // whereNull() keeps this atomic regardless of locking — 0 rows means replay.
-        $marked = LevelDailyUsage::query()
-            ->whereKey($row->getKey())
-            ->whereNull('completed_at')
-            ->update(['completed_at' => $completedAt]) > 0;
+        // whereNull() keeps this atomic regardless of locking — 0 rows means
+        // either a replay or no row at all, checked below.
+        $marked = (clone $usage)->whereNull('completed_at')->update(['completed_at' => $completedAt]) > 0;
 
         if (! $marked) {
+            // A count against an absent row and a count under the limit look
+            // identical, so existence is checked directly. The lock matters
+            // only here: without it, a concurrent insert not yet visible would
+            // read as "never opened".
+            if (! $usage->lockForUpdate()->exists()) {
+                throw new LevelNotOpenedTodayException(
+                    "User {$user->id} submitted level {$levelId} without opening it today.",
+                );
+            }
+
             return false;
         }
 
