@@ -112,9 +112,7 @@ class DailyUsageService
             ->count();
 
         if ($completedToday > $completedLimit) {
-            throw new DailyCompletedLimitExceededException(
-                "User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$completedLimit}.",
-            );
+            throw DailyCompletedLimitExceededException::exceededBy($user, $tier, $completedLimit);
         }
 
         return true;
@@ -166,15 +164,11 @@ class DailyUsageService
             ->first();
 
         if ($startedLimit !== null && (int) ($counts?->started ?? 0) > $startedLimit) {
-            throw new DailyStartedLimitExceededException(
-                "User {$user->id} exceeded tier {$tier->value}'s daily start limit of {$startedLimit}.",
-            );
+            throw DailyStartedLimitExceededException::exceededBy($user, $tier, $startedLimit);
         }
 
         if ($completedLimit !== null && (int) ($counts?->completed ?? 0) >= $completedLimit) {
-            throw new DailyCompletedLimitExceededException(
-                "User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$completedLimit}.",
-            );
+            throw DailyCompletedLimitExceededException::exceededBy($user, $tier, $completedLimit);
         }
     }
 
