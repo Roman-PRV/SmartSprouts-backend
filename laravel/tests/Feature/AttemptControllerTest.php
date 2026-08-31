@@ -64,6 +64,40 @@ class AttemptControllerTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_two_different_levels_are_both_scored_for_one_user(): void
+    {
+        $game = $this->trueFalseGame();
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_statements')->truncate();
+
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'Level 1']), 'image_url' => 'level1.jpg', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'title' => json_encode(['en' => 'Level 2']), 'image_url' => 'level2.jpg', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        DB::table('true_false_image_statements')->insert([
+            ['id' => 10, 'level_id' => 1, 'statement' => json_encode(['en' => 'One']), 'is_true' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 20, 'level_id' => 2, 'statement' => json_encode(['en' => 'Two']), 'is_true' => true, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        foreach ([1 => 10, 2 => 20] as $level => $statementId) {
+            $this->openLevel($user, $game, $level);
+
+            $this->actingAs($user)
+                ->postJson($this->attemptUrl($game, $level), [
+                    'answers' => [
+                        ['statement_id' => $statementId, 'answer' => true],
+                    ],
+                ])
+                ->assertStatus(200);
+        }
+
+        $this->assertDatabaseCount('game_results', 2);
+    }
+
     public function test_answer_from_a_different_level_returns_422(): void
     {
         $game = $this->trueFalseGame();
