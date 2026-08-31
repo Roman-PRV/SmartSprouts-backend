@@ -114,6 +114,13 @@ class LevelController extends Controller
      *     ),
      *
      *     @OA\Response(
+     *         response=403,
+     *         description="Daily start allowance spent",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/DailyLimitReachedResponse")
+     *     ),
+     *
+     *     @OA\Response(
      *         response=404,
      *         description="Level not found or levels table missing",
      *

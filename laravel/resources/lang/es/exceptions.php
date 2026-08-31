@@ -47,5 +47,7 @@ return [
     'entitlement' => [
         'exemption_not_found' => 'Esta cuenta no tiene ninguna exención de acceso.',
         'exemption_blocked_by_subscription' => 'Esta cuenta tiene una suscripción que todavía otorga un plan. Resuelve la suscripción antes de conceder una exención.',
+        'daily_limit_reached' => 'Límite diario alcanzado',
+        'level_not_opened_today' => 'Abre el nivel antes de enviar la respuesta',
     ],
 ];

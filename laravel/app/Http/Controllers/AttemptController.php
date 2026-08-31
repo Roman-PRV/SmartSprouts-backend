@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\User;
+use App\Services\Entitlement\DailyUsageService;
+use App\Services\Entitlement\EntitlementService;
 use App\Services\GameServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * One submit endpoint for every game. The concrete game service is resolved
@@ -22,7 +25,11 @@ use Illuminate\Http\Request;
  */
 class AttemptController extends Controller
 {
-    public function __construct(protected GameServiceFactory $factory) {}
+    public function __construct(
+        protected GameServiceFactory $factory,
+        protected EntitlementService $entitlement,
+        protected DailyUsageService $usage,
+    ) {}
 
     /**
      * @OA\Post(
@@ -51,6 +58,12 @@ class AttemptController extends Controller
      *
      *     @OA\Response(response=400, description="Service misconfiguration for the game prefix", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=401, description="Unauthenticated", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+     *     @OA\Response(response=403, description="Daily completion allowance spent, or the level was not opened today", @OA\JsonContent(oneOf={
+     *
+     *         @OA\Schema(ref="#/components/schemas/DailyLimitReachedResponse"),
+     *         @OA\Schema(ref="#/components/schemas/LevelNotOpenedTodayResponse")
+     *     })),
+     *
      *     @OA\Response(response=404, description="Game or level not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
      * )
@@ -60,7 +73,16 @@ class AttemptController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $results = $this->factory->for($game)->submit($user, $game, $level, $request->all());
+        $tier = $this->entitlement->resolveTier($user);
+
+        // One transaction over both: a refused completion has to take the
+        // game_results row the service writes down with it. Marked before
+        // scoring, so a refusal costs no scoring work.
+        $results = DB::transaction(function () use ($user, $tier, $game, $level, $request): array {
+            $this->usage->recordCompletion($user, $tier, $game->id, $level);
+
+            return $this->factory->for($game)->submit($user, $game, $level, $request->all());
+        }, DailyUsageService::DEADLOCK_ATTEMPTS);
 
         return response()->json($results, 200);
     }

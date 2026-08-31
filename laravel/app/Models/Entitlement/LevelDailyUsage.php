@@ -27,6 +27,32 @@ use Illuminate\Support\Carbon;
  * There is deliberately no relation for level_id — the migration says why it is
  * not a foreign key.
  *
+ * @OA\Schema(
+ *   schema="DailyLimitReachedResponse",
+ *   type="object",
+ *   description="403 on either gate once that gate's own daily counter is spent.",
+ *
+ *   @OA\Property(property="message", type="string", example="Daily limit reached"),
+ *   @OA\Property(property="error_type", type="string", example="LEVEL_LIMIT_REACHED"),
+ *   @OA\Property(
+ *     property="details",
+ *     type="object",
+ *     description="limit_kind names the counter this gate enforces: started on opening, completed on submitting.",
+ *     @OA\Property(property="limit_kind", type="string", enum={"started", "completed"}, example="started"),
+ *     @OA\Property(property="resets_at", type="string", format="date-time", example="2026-08-24T00:00:00Z"),
+ *     @OA\Property(property="purchasing_enabled", type="boolean", example=true)
+ *   )
+ * )
+ *
+ * @OA\Schema(
+ *   schema="LevelNotOpenedTodayResponse",
+ *   type="object",
+ *   description="403 on submitting a level with no recorded open for today. Not a limit: the client re-fetches the level and resubmits.",
+ *
+ *   @OA\Property(property="message", type="string", example="Open this level before submitting"),
+ *   @OA\Property(property="error_type", type="string", example="LEVEL_NOT_OPENED_TODAY")
+ * )
+ *
  * @property int $id
  * @property int $user_id
  * @property Carbon $usage_date

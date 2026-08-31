@@ -47,5 +47,7 @@ return [
     'entitlement' => [
         'exemption_not_found' => 'This account holds no access exemption.',
         'exemption_blocked_by_subscription' => 'This account holds a subscription that still grants a tier. Resolve the subscription before granting an exemption.',
+        'daily_limit_reached' => 'Daily limit reached',
+        'level_not_opened_today' => 'Open this level before submitting',
     ],
 ];

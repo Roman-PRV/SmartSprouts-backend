@@ -6,10 +6,12 @@ use App\Models\Game;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\OpensLevels;
 use Tests\TestCase;
 
 class GameResultSavingTest extends TestCase
 {
+    use OpensLevels;
     use RefreshDatabase;
 
     public function test_game_result_is_stored_in_database_after_successful_check(): void
@@ -33,6 +35,7 @@ class GameResultSavingTest extends TestCase
         ]);
 
         $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
 
         // 2. Perform check request
         $response = $this->actingAs($user)
@@ -78,6 +81,7 @@ class GameResultSavingTest extends TestCase
         ]);
 
         $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
 
         // 1 correct, 1 incorrect
         $this->actingAs($user)
@@ -110,6 +114,7 @@ class GameResultSavingTest extends TestCase
         ]);
 
         $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
 
         $this->actingAs($user)
             ->withHeaders(['Accept-Language' => 'uk'])

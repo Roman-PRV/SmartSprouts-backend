@@ -14,6 +14,7 @@ use App\Http\Controllers\LegalController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilePasswordController;
+use App\Http\Middleware\EnforceLevelStart;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\GameMatches;
 use Illuminate\Support\Facades\Route;
@@ -60,7 +61,14 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('game');
 
     Route::apiResource('games.levels', LevelController::class)
-        ->only(['index', 'show'])
+        ->only(['index'])
+        ->whereNumber(['game']);
+
+    // Declared apart from the resource so the start gate lands on opening a
+    // level only — listing them is not opening one.
+    Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
+        ->name('games.levels.show')
+        ->middleware(EnforceLevelStart::class)
         ->whereNumber(['game', 'level']);
 
     Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])

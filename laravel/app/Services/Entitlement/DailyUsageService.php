@@ -21,6 +21,13 @@ use LogicException;
 class DailyUsageService
 {
     /**
+     * Total attempts for the transaction each recording step needs: the locking
+     * reads below can deadlock. Public because the completion step runs in the
+     * caller's transaction, and the caller cannot see what takes the locks.
+     */
+    public const DEADLOCK_ATTEMPTS = 3;
+
+    /**
      * Inserts the row before counting, under the same transaction — counting
      * first would be a check-then-act race between two devices.
      *
@@ -50,14 +57,14 @@ class DailyUsageService
             }
 
             return $isNew;
-        }, 3); // 3 attempts: the locking read below can deadlock and needs a retry.
+        }, self::DEADLOCK_ATTEMPTS);
     }
 
     /**
      * Opens no transaction of its own — the opposite of recordOpen(). It must
      * run inside one the caller opens, because a refused completion has to
      * roll back the caller's own write (e.g. game_results) along with the mark.
-     * The caller's transaction must carry the deadlock retry — the two locks
+     * The caller's transaction must carry DEADLOCK_ATTEMPTS — the two locks
      * below can deadlock exactly as recordOpen()'s do.
      *
      * The limit exception must be handled OUTSIDE that transaction. Catching
@@ -132,6 +139,12 @@ class DailyUsageService
     public function countsToday(User $user): array
     {
         return $this->countsOn($user, now(), locking: false);
+    }
+
+    /** The UTC midnight both counters roll over at — the boundary usage_date already draws. */
+    public static function resetsAt(): Carbon
+    {
+        return now()->addDay()->startOfDay();
     }
 
     /**

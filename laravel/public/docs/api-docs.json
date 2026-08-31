@@ -340,6 +340,23 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "Daily completion allowance spent, or the level was not opened today",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DailyLimitReachedResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/LevelNotOpenedTodayResponse"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Game or level not found",
                         "content": {
@@ -875,6 +892,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Level"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Daily start allowance spent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DailyLimitReachedResponse"
                                 }
                             }
                         }
@@ -2216,6 +2243,58 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "DailyLimitReachedResponse": {
+                "description": "403 on either gate once that gate's own daily counter is spent.",
+                "properties": {
+                    "message": {
+                        "description": "One level a user touched on one day.\n\nBoth daily counters are derived by counting these rows, never stored: started\ntoday is the rows for the day, completed today is the same set filtered on\ncompleted_at.\n\nA row is inserted for every account, unlimited and exempt ones included.\nRecording and limit-checking are separate steps, and skipping the insert for\naccounts that are never limited — the natural shape — would leave the\nfair-use report with nothing to report on for exactly the tier it exists to\nwatch.\n\nThere is deliberately no relation for level_id — the migration says why it is\nnot a foreign key.",
+                        "type": "string",
+                        "example": "Daily limit reached"
+                    },
+                    "error_type": {
+                        "type": "string",
+                        "example": "LEVEL_LIMIT_REACHED"
+                    },
+                    "details": {
+                        "description": "limit_kind names the counter this gate enforces: started on opening, completed on submitting.",
+                        "properties": {
+                            "limit_kind": {
+                                "type": "string",
+                                "enum": [
+                                    "started",
+                                    "completed"
+                                ],
+                                "example": "started"
+                            },
+                            "resets_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-08-24T00:00:00Z"
+                            },
+                            "purchasing_enabled": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "LevelNotOpenedTodayResponse": {
+                "description": "403 on submitting a level with no recorded open for today. Not a limit: the client re-fetches the level and resubmits.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Open this level before submitting"
+                    },
+                    "error_type": {
+                        "type": "string",
+                        "example": "LEVEL_NOT_OPENED_TODAY"
                     }
                 },
                 "type": "object"

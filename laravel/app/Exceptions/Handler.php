@@ -3,7 +3,11 @@
 namespace App\Exceptions;
 
 use App\Enums\ErrorTypeEnum;
+use App\Exceptions\Entitlement\DailyLimitExceededException;
+use App\Exceptions\Entitlement\LevelNotOpenedTodayException;
 use App\Exceptions\Entitlement\SubscriptionBlocksExemptionException;
+use App\Helpers\ConfigHelper;
+use App\Services\Entitlement\DailyUsageService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
@@ -26,12 +30,15 @@ class Handler extends ExceptionHandler
      *
      * The exemption refusal is a business rule answered as a 409, not a failure:
      * if reported, every normal admin action against a paying account looks
-     * like an incident.
+     * like an incident. The two daily gates are the same kind of answer: a spent
+     * allowance and a tab left open overnight are ordinary outcomes.
      *
      * @var array<int, class-string<\Throwable>>
      */
     protected $dontReport = [
         SubscriptionBlocksExemptionException::class,
+        DailyLimitExceededException::class,
+        LevelNotOpenedTodayException::class,
     ];
 
     /**
@@ -72,6 +79,28 @@ class Handler extends ExceptionHandler
                 'message' => __('exceptions.entitlement.exemption_blocked_by_subscription'),
                 'error_type' => ErrorTypeEnum::SUBSCRIPTION_STILL_GRANTS_TIER->value,
             ], 409);
+        });
+
+        // One registration for both gates: the exception subclass carries which
+        // counter was spent, so the shape is written once.
+        $this->renderable(function (DailyLimitExceededException $e) {
+            return response()->json([
+                'message' => __('exceptions.entitlement.daily_limit_reached'),
+                'error_type' => ErrorTypeEnum::LEVEL_LIMIT_REACHED->value,
+                'details' => [
+                    'limit_kind' => $e->limitKind()->value,
+                    'resets_at' => DailyUsageService::resetsAt()->toIso8601ZuluString(),
+                    'purchasing_enabled' => ConfigHelper::getBool('billing.purchasing_enabled'),
+                ],
+            ], 403);
+        });
+
+        // Separate on purpose: a missing precondition, not a spent allowance.
+        $this->renderable(function (LevelNotOpenedTodayException $e) {
+            return response()->json([
+                'message' => __('exceptions.entitlement.level_not_opened_today'),
+                'error_type' => ErrorTypeEnum::LEVEL_NOT_OPENED_TODAY->value,
+            ], 403);
         });
     }
 
