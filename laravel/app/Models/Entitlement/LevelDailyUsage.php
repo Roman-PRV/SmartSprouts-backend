@@ -4,9 +4,12 @@ namespace App\Models\Entitlement;
 
 use App\Models\Game;
 use App\Models\User;
+use DateTimeInterface;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * One level a user touched on one day.
@@ -26,11 +29,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $id
  * @property int $user_id
- * @property \Illuminate\Support\Carbon $usage_date
+ * @property Carbon $usage_date
  * @property int $game_id
  * @property int $level_id
- * @property \Illuminate\Support\Carbon $opened_at
- * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property Carbon $opened_at
+ * @property Carbon|null $completed_at
  */
 class LevelDailyUsage extends Model
 {
@@ -68,10 +71,21 @@ class LevelDailyUsage extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'usage_date' => 'date',
         'opened_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
+
+    /**
+     * Bare 'Y-m-d', not the `date` cast: that writes 'Y-m-d 00:00:00', which
+     * MySQL truncates on write and sqlite keeps whole.
+     */
+    protected function usageDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn (string $value): Carbon => Carbon::parse($value),
+            set: fn (DateTimeInterface|string $value): string => Carbon::parse($value)->toDateString(),
+        );
+    }
 
     /**
      * The account whose allowance this row consumes.

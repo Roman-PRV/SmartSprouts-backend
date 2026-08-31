@@ -1,0 +1,70 @@
+<?php
+
+namespace Tests\Feature\Entitlement;
+
+use App\Enums\Entitlement\TierEnum;
+use App\Models\Entitlement\LevelDailyUsage;
+use App\Models\Game;
+use App\Models\User;
+use App\Services\Entitlement\DailyUsageService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class FreeReplayTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private DailyUsageService $service;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('billing.tiers.free', [
+            'completed_limit' => 1,
+            'started_limit' => 3,
+            'price_minor' => 0,
+        ]);
+
+        $this->service = app(DailyUsageService::class);
+    }
+
+    /** @test */
+    public function reopening_an_uncompleted_level_moves_neither_allowance(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+        $replay = $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+
+        // Free allows 3 starts. If the replay above had spent one, the third
+        // distinct level below would refuse instead of succeeding.
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 2);
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 3);
+
+        $this->assertFalse($replay);
+        $this->assertDatabaseCount('level_daily_usage', 3);
+    }
+
+    /** @test */
+    public function reopening_a_completed_level_moves_neither_allowance(): void
+    {
+        $user = User::factory()->create();
+        $game = Game::factory()->create();
+
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+        DB::transaction(fn (): bool => $this->service->recordCompletion($user, TierEnum::FREE, $game->id, 1));
+
+        // The unique-key collision is caught before anything else runs, so the
+        // replay must neither add a row nor disturb the mark already on it.
+        $replay = $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
+
+        $this->assertFalse($replay);
+        $this->assertDatabaseCount('level_daily_usage', 1);
+        $this->assertNotNull(
+            LevelDailyUsage::query()->where('level_id', 1)->sole()->completed_at,
+        );
+    }
+}
