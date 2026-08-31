@@ -2,6 +2,7 @@
 
 namespace App\Exceptions\Entitlement;
 
+use App\Enums\Entitlement\LimitKindEnum;
 use App\Enums\Entitlement\TierEnum;
 use App\Models\User;
 
@@ -15,8 +16,8 @@ class DailyCompletedLimitExceededException extends DailyLimitExceededException
         return new self("User {$user->id} exceeded tier {$tier->value}'s daily completion limit of {$limit}.");
     }
 
-    public function limitKind(): string
+    public function limitKind(): LimitKindEnum
     {
-        return 'completed';
+        return LimitKindEnum::COMPLETED;
     }
 }

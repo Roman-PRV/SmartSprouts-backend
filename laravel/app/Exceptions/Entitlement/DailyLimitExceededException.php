@@ -2,6 +2,7 @@
 
 namespace App\Exceptions\Entitlement;
 
+use App\Enums\Entitlement\LimitKindEnum;
 use RuntimeException;
 
 /**
@@ -9,5 +10,5 @@ use RuntimeException;
  */
 abstract class DailyLimitExceededException extends RuntimeException
 {
-    abstract public function limitKind(): string;
+    abstract public function limitKind(): LimitKindEnum;
 }
