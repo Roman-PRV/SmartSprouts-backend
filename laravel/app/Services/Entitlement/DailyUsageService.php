@@ -20,11 +20,7 @@ use LogicException;
  */
 class DailyUsageService
 {
-    /**
-     * Total attempts for the transaction each recording step needs: the locking
-     * reads below can deadlock. Public because the completion step runs in the
-     * caller's transaction, and the caller cannot see what takes the locks.
-     */
+    /** Attempts for a transaction holding the locking reads below. */
     public const DEADLOCK_ATTEMPTS = 3;
 
     /**

@@ -85,7 +85,7 @@ class Handler extends ExceptionHandler
         // counter was spent, so the shape is written once.
         $this->renderable(function (DailyLimitExceededException $e) {
             return response()->json([
-                'message' => __('exceptions.entitlement.daily_limit_reached'),
+                'message' => __($e->messageKey()),
                 'error_type' => ErrorTypeEnum::LEVEL_LIMIT_REACHED->value,
                 'details' => [
                     'limit_kind' => $e->limitKind()->value,

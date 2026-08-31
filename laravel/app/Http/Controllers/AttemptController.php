@@ -4,18 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\User;
-use App\Services\Entitlement\DailyUsageService;
-use App\Services\Entitlement\EntitlementService;
-use App\Services\GameServiceFactory;
+use App\Services\Entitlement\GatedAttemptService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
- * One submit endpoint for every game. The concrete game service is resolved
- * from the route's Game (table_prefix → service) via the factory, and it owns
- * validation, scoring, persistence and the response shape. Mirrors the generic
- * read path (one route, dispatched by game).
+ * One submit endpoint for every game. GatedAttemptService records the
+ * completion and hands off to the concrete game service, which owns validation,
+ * scoring, persistence and the response shape. Mirrors the generic read path
+ * (one route, dispatched by game).
  *
  * Validation deliberately lives in the service (via Validator), not a
  * FormRequest: a single generic endpoint cannot statically bind a per-game
@@ -25,11 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 class AttemptController extends Controller
 {
-    public function __construct(
-        protected GameServiceFactory $factory,
-        protected EntitlementService $entitlement,
-        protected DailyUsageService $usage,
-    ) {}
+    public function __construct(protected GatedAttemptService $attempts) {}
 
     /**
      * @OA\Post(
@@ -73,17 +66,9 @@ class AttemptController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $tier = $this->entitlement->resolveTier($user);
-
-        // One transaction over both: a refused completion has to take the
-        // game_results row the service writes down with it. Marked before
-        // scoring, so a refusal costs no scoring work.
-        $results = DB::transaction(function () use ($user, $tier, $game, $level, $request): array {
-            $this->usage->recordCompletion($user, $tier, $game->id, $level);
-
-            return $this->factory->for($game)->submit($user, $game, $level, $request->all());
-        }, DailyUsageService::DEADLOCK_ATTEMPTS);
-
-        return response()->json($results, 200);
+        return response()->json(
+            $this->attempts->submit($user, $game, $level, $request->all()),
+            200,
+        );
     }
 }

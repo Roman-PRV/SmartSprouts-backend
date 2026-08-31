@@ -47,7 +47,8 @@ return [
     'entitlement' => [
         'exemption_not_found' => 'Цей акаунт не має звільнення від оплати.',
         'exemption_blocked_by_subscription' => 'Цей акаунт має підписку, яка ще надає тариф. Завершіть підписку, перш ніж видавати звільнення.',
-        'daily_limit_reached' => 'Денний ліміт вичерпано',
+        'daily_started_limit_reached' => 'Сьогодні ви вже відкрили всі доступні рівні',
+        'daily_completed_limit_reached' => 'Сьогодні ви вже завершили всі доступні рівні',
         'level_not_opened_today' => 'Відкрийте рівень, перш ніж надсилати відповідь',
     ],
 ];

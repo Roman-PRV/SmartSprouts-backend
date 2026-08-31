@@ -163,11 +163,11 @@ class AdditionTableApiTest extends TestCase
             ->assertJsonPath('results.0.correct', false);
     }
 
-    public function test_submit_to_a_nonexistent_level_returns_404(): void
+    public function test_submit_to_a_level_that_disappeared_returns_404(): void
     {
         $game = $this->additionGame();
 
-        // Opened first, so the 404 under test is the level's own, not the gate's.
+        // The level was open, then went away — the 404 is the game's, not the gate's.
         $user = User::factory()->create();
         $this->openLevel($user, $game, 999);
 

@@ -21,4 +21,9 @@ class DailyStartedLimitExceededException extends DailyLimitExceededException
     {
         return LimitKindEnum::STARTED;
     }
+
+    public function messageKey(): string
+    {
+        return 'exceptions.entitlement.daily_started_limit_reached';
+    }
 }

@@ -23,6 +23,21 @@ class DailyLimitExceededExceptionTest extends TestCase
         $this->assertSame(LimitKindEnum::COMPLETED, DailyCompletedLimitExceededException::exceededBy($user, TierEnum::FREE, 1)->limitKind());
     }
 
+    /** Swapping the two keys stays type-correct, the same way limitKind() does. */
+    public function test_each_exception_names_its_own_message(): void
+    {
+        $user = $this->userWithId(1);
+
+        $this->assertSame(
+            'exceptions.entitlement.daily_started_limit_reached',
+            DailyStartedLimitExceededException::exceededBy($user, TierEnum::FREE, 3)->messageKey(),
+        );
+        $this->assertSame(
+            'exceptions.entitlement.daily_completed_limit_reached',
+            DailyCompletedLimitExceededException::exceededBy($user, TierEnum::FREE, 1)->messageKey(),
+        );
+    }
+
     public function test_exceeded_by_builds_a_message_naming_the_user_tier_and_limit(): void
     {
         $user = $this->userWithId(42);

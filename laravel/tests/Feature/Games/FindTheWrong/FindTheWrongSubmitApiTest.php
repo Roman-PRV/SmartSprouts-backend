@@ -88,9 +88,9 @@ class FindTheWrongSubmitApiTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_nonexistent_level_returns_404(): void
+    public function test_level_that_disappeared_returns_404(): void
     {
-        // Opened first, so the 404 under test is the level's own, not the gate's.
+        // The level was open, then went away — the 404 is the game's, not the gate's.
         $this->openLevel($this->user, $this->game, 999999);
 
         $this->actingAs($this->user)

@@ -26,6 +26,12 @@ return [
     |
     | Drivers: "sync", "database", "beanstalkd", "sqs", "redis", "null"
     |
+    | after_commit is on everywhere it exists — the sync driver fires a job
+    | inline and has no such option. A submitted attempt is scored inside a
+    | transaction the daily gate can roll back, and the worker is a separate
+    | container that would not see an uncommitted row. Nothing dispatches
+    | inside a transaction today, so turning it on changes nothing yet.
+    |
     */
 
     'connections' => [
@@ -39,7 +45,7 @@ return [
             'table' => 'jobs',
             'queue' => 'default',
             'retry_after' => (int) env('QUEUE_RETRY_AFTER', 135),
-            'after_commit' => false,
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [
@@ -48,7 +54,7 @@ return [
             'queue' => 'default',
             'retry_after' => (int) env('QUEUE_RETRY_AFTER', 135),
             'block_for' => 0,
-            'after_commit' => false,
+            'after_commit' => true,
         ],
 
         'sqs' => [
@@ -59,7 +65,7 @@ return [
             'queue' => env('SQS_QUEUE', 'default'),
             'suffix' => env('SQS_SUFFIX'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-            'after_commit' => false,
+            'after_commit' => true,
         ],
 
         'redis' => [
@@ -68,7 +74,7 @@ return [
             'queue' => env('REDIS_QUEUE', 'default'),
             'retry_after' => (int) env('QUEUE_RETRY_AFTER', 135),
             'block_for' => null,
-            'after_commit' => false,
+            'after_commit' => true,
         ],
 
     ],
