@@ -98,24 +98,26 @@ class DailyAllowanceTest extends TestCase
         }
     }
 
-    /** @test */
-    public function the_completion_limit_refuses_independently_and_names_itself(): void
+    /**
+     * The completion allowance closes the completion gate only. Checking it at
+     * the open gate as well would put started_limit out of reach in ordinary
+     * play — open, finish, and Free's remaining two starts could never be spent.
+     *
+     * @test
+     */
+    public function the_start_allowance_stays_usable_after_the_completion_allowance_is_spent(): void
     {
         $user = User::factory()->create();
         $game = Game::factory()->create();
 
-        // One completion exhausts Free's completion allowance while only one
-        // of the three starts has been spent — the start limit has headroom.
+        // Free allows 3 starts and 1 completion; the completion is spent here.
         $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
         $this->complete($user, TierEnum::FREE, $game->id, 1);
 
-        $this->expectException(DailyCompletedLimitExceededException::class);
+        $this->assertTrue($this->service->recordOpen($user, TierEnum::FREE, $game->id, 2));
+        $this->assertTrue($this->service->recordOpen($user, TierEnum::FREE, $game->id, 3));
 
-        try {
-            $this->service->recordOpen($user, TierEnum::FREE, $game->id, 2);
-        } finally {
-            $this->assertDatabaseCount('level_daily_usage', 1);
-        }
+        $this->assertSame(['started' => 3, 'completed' => 1], $this->service->countsToday($user));
     }
 
     /**
@@ -167,12 +169,8 @@ class DailyAllowanceTest extends TestCase
         $user = User::factory()->create();
         $game = Game::factory()->create();
 
-        // Both completed: a null completed_limit is the only thing keeping this
-        // from refusing on the completion counter instead.
         $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 1);
-        $this->complete($user, TierEnum::PREMIUM, $game->id, 1);
         $this->service->recordOpen($user, TierEnum::PREMIUM, $game->id, 2);
-        $this->complete($user, TierEnum::PREMIUM, $game->id, 2);
 
         $this->expectException(DailyStartedLimitExceededException::class);
 
@@ -320,12 +318,7 @@ class DailyAllowanceTest extends TestCase
         $this->assertSame(['started' => 1, 'completed' => 0], $this->service->countsToday($user));
     }
 
-    /**
-     * Both opens come first: completing one would otherwise spend Free's
-     * single completion and refuse the second open before it is tested.
-     *
-     * @test
-     */
+    /** @test */
     public function the_same_level_number_in_another_game_is_a_separate_row(): void
     {
         $user = User::factory()->create();

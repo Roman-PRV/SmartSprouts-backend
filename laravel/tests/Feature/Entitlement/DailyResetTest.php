@@ -71,9 +71,16 @@ class DailyResetTest extends TestCase
             ->onDay(now()->subDay())
             ->create(['game_id' => $game->id, 'level_id' => 1]);
 
-        $isNew = $this->service->recordOpen($user, TierEnum::FREE, $game->id, 2);
+        $this->service->recordOpen($user, TierEnum::FREE, $game->id, 2);
 
-        $this->assertTrue($isNew);
+        // Asserted through recordCompletion(), the only place the completion
+        // counter is read: recordOpen() would pass here even with the date
+        // filter broken, since it never looks at completions at all.
+        $marked = DB::transaction(
+            fn (): bool => $this->service->recordCompletion($user, TierEnum::FREE, $game->id, 2),
+        );
+
+        $this->assertTrue($marked);
         $this->assertDatabaseCount('level_daily_usage', 2);
     }
 

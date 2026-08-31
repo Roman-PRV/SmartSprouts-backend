@@ -24,11 +24,14 @@ class DailyUsageService
      * Inserts the row before counting, under the same transaction — counting
      * first would be a check-then-act race between two devices.
      *
+     * Only the start allowance is checked here. A spent completion allowance
+     * does not close the day: the player keeps opening levels up to the start
+     * limit and is refused at the completion gate instead.
+     *
      * @return bool Whether this was a new open. False is a free replay.
      *
      * @throws LogicException
      * @throws DailyStartedLimitExceededException
-     * @throws DailyCompletedLimitExceededException
      */
     public function recordOpen(User $user, TierEnum $tier, int $gameId, int $levelId): bool
     {
@@ -44,7 +47,7 @@ class DailyUsageService
             $isNew = $this->insert($user, $gameId, $levelId, $usageDate, $openedAt);
 
             if ($isNew) {
-                $this->assertWithinAllowance($user, $tier, $usageDate);
+                $this->assertWithinStartAllowance($user, $tier, $usageDate);
             }
 
             return $isNew;
@@ -179,29 +182,20 @@ class DailyUsageService
     }
 
     /**
-     * `started` compares with `>` since the row just inserted counts as the
-     * start being checked; `completed` is unaffected by that insert, so `>=`.
+     * `>` since the row just inserted is itself the start being checked.
      *
      * @throws DailyStartedLimitExceededException
-     * @throws DailyCompletedLimitExceededException
      */
-    private function assertWithinAllowance(User $user, TierEnum $tier, string $usageDate): void
+    private function assertWithinStartAllowance(User $user, TierEnum $tier, string $usageDate): void
     {
         $startedLimit = $tier->startedLimit();
-        $completedLimit = $tier->completedLimit();
 
-        if ($startedLimit === null && $completedLimit === null) {
+        if ($startedLimit === null) {
             return;
         }
 
-        $counts = $this->countsOn($user, $usageDate, locking: true);
-
-        if ($startedLimit !== null && $counts['started'] > $startedLimit) {
+        if ($this->countsOn($user, $usageDate, locking: true)['started'] > $startedLimit) {
             throw DailyStartedLimitExceededException::exceededBy($user, $tier, $startedLimit);
-        }
-
-        if ($completedLimit !== null && $counts['completed'] >= $completedLimit) {
-            throw DailyCompletedLimitExceededException::exceededBy($user, $tier, $completedLimit);
         }
     }
 

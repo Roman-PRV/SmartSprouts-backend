@@ -57,9 +57,8 @@ class FreeReplayTest extends TestCase
         $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
         DB::transaction(fn (): bool => $this->service->recordCompletion($user, TierEnum::FREE, $game->id, 1));
 
-        // Free's completion allowance is already spent; a genuinely new open
-        // here would throw. A replay must not, because the unique-key
-        // collision is caught before the limit check ever runs.
+        // The unique-key collision is caught before anything else runs, so the
+        // replay must neither add a row nor disturb the mark already on it.
         $replay = $this->service->recordOpen($user, TierEnum::FREE, $game->id, 1);
 
         $this->assertFalse($replay);
