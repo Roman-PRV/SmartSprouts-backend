@@ -5,7 +5,7 @@ namespace App\Exceptions\Entitlement;
 use RuntimeException;
 
 /**
- * limitKind() is the single source for details.limit_kind (contracts/entitlement-api.md).
+ * limitKind() is the single source for the limit_kind the 403 response carries.
  */
 abstract class DailyLimitExceededException extends RuntimeException
 {

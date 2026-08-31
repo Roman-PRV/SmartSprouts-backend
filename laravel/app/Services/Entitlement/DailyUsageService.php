@@ -58,9 +58,13 @@ class DailyUsageService
      * The caller's transaction must carry the deadlock retry — the two locks
      * below can deadlock exactly as recordOpen()'s do.
      *
+     * The limit exception must be handled OUTSIDE that transaction. Catching
+     * it inside and committing anyway keeps both completed_at and the
+     * caller's own write while showing the player a refusal.
+     *
      * A level opened before midnight has no row for "today" once the clock
-     * turns, so it throws LevelNotOpenedTodayException here too — deliberate
-     * for now (DailyResetTest), not an oversight.
+     * turns, so it throws LevelNotOpenedTodayException here too — deliberate,
+     * not an oversight.
      *
      * @return bool Whether a row was marked. False means the level was
      *              already completed today — a free replay.
@@ -82,15 +86,14 @@ class DailyUsageService
             ->where('game_id', $gameId)
             ->where('level_id', $levelId);
 
-        // whereNull() keeps this atomic regardless of locking — 0 rows means
-        // either a replay or no row at all, checked below.
+        // whereNull() keeps this atomic regardless of locking.
         $marked = (clone $usage)->whereNull('completed_at')->update(['completed_at' => $completedAt]) > 0;
 
         if (! $marked) {
-            // A count against an absent row and a count under the limit look
-            // identical, so existence is checked directly. The lock matters
-            // only here: without it, a concurrent insert not yet visible would
-            // read as "never opened".
+            // Existence is the whole question here: a row found now must
+            // already be marked, since nothing un-marks one and the update
+            // above gap-locked the key against a concurrent insert landing
+            // in between.
             if (! $usage->lockForUpdate()->exists()) {
                 throw new LevelNotOpenedTodayException(
                     "User {$user->id} submitted level {$levelId} without opening it today.",
@@ -115,7 +118,16 @@ class DailyUsageService
         return true;
     }
 
-    /** @return array{started: int, completed: int} */
+    /**
+     * Today's two counters for the account: distinct levels opened, and how
+     * many of those were finished. The day is a fixed UTC date, not the
+     * player's.
+     *
+     * Non-locking on purpose — this is the read behind GET /entitlement, not
+     * part of any enforcement decision.
+     *
+     * @return array{started: int, completed: int}
+     */
     public function countsToday(User $user): array
     {
         return $this->countsOn($user, now()->toDateString(), locking: false);
@@ -194,6 +206,12 @@ class DailyUsageService
     }
 
     /**
+     * Every row this account holds for one day.
+     *
+     * $usageDate must be a bare 'Y-m-d', matching what the model's mutator
+     * writes. There is no strict_types here, so a Carbon passed by mistake is
+     * coerced to 'Y-m-d H:i:s' and silently matches nothing.
+     *
      * @return Builder<LevelDailyUsage>
      */
     private function usageOn(User $user, string $usageDate): Builder
