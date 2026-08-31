@@ -12,7 +12,7 @@ use Tests\TestCase;
 /**
  * Covers only the unique-index arbitration of a repeated open of the SAME
  * level (FR-006). The other half of FR-006 — two DIFFERENT levels opened at
- * once, defended by the locking read in assertWithinAllowance — needs real
+ * once, defended by the locking read in assertWithinStartAllowance — needs real
  * row locking, which sqlite does not have, so it is not covered by an
  * automated test (see issues/04-BE-daily-usage-engine.md).
  *

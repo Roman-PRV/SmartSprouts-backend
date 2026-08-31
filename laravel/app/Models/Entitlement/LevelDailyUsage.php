@@ -29,11 +29,11 @@ use Illuminate\Support\Carbon;
  *
  * @property int $id
  * @property int $user_id
- * @property \Illuminate\Support\Carbon $usage_date
+ * @property Carbon $usage_date
  * @property int $game_id
  * @property int $level_id
- * @property \Illuminate\Support\Carbon $opened_at
- * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property Carbon $opened_at
+ * @property Carbon|null $completed_at
  */
 class LevelDailyUsage extends Model
 {

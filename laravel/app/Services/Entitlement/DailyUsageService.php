@@ -41,13 +41,12 @@ class DailyUsageService
 
         // One clock read: usage_date and opened_at must land on the same side of midnight.
         $openedAt = now();
-        $usageDate = $openedAt->toDateString();
 
-        return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt, $usageDate): bool {
-            $isNew = $this->insert($user, $gameId, $levelId, $usageDate, $openedAt);
+        return DB::transaction(function () use ($user, $tier, $gameId, $levelId, $openedAt): bool {
+            $isNew = $this->insert($user, $gameId, $levelId, $openedAt);
 
             if ($isNew) {
-                $this->assertWithinStartAllowance($user, $tier, $usageDate);
+                $this->assertWithinStartAllowance($user, $tier, $openedAt);
             }
 
             return $isNew;
@@ -83,9 +82,8 @@ class DailyUsageService
         }
 
         $completedAt = now();
-        $usageDate = $completedAt->toDateString();
 
-        $usage = $this->usageOn($user, $usageDate)
+        $usage = $this->usageOn($user, $completedAt)
             ->where('game_id', $gameId)
             ->where('level_id', $levelId);
 
@@ -113,8 +111,8 @@ class DailyUsageService
         }
 
         // The row just marked is itself the completion being checked, so `>`
-        // — the same reasoning as `started` in assertWithinAllowance().
-        if ($this->countsOn($user, $usageDate, locking: true)['completed'] > $completedLimit) {
+        // — the same reasoning as `started` in assertWithinStartAllowance().
+        if ($this->countsOn($user, $completedAt, locking: true)['completed'] > $completedLimit) {
             throw DailyCompletedLimitExceededException::exceededBy($user, $tier, $completedLimit);
         }
 
@@ -133,7 +131,7 @@ class DailyUsageService
      */
     public function countsToday(User $user): array
     {
-        return $this->countsOn($user, now()->toDateString(), locking: false);
+        return $this->countsOn($user, now(), locking: false);
     }
 
     /**
@@ -143,7 +141,7 @@ class DailyUsageService
      *
      * @return array{started: int, completed: int}
      */
-    private function countsOn(User $user, string $usageDate, bool $locking): array
+    private function countsOn(User $user, Carbon $usageDate, bool $locking): array
     {
         $query = $this->usageOn($user, $usageDate)
             ->toBase()
@@ -164,12 +162,12 @@ class DailyUsageService
     /**
      * @return bool False when the unique key already existed — a replay.
      */
-    private function insert(User $user, int $gameId, int $levelId, string $usageDate, Carbon $openedAt): bool
+    private function insert(User $user, int $gameId, int $levelId, Carbon $openedAt): bool
     {
         try {
             LevelDailyUsage::query()->create([
                 'user_id' => $user->id,
-                'usage_date' => $usageDate,
+                'usage_date' => $openedAt->toDateString(),
                 'game_id' => $gameId,
                 'level_id' => $levelId,
                 'opened_at' => $openedAt,
@@ -186,7 +184,7 @@ class DailyUsageService
      *
      * @throws DailyStartedLimitExceededException
      */
-    private function assertWithinStartAllowance(User $user, TierEnum $tier, string $usageDate): void
+    private function assertWithinStartAllowance(User $user, TierEnum $tier, Carbon $usageDate): void
     {
         $startedLimit = $tier->startedLimit();
 
@@ -202,16 +200,12 @@ class DailyUsageService
     /**
      * Every row this account holds for one day.
      *
-     * $usageDate must be a bare 'Y-m-d', matching what the model's mutator
-     * writes. There is no strict_types here, so a Carbon passed by mistake is
-     * coerced to 'Y-m-d H:i:s' and silently matches nothing.
-     *
      * @return Builder<LevelDailyUsage>
      */
-    private function usageOn(User $user, string $usageDate): Builder
+    private function usageOn(User $user, Carbon $usageDate): Builder
     {
         return LevelDailyUsage::query()
             ->where('user_id', $user->id)
-            ->where('usage_date', $usageDate);
+            ->where('usage_date', $usageDate->toDateString());
     }
 }
