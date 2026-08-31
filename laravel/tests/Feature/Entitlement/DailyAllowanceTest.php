@@ -295,4 +295,54 @@ class DailyAllowanceTest extends TestCase
 
         $this->assertSame(['started' => 0, 'completed' => 0], $this->service->countsToday($user));
     }
+
+    /**
+     * Drop the user_id filter from the counting query and every other test
+     * here still passes — they all use a single account.
+     *
+     * @test
+     */
+    public function another_accounts_usage_does_not_count_against_this_one(): void
+    {
+        $user = User::factory()->create();
+        $stranger = User::factory()->create();
+        $game = Game::factory()->create();
+
+        // Built by factory, not by the service: the setup must not run through
+        // the code under test.
+        LevelDailyUsage::factory()
+            ->for($stranger)
+            ->count(3)
+            ->sequence(['level_id' => 1], ['level_id' => 2], ['level_id' => 3])
+            ->create(['game_id' => $game->id]);
+
+        $this->assertTrue($this->service->recordOpen($user, TierEnum::FREE, $game->id, 1));
+        $this->assertSame(['started' => 1, 'completed' => 0], $this->service->countsToday($user));
+    }
+
+    /**
+     * Both opens come first: completing one would otherwise spend Free's
+     * single completion and refuse the second open before it is tested.
+     *
+     * @test
+     */
+    public function the_same_level_number_in_another_game_is_a_separate_row(): void
+    {
+        $user = User::factory()->create();
+        $mathGame = Game::factory()->create();
+        $quizGame = Game::factory()->create();
+
+        $this->service->recordOpen($user, TierEnum::FREE, $mathGame->id, 5);
+        $this->service->recordOpen($user, TierEnum::FREE, $quizGame->id, 5);
+
+        $this->complete($user, TierEnum::FREE, $mathGame->id, 5);
+
+        $this->assertDatabaseCount('level_daily_usage', 2);
+        $this->assertSame(['started' => 2, 'completed' => 1], $this->service->countsToday($user));
+
+        // Drop the game_id filter from recordCompletion() and this is what breaks.
+        $this->assertNull(
+            LevelDailyUsage::query()->where('game_id', $quizGame->id)->sole()->completed_at,
+        );
+    }
 }
