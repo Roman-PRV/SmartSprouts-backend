@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\User;
-use App\Services\GameServiceFactory;
+use App\Services\Entitlement\GatedAttemptService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * One submit endpoint for every game. The concrete game service is resolved
- * from the route's Game (table_prefix → service) via the factory, and it owns
- * validation, scoring, persistence and the response shape. Mirrors the generic
- * read path (one route, dispatched by game).
+ * One submit endpoint for every game. GatedAttemptService records the
+ * completion and hands off to the concrete game service, which owns validation,
+ * scoring, persistence and the response shape. Mirrors the generic read path
+ * (one route, dispatched by game).
  *
  * Validation deliberately lives in the service (via Validator), not a
  * FormRequest: a single generic endpoint cannot statically bind a per-game
@@ -22,7 +22,7 @@ use Illuminate\Http\Request;
  */
 class AttemptController extends Controller
 {
-    public function __construct(protected GameServiceFactory $factory) {}
+    public function __construct(protected GatedAttemptService $attempts) {}
 
     /**
      * @OA\Post(
@@ -51,6 +51,12 @@ class AttemptController extends Controller
      *
      *     @OA\Response(response=400, description="Service misconfiguration for the game prefix", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=401, description="Unauthenticated", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+     *     @OA\Response(response=403, description="Daily completion allowance spent, or the level was not opened today", @OA\JsonContent(oneOf={
+     *
+     *         @OA\Schema(ref="#/components/schemas/DailyLimitReachedResponse"),
+     *         @OA\Schema(ref="#/components/schemas/LevelNotOpenedTodayResponse")
+     *     })),
+     *
      *     @OA\Response(response=404, description="Game or level not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
      * )
@@ -60,8 +66,9 @@ class AttemptController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $results = $this->factory->for($game)->submit($user, $game, $level, $request->all());
-
-        return response()->json($results, 200);
+        return response()->json(
+            $this->attempts->submit($user, $game, $level, $request->all()),
+            200,
+        );
     }
 }

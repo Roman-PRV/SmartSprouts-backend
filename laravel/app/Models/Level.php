@@ -51,6 +51,32 @@ use Illuminate\Database\Eloquent\Model;
  *     )
  *   )
  * )
+ *
+ * @OA\Schema(
+ *   schema="DailyLimitReachedResponse",
+ *   type="object",
+ *   description="403 on either gate once that gate's own daily counter is spent.",
+ *
+ *   @OA\Property(property="message", type="string", description="Follows limit_kind: the two gates carry their own text.", example="You have already opened every level available today"),
+ *   @OA\Property(property="error_type", type="string", example="LEVEL_LIMIT_REACHED"),
+ *   @OA\Property(
+ *     property="details",
+ *     type="object",
+ *     description="limit_kind names the counter this gate enforces: started on opening, completed on submitting.",
+ *     @OA\Property(property="limit_kind", type="string", enum={"started", "completed"}, example="started"),
+ *     @OA\Property(property="resets_at", type="string", format="date-time", example="2026-08-24T00:00:00Z"),
+ *     @OA\Property(property="purchasing_enabled", type="boolean", example=true)
+ *   )
+ * )
+ *
+ * @OA\Schema(
+ *   schema="LevelNotOpenedTodayResponse",
+ *   type="object",
+ *   description="403 on submitting a level with no recorded open for today — either it was never opened, or the open expired at midnight. Not a limit: the client re-fetches the level and resubmits. A 404 on that re-fetch means the level is gone and the attempt cannot be recorded.",
+ *
+ *   @OA\Property(property="message", type="string", example="Open this level before submitting"),
+ *   @OA\Property(property="error_type", type="string", example="LEVEL_NOT_OPENED_TODAY")
+ * )
  */
 class Level extends Model
 {

@@ -9,10 +9,12 @@ use App\Models\GameResult;
 use App\Models\User;
 use App\Services\Tts\TtsOrchestrator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\OpensLevels;
 use Tests\TestCase;
 
 class FindTheWrongSubmitApiTest extends TestCase
 {
+    use OpensLevels;
     use RefreshDatabase;
 
     private Game $game;
@@ -47,6 +49,7 @@ class FindTheWrongSubmitApiTest extends TestCase
             ->all();
 
         $this->user = User::factory()->create();
+        $this->openLevel($this->user, $this->game, $this->level->id);
     }
 
     private function route(?int $gameId = null, ?int $levelId = null): string
@@ -85,8 +88,11 @@ class FindTheWrongSubmitApiTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function test_nonexistent_level_returns_404(): void
+    public function test_level_that_disappeared_returns_404(): void
     {
+        // The level was open, then went away — the 404 is the game's, not the gate's.
+        $this->openLevel($this->user, $this->game, 999999);
+
         $this->actingAs($this->user)
             ->postJson($this->route(levelId: 999999), $this->validPayload())
             ->assertStatus(404);
@@ -97,6 +103,7 @@ class FindTheWrongSubmitApiTest extends TestCase
         // The submit endpoint is shared across games; a find-the-wrong payload
         // sent to a true/false game fails that game's validation (422), not 404.
         $otherGame = Game::factory()->create(['table_prefix' => 'true_false_image']);
+        $this->openLevel($this->user, $otherGame, $this->level->id);
 
         $this->actingAs($this->user)
             ->postJson($this->route(gameId: $otherGame->id), $this->validPayload())

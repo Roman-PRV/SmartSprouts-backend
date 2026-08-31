@@ -20,6 +20,11 @@ interface GameServiceInterface
      * result and return the response body. Each game owns its own payload shape,
      * scoring and response — the controller is a thin dispatcher.
      *
+     * Runs inside the caller's transaction, which retries on deadlock, so this
+     * method may run more than once for one request. Write to the database and
+     * nothing else — an HTTP call or a file write would repeat. A queued job is
+     * the one safe exception: after_commit holds it until the commit.
+     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *

@@ -6,6 +6,7 @@ use App\Models\Game;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\OpensLevels;
 use Tests\TestCase;
 
 /**
@@ -15,6 +16,7 @@ use Tests\TestCase;
  */
 class AttemptControllerTest extends TestCase
 {
+    use OpensLevels;
     use RefreshDatabase;
 
     private function trueFalseGame(): Game
@@ -44,20 +46,56 @@ class AttemptControllerTest extends TestCase
     public function test_invalid_payload_returns_422(): void
     {
         $game = $this->trueFalseGame();
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
 
         // Missing required fields
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($user)
             ->postJson($this->attemptUrl($game), [])
             ->assertStatus(422);
 
         // Invalid answer type
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($user)
             ->postJson($this->attemptUrl($game), [
                 'answers' => [
                     ['statement_id' => 1, 'answer' => 'not a boolean'],
                 ],
             ])
             ->assertStatus(422);
+    }
+
+    public function test_two_different_levels_are_both_scored_for_one_user(): void
+    {
+        $game = $this->trueFalseGame();
+
+        DB::table('true_false_image_levels')->truncate();
+        DB::table('true_false_image_statements')->truncate();
+
+        DB::table('true_false_image_levels')->insert([
+            ['id' => 1, 'title' => json_encode(['en' => 'Level 1']), 'image_url' => 'level1.jpg', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'title' => json_encode(['en' => 'Level 2']), 'image_url' => 'level2.jpg', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        DB::table('true_false_image_statements')->insert([
+            ['id' => 10, 'level_id' => 1, 'statement' => json_encode(['en' => 'One']), 'is_true' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 20, 'level_id' => 2, 'statement' => json_encode(['en' => 'Two']), 'is_true' => true, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        foreach ([1 => 10, 2 => 20] as $level => $statementId) {
+            $this->openLevel($user, $game, $level);
+
+            $this->actingAs($user)
+                ->postJson($this->attemptUrl($game, $level), [
+                    'answers' => [
+                        ['statement_id' => $statementId, 'answer' => true],
+                    ],
+                ])
+                ->assertStatus(200);
+        }
+
+        $this->assertDatabaseCount('game_results', 2);
     }
 
     public function test_answer_from_a_different_level_returns_422(): void
@@ -95,7 +133,10 @@ class AttemptControllerTest extends TestCase
         ]);
 
         // Try to submit level 1 with a statement that belongs to level 2
-        $response = $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
+
+        $response = $this->actingAs($user)
             ->postJson($this->attemptUrl($game), [
                 'answers' => [
                     ['statement_id' => 20, 'answer' => true],
@@ -142,7 +183,10 @@ class AttemptControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
+
+        $response = $this->actingAs($user)
             ->postJson($this->attemptUrl($game), [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],
@@ -199,7 +243,10 @@ class AttemptControllerTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
+
+        $response = $this->actingAs($user)
             ->postJson($this->attemptUrl($game), [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => false], // Wrong answer
@@ -254,7 +301,10 @@ class AttemptControllerTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 1);
+
+        $response = $this->actingAs($user)
             ->postJson($this->attemptUrl($game), [
                 'answers' => [
                     ['statement_id' => 10, 'answer' => true],  // Correct

@@ -6,6 +6,7 @@ use App\Games\Arithmetic\Support\ArithmeticConstants;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\OpensLevels;
 use Tests\TestCase;
 
 /**
@@ -16,6 +17,7 @@ use Tests\TestCase;
  */
 class MultiplicationTableApiTest extends TestCase
 {
+    use OpensLevels;
     use RefreshDatabase;
 
     private function multiplicationGame(): Game
@@ -87,6 +89,7 @@ class MultiplicationTableApiTest extends TestCase
     {
         $game = $this->multiplicationGame();
         $user = User::factory()->create();
+        $this->openLevel($user, $game, 3);
 
         $response = $this->actingAs($user)
             ->withHeaders(['Accept-Language' => 'en'])
@@ -118,7 +121,10 @@ class MultiplicationTableApiTest extends TestCase
         // Drop the last fact — the coverage check must reject an incomplete set.
         $answers = array_slice($this->correctAnswersFor(3), 0, ArithmeticConstants::FACTS_PER_LEVEL - 1);
 
-        $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 3);
+
+        $this->actingAs($user)
             ->postJson("/api/games/{$game->id}/levels/3/attempts", ['answers' => $answers])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['answers']);
@@ -131,7 +137,10 @@ class MultiplicationTableApiTest extends TestCase
         $answers = $this->correctAnswersFor(3);
         $answers[0]['equation_id'] = 11; // outside 1..FACTS_PER_LEVEL
 
-        $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 3);
+
+        $this->actingAs($user)
             ->postJson("/api/games/{$game->id}/levels/3/attempts", ['answers' => $answers])
             ->assertStatus(422);
     }
@@ -143,7 +152,10 @@ class MultiplicationTableApiTest extends TestCase
         $answers = $this->correctAnswersFor(3);
         $answers[0]['answer'] = -5; // valid integer, wrong value
 
-        $response = $this->actingAs(User::factory()->create())
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 3);
+
+        $response = $this->actingAs($user)
             ->postJson("/api/games/{$game->id}/levels/3/attempts", ['answers' => $answers]);
 
         $response->assertStatus(200)
@@ -151,11 +163,15 @@ class MultiplicationTableApiTest extends TestCase
             ->assertJsonPath('results.0.correct', false);
     }
 
-    public function test_submit_to_a_nonexistent_level_returns_404(): void
+    public function test_submit_to_a_level_that_disappeared_returns_404(): void
     {
         $game = $this->multiplicationGame();
 
-        $this->actingAs(User::factory()->create())
+        // The level was open, then went away — the 404 is the game's, not the gate's.
+        $user = User::factory()->create();
+        $this->openLevel($user, $game, 999);
+
+        $this->actingAs($user)
             ->postJson("/api/games/{$game->id}/levels/999/attempts", [
                 'answers' => $this->correctAnswersFor(999),
             ])

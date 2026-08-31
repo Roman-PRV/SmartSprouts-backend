@@ -340,6 +340,23 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "Daily completion allowance spent, or the level was not opened today",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/DailyLimitReachedResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/LevelNotOpenedTodayResponse"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Game or level not found",
                         "content": {
@@ -875,6 +892,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Level"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Daily start allowance spent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DailyLimitReachedResponse"
                                 }
                             }
                         }
@@ -2332,6 +2359,58 @@
                                 "type": "string"
                             }
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "DailyLimitReachedResponse": {
+                "description": "403 on either gate once that gate's own daily counter is spent.",
+                "properties": {
+                    "message": {
+                        "description": "Follows limit_kind: the two gates carry their own text.",
+                        "type": "string",
+                        "example": "You have already opened every level available today"
+                    },
+                    "error_type": {
+                        "type": "string",
+                        "example": "LEVEL_LIMIT_REACHED"
+                    },
+                    "details": {
+                        "description": "limit_kind names the counter this gate enforces: started on opening, completed on submitting.",
+                        "properties": {
+                            "limit_kind": {
+                                "type": "string",
+                                "enum": [
+                                    "started",
+                                    "completed"
+                                ],
+                                "example": "started"
+                            },
+                            "resets_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-08-24T00:00:00Z"
+                            },
+                            "purchasing_enabled": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "LevelNotOpenedTodayResponse": {
+                "description": "403 on submitting a level with no recorded open for today — either it was never opened, or the open expired at midnight. Not a limit: the client re-fetches the level and resubmits. A 404 on that re-fetch means the level is gone and the attempt cannot be recorded.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Open this level before submitting"
+                    },
+                    "error_type": {
+                        "type": "string",
+                        "example": "LEVEL_NOT_OPENED_TODAY"
                     }
                 },
                 "type": "object"

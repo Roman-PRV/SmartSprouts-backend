@@ -11,4 +11,10 @@ use RuntimeException;
 abstract class DailyLimitExceededException extends RuntimeException
 {
     abstract public function limitKind(): LimitKindEnum;
+
+    /**
+     * Its own message per limit: the two refusals arrive at different moments
+     * and mean different things to the player.
+     */
+    abstract public function messageKey(): string;
 }

@@ -20,4 +20,9 @@ class DailyCompletedLimitExceededException extends DailyLimitExceededException
     {
         return LimitKindEnum::COMPLETED;
     }
+
+    public function messageKey(): string
+    {
+        return 'exceptions.entitlement.daily_completed_limit_reached';
+    }
 }
