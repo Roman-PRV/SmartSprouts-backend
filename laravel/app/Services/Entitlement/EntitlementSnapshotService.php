@@ -16,7 +16,7 @@ use App\Models\User;
  * change to the response shape cannot reach enforcement. Nothing here decides
  * anything — every number comes from the same readers the gates use.
  *
- * The schema annotations sit on for() rather than here: the generator hands a
+ * The schema annotations sit on build() rather than here: the generator hands a
  * docblock's free text to the first annotation inside it that carries no
  * description of its own, so prose and schemas sharing a block put this
  * paragraph into a field. Writing one out by name here would do it too — the
@@ -84,7 +84,7 @@ class EntitlementSnapshotService
      *
      * @throws TierNotConfiguredException
      */
-    public function for(User $user): array
+    public function build(User $user): array
     {
         $tier = $this->entitlement->resolveTier($user);
         $limits = $tier->limits();

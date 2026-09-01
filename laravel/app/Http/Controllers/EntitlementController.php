@@ -32,6 +32,6 @@ class EntitlementController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        return response()->json($this->snapshot->for($user), 200);
+        return response()->json($this->snapshot->build($user), 200);
     }
 }
