@@ -2137,7 +2137,6 @@
                 "type": "object"
             },
             "LevelDescriptionCollection": {
-                "description": "Player-facing level summary. `progress` is expected to be populated upstream by\nLevelProgressService::decorate(); when it is not (e.g. the undecorated\n`resources_default` show fallback) the field safely degrades to `not_started`\n— i.e. \"no progress data known\", never a played status.",
                 "type": "array",
                 "items": {
                     "$ref": "#/components/schemas/LevelDescription"
@@ -2148,7 +2147,6 @@
                 "description": "Level summary for the player level grid",
                 "properties": {
                     "id": {
-                        "description": "Transform the resource into an array.",
                         "type": "integer",
                         "example": 1
                     },
