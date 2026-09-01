@@ -129,18 +129,21 @@ class EntitlementEndpointTest extends TestCase
 
         $periodEnd = $subscription->current_period_end->toIso8601ZuluString();
 
-        $this->actingAs($user)->getJson('/api/entitlement')
+        $response = $this->actingAs($user)->getJson('/api/entitlement')
             ->assertOk()
             // Still Premium: the queued tier is not today's.
             ->assertJsonPath('tier', 'premium')
             // The allowances follow the resolved tier, not the queued one.
             ->assertJsonPath('limits', ['completed' => 20, 'started' => 40])
             ->assertJsonPath('subscription.status', 'active')
-            ->assertJsonPath('subscription.renews_at', $periodEnd)
+            ->assertJsonPath('subscription.current_period_end', $periodEnd)
             ->assertJsonPath('subscription.pending_tier', 'free')
-            ->assertJsonPath('subscription.pending_tier_effective_at', $periodEnd)
             ->assertJsonPath('subscription.cancel_at_period_end', false)
             ->assertJsonPath('subscription.manage_url', null);
+
+        // The downgrade takes effect at the boundary above, so a second date
+        // saying the same thing does not travel.
+        $this->assertArrayNotHasKey('pending_tier_effective_at', $response->json('subscription'));
     }
 
     /** @test */
@@ -181,9 +184,9 @@ class EntitlementEndpointTest extends TestCase
             // what the client offers to resume, and hiding it would make this
             // account indistinguishable from one that never paid.
             ->assertJsonPath('subscription.status', 'ended')
-            // renews_at is the period that already lapsed, so it is in the past
-            // here. Nothing renews; the field carries the boundary, not a promise.
-            ->assertJsonPath('subscription.renews_at', '2026-08-26T10:00:00Z')
+            // The boundary is in the past here, and the field name no longer
+            // claims otherwise.
+            ->assertJsonPath('subscription.current_period_end', '2026-08-26T10:00:00Z')
             ->assertJsonPath('subscription.cancel_at_period_end', false);
     }
 

@@ -2489,21 +2489,16 @@
                         ],
                         "example": "active"
                     },
-                    "renews_at": {
+                    "current_period_end": {
+                        "description": "End of the paid period. Only an active subscription renews on it — for the other statuses this is when access ends, or already ended.",
                         "type": "string",
                         "format": "date-time",
                         "example": "2026-09-23T00:00:00Z"
                     },
                     "pending_tier": {
-                        "description": "Set only while a downgrade is queued.",
+                        "description": "Set only while a downgrade is queued. It takes effect at current_period_end.",
                         "type": "string",
                         "example": "plus",
-                        "nullable": true
-                    },
-                    "pending_tier_effective_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-09-23T00:00:00Z",
                         "nullable": true
                     },
                     "cancel_at_period_end": {

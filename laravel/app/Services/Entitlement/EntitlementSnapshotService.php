@@ -57,9 +57,8 @@ class EntitlementSnapshotService
      *     title="Subscription state",
      *
      *     @OA\Property(property="status", type="string", enum={"active", "cancelling", "past_due", "ended"}, example="active"),
-     *     @OA\Property(property="renews_at", type="string", format="date-time", example="2026-09-23T00:00:00Z"),
-     *     @OA\Property(property="pending_tier", type="string", nullable=true, description="Set only while a downgrade is queued.", example="plus"),
-     *     @OA\Property(property="pending_tier_effective_at", type="string", format="date-time", nullable=true, example="2026-09-23T00:00:00Z"),
+     *     @OA\Property(property="current_period_end", type="string", format="date-time", description="End of the paid period. Only an active subscription renews on it — for the other statuses this is when access ends, or already ended.", example="2026-09-23T00:00:00Z"),
+     *     @OA\Property(property="pending_tier", type="string", nullable=true, description="Set only while a downgrade is queued. It takes effect at current_period_end.", example="plus"),
      *     @OA\Property(property="cancel_at_period_end", type="boolean", example=false),
      *     @OA\Property(property="manage_url", type="string", nullable=true, description="The provider's billing portal. Null until a real purchase exists.", example=null)
      * )
@@ -101,7 +100,10 @@ class EntitlementSnapshotService
             'resets_at' => DailyUsageService::resetsAt()->toIso8601ZuluString(),
             'purchasing_enabled' => ConfigHelper::getBool('billing.purchasing_enabled'),
             'subscription' => $this->subscription($user),
-            'currency' => ConfigHelper::getString('billing.currency'),
+            // Required, not defaulted: the tiers beside it throw when their
+            // config is broken, and a price with no currency on screen is worse
+            // than an error.
+            'currency' => ConfigHelper::getRequiredString('billing.currency'),
             'tiers' => $this->catalogue(),
         ];
     }
@@ -130,15 +132,16 @@ class EntitlementSnapshotService
             return null;
         }
 
-        $periodEnd = $subscription->current_period_end->toIso8601ZuluString();
-
         return [
             'status' => $subscription->status->value,
-            'renews_at' => $periodEnd,
+            // Not renews_at: only an active subscription renews on this date.
+            // A cancelling one ends on it, a past-due one renews nothing until
+            // payment recovers, and an ended one has it in the past. Which of
+            // those to say is the client's call, from status.
+            'current_period_end' => $subscription->current_period_end->toIso8601ZuluString(),
+            // A queued downgrade lands at that same boundary, so it needs no
+            // date of its own here.
             'pending_tier' => $subscription->pending_tier?->value,
-            // A queued downgrade lands at the period boundary, which is why it
-            // has no date column of its own.
-            'pending_tier_effective_at' => $subscription->pending_tier === null ? null : $periodEnd,
             // From the status, never from cancelled_at: undoing a cancellation
             // returns the subscription to active and leaves that timestamp set.
             'cancel_at_period_end' => $subscription->status === SubscriptionStatusEnum::CANCELLING,
