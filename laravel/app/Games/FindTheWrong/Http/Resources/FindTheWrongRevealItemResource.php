@@ -16,19 +16,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * `stars` is injected via the second constructor argument so callers can
  * build the resource per item with the right rating, without contorting
  * `$this->resource` into a wrapper object.
- *
- * @OA\Schema(
- *     schema="FindTheWrong.RevealItem",
- *     type="object",
- *     title="FindTheWrong.RevealItem",
- *
- *     @OA\Property(property="id", type="integer"),
- *     @OA\Property(property="stars", type="integer", minimum=1, maximum=3, nullable=true, description="Present only for found items"),
- *     @OA\Property(property="name", type="string"),
- *     @OA\Property(property="name_audio_url", type="string", format="uri", nullable=true),
- *     @OA\Property(property="explanation", type="string"),
- *     @OA\Property(property="explanation_audio_url", type="string", format="uri", nullable=true)
- * )
  */
 class FindTheWrongRevealItemResource extends JsonResource
 {
@@ -38,6 +25,19 @@ class FindTheWrongRevealItemResource extends JsonResource
     }
 
     /**
+     * @OA\Schema(
+     *     schema="FindTheWrong.RevealItem",
+     *     type="object",
+     *     title="FindTheWrong.RevealItem",
+     *
+     *     @OA\Property(property="id", type="integer"),
+     *     @OA\Property(property="stars", type="integer", minimum=1, maximum=3, nullable=true, description="Present only for found items"),
+     *     @OA\Property(property="name", type="string"),
+     *     @OA\Property(property="name_audio_url", type="string", format="uri", nullable=true),
+     *     @OA\Property(property="explanation", type="string"),
+     *     @OA\Property(property="explanation_audio_url", type="string", format="uri", nullable=true)
+     * )
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

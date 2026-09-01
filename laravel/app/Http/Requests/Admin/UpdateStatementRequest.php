@@ -9,30 +9,6 @@ use Illuminate\Foundation\Http\FormRequest;
  * Validates an admin "update statement" request, shared by both true/false
  * games. Same shape as the store request; `is_true` is required so the toggle
  * always has an explicit value on save.
- *
- * @OA\Schema(
- *     schema="Admin.UpdateStatementRequest",
- *     type="object",
- *     title="Admin Update Statement Request",
- *     required={"statement", "is_true"},
- *
- *     @OA\Property(
- *         property="statement",
- *         type="object",
- *         required={"uk", "en", "es"},
- *         @OA\Property(property="uk", type="string"),
- *         @OA\Property(property="en", type="string"),
- *         @OA\Property(property="es", type="string")
- *     ),
- *     @OA\Property(
- *         property="explanation",
- *         type="object",
- *         @OA\Property(property="uk", type="string"),
- *         @OA\Property(property="en", type="string"),
- *         @OA\Property(property="es", type="string")
- *     ),
- *     @OA\Property(property="is_true", type="boolean", example=true)
- * )
  */
 class UpdateStatementRequest extends FormRequest
 {
@@ -45,6 +21,30 @@ class UpdateStatementRequest extends FormRequest
     }
 
     /**
+     * @OA\Schema(
+     *     schema="Admin.UpdateStatementRequest",
+     *     type="object",
+     *     title="Admin Update Statement Request",
+     *     required={"statement", "is_true"},
+     *
+     *     @OA\Property(
+     *         property="statement",
+     *         type="object",
+     *         required={"uk", "en", "es"},
+     *         @OA\Property(property="uk", type="string"),
+     *         @OA\Property(property="en", type="string"),
+     *         @OA\Property(property="es", type="string")
+     *     ),
+     *     @OA\Property(
+     *         property="explanation",
+     *         type="object",
+     *         @OA\Property(property="uk", type="string"),
+     *         @OA\Property(property="en", type="string"),
+     *         @OA\Property(property="es", type="string")
+     *     ),
+     *     @OA\Property(property="is_true", type="boolean", example=true)
+     * )
+     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
