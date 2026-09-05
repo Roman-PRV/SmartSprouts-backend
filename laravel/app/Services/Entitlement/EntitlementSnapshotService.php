@@ -18,6 +18,14 @@ use App\Models\User;
  *
  * The response schemas are annotated on EntitlementController::show(), which
  * references them — not here, so this class stays free of the HTTP contract.
+ *
+ * @phpstan-type EntitlementSubscriptionShape array{
+ *     status: string,
+ *     current_period_end: string,
+ *     pending_tier: string|null,
+ *     cancel_at_period_end: bool,
+ *     manage_url: string|null,
+ * }
  */
 class EntitlementSnapshotService
 {
@@ -27,7 +35,17 @@ class EntitlementSnapshotService
     ) {}
 
     /**
-     * @return array<string, mixed>
+     * @return array{
+     *     tier: string,
+     *     is_exempt: bool,
+     *     limits: array{completed: int|null, started: int|null},
+     *     remaining: array{completed: int|null, started: int|null},
+     *     resets_at: string,
+     *     purchasing_enabled: bool,
+     *     subscription: EntitlementSubscriptionShape|null,
+     *     currency: string,
+     *     tiers: list<array{key: string, limits: array{completed: int|null, started: int|null}, price_minor: int}>,
+     * }
      *
      * @throws TierNotConfiguredException
      */
@@ -70,7 +88,7 @@ class EntitlementSnapshotService
      * keeps its row, and its block is still sent beside `tier: "free"` — that is
      * what the client offers to resume.
      *
-     * @return array<string, mixed>|null
+     * @return EntitlementSubscriptionShape|null
      */
     private function subscription(User $user): ?array
     {
@@ -102,7 +120,7 @@ class EntitlementSnapshotService
     /**
      * Sorted by rank rather than trusting the order the cases are declared in.
      *
-     * @return list<array<string, mixed>>
+     * @return list<array{key: string, limits: array{completed: int|null, started: int|null}, price_minor: int}>
      *
      * @throws TierNotConfiguredException
      */

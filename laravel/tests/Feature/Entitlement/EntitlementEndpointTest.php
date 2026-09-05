@@ -191,6 +191,24 @@ class EntitlementEndpointTest extends TestCase
     }
 
     /** @test */
+    public function a_past_due_subscription_keeps_the_paid_tier_while_announcing_the_failure(): void
+    {
+        $user = User::factory()->create();
+        Subscription::factory()->pastDue()->create(['user_id' => $user->id, 'tier' => TierEnum::PREMIUM]);
+
+        $this->actingAs($user)->getJson('/api/entitlement')
+            ->assertOk()
+            // Access continues through the grace period — the tier is still the
+            // one paid for, not Free.
+            ->assertJsonPath('tier', 'premium')
+            ->assertJsonPath('limits', ['completed' => 20, 'started' => 40])
+            ->assertJsonPath('subscription.status', 'past_due')
+            // Nothing is scheduled to end — the client tells past_due from
+            // cancelling by status, not by this flag.
+            ->assertJsonPath('subscription.cancel_at_period_end', false);
+    }
+
+    /** @test */
     public function the_catalogue_carries_every_tier_in_ladder_order_under_one_currency(): void
     {
         $response = $this->actingAs(User::factory()->create())->getJson('/api/entitlement')->assertOk();
