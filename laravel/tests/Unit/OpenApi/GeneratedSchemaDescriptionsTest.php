@@ -37,7 +37,7 @@ class GeneratedSchemaDescriptionsTest extends TestCase
         $this->assertSame(
             [],
             $offenders,
-            "A docblock leaked into the generated docs. Move the prose out of the block holding the @OA annotation — a second, separate docblock above it works, and the annotation must stay the last block.\n",
+            "A docblock leaked into the generated docs. The block attached to an @OA annotation must carry no prose — either move the annotation onto a method whose own docblock has none (toArray(), rules()), or split the class docblock into two separate blocks with the annotation last. A description on the schema itself does not help: every nested property is checked on its own and leaks independently if it has no description of its own.\n",
         );
     }
 
