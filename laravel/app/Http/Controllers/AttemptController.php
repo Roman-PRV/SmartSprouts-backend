@@ -25,6 +25,91 @@ class AttemptController extends Controller
     public function __construct(protected GatedAttemptService $attempts) {}
 
     /**
+     * @OA\Schema(
+     *     schema="TrueFalse.AttemptRequest",
+     *     type="object",
+     *     title="TrueFalse Attempt Request",
+     *     required={"answers"},
+     *
+     *     @OA\Property(
+     *         property="answers",
+     *         type="array",
+     *
+     *         @OA\Items(
+     *             type="object",
+     *             required={"statement_id", "answer"},
+     *
+     *             @OA\Property(property="statement_id", type="integer", example=10),
+     *             @OA\Property(property="answer", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Schema(
+     *     schema="TrueFalse.AttemptResponse",
+     *     type="object",
+     *     title="TrueFalse Attempt Response",
+     *
+     *     @OA\Property(
+     *         property="results",
+     *         type="array",
+     *
+     *         @OA\Items(
+     *             type="object",
+     *
+     *             @OA\Property(property="statement_id", type="integer"),
+     *             @OA\Property(property="correct", type="boolean"),
+     *             @OA\Property(property="is_true", type="boolean"),
+     *             @OA\Property(property="explanation", type="string", nullable=true),
+     *             @OA\Property(property="statement_audio_url", type="string", format="uri", nullable=true),
+     *             @OA\Property(property="explanation_audio_url", type="string", format="uri", nullable=true)
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Schema(
+     *     schema="Arithmetic.AttemptRequest",
+     *     type="object",
+     *     title="Arithmetic Attempt Request",
+     *     required={"answers"},
+     *
+     *     @OA\Property(
+     *         property="answers",
+     *         type="array",
+     *
+     *         @OA\Items(
+     *             type="object",
+     *             required={"equation_id", "answer"},
+     *
+     *             @OA\Property(property="equation_id", type="integer", minimum=1, maximum=10, example=4),
+     *             @OA\Property(property="answer", type="integer", example=12)
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Schema(
+     *     schema="Arithmetic.AttemptResponse",
+     *     type="object",
+     *     title="Arithmetic Attempt Response",
+     *
+     *     @OA\Property(
+     *         property="results",
+     *         type="array",
+     *
+     *         @OA\Items(
+     *             type="object",
+     *
+     *             @OA\Property(property="equation_id", type="integer"),
+     *             @OA\Property(property="operand_a", type="integer"),
+     *             @OA\Property(property="operand_b", type="integer"),
+     *             @OA\Property(property="operator", type="string"),
+     *             @OA\Property(property="given_answer", type="integer"),
+     *             @OA\Property(property="expected_answer", type="integer"),
+     *             @OA\Property(property="correct", type="boolean")
+     *         )
+     *     )
+     * )
+     *
      * @OA\Post(
      *     path="/api/games/{game}/levels/{level}/attempts",
      *     tags={"Attempts"},

@@ -13,17 +13,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * `resources_default` show fallback) the field safely degrades to `not_started`
  * — i.e. "no progress data known", never a played status.
  */
-/**
- * @OA\Schema(
- *   schema="LevelDescriptionCollection",
- *   type="array",
- *
- *   @OA\Items(ref="#/components/schemas/LevelDescription")
- * )
- */
 class LevelDescriptionResource extends JsonResource
 {
     /**
+     * @OA\Schema(
+     *   schema="LevelDescriptionCollection",
+     *   type="array",
+     *
+     *   @OA\Items(ref="#/components/schemas/LevelDescription")
+     * )
+     *
      * @OA\Schema(
      *     schema="LevelDescription",
      *     type="object",
