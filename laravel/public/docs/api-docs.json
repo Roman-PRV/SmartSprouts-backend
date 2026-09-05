@@ -686,6 +686,36 @@
                 ]
             }
         },
+        "/api/entitlement": {
+            "get": {
+                "tags": [
+                    "Entitlement"
+                ],
+                "summary": "Get the current tier, both allowances and the tier catalogue",
+                "description": "Called on app bootstrap and after any change to tier or usage. `remaining` is advisory for display — the server is authoritative, so a stale value must never gate the interface; let the request through and read the real answer.",
+                "operationId": "getEntitlement",
+                "responses": {
+                    "200": {
+                        "description": "The account's entitlement state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Entitlement"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games": {
             "get": {
                 "tags": [
@@ -2414,6 +2444,149 @@
                     }
                 },
                 "type": "object"
+            },
+            "Entitlement.Limits": {
+                "title": "Daily allowances",
+                "description": "null means the counter is not enforced — never a large number, so the client branches on it instead of comparing.",
+                "properties": {
+                    "completed": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "started": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Entitlement.Tier": {
+                "title": "Catalogue entry",
+                "description": "Carries no display name: the client keys into its own billing translations by `key`.",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "enum": [
+                            "free",
+                            "plus",
+                            "premium",
+                            "unlimited"
+                        ],
+                        "example": "free"
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/Entitlement.Limits"
+                    },
+                    "price_minor": {
+                        "description": "Monthly price in the payload's currency, minor units, net of VAT.",
+                        "type": "integer",
+                        "example": 0
+                    }
+                },
+                "type": "object"
+            },
+            "Entitlement.Subscription": {
+                "title": "Subscription state",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "cancelling",
+                            "past_due",
+                            "ended"
+                        ],
+                        "example": "active"
+                    },
+                    "renews_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-09-23T00:00:00Z"
+                    },
+                    "pending_tier": {
+                        "description": "Set only while a downgrade is queued.",
+                        "type": "string",
+                        "example": "plus",
+                        "nullable": true
+                    },
+                    "pending_tier_effective_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-09-23T00:00:00Z",
+                        "nullable": true
+                    },
+                    "cancel_at_period_end": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "manage_url": {
+                        "description": "The provider's billing portal. Null until a real purchase exists.",
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Entitlement": {
+                "title": "Entitlement state",
+                "properties": {
+                    "tier": {
+                        "description": "`unlimited` for an exempt account too — they play identically.",
+                        "type": "string",
+                        "enum": [
+                            "free",
+                            "plus",
+                            "premium",
+                            "unlimited"
+                        ],
+                        "example": "free"
+                    },
+                    "is_exempt": {
+                        "description": "Unlimited granted without payment. Suppresses every purchase entry point.",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/Entitlement.Limits"
+                    },
+                    "remaining": {
+                        "$ref": "#/components/schemas/Entitlement.Limits"
+                    },
+                    "resets_at": {
+                        "description": "UTC. Rendering it in the viewer's time is the client's job.",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-24T00:00:00Z"
+                    },
+                    "purchasing_enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "subscription": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Entitlement.Subscription"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "currency": {
+                        "description": "One currency covers every price, so it sits beside the catalogue rather than inside each entry.",
+                        "type": "string",
+                        "example": "EUR"
+                    },
+                    "tiers": {
+                        "description": "The whole catalogue in ladder order. The client holds no copy of allowances or prices.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Entitlement.Tier"
+                        }
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -2444,6 +2617,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Entitlement",
+            "description": "Entitlement"
         },
         {
             "name": "Games",
