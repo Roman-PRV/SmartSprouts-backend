@@ -3,17 +3,20 @@
 namespace Tests\Unit\OpenApi;
 
 use Illuminate\Support\Facades\File;
+use OpenApi\Generator;
 use Tests\TestCase;
 
 /**
  * swagger-php applies a docblock's free text to the first annotation inside the
  * block that carries no description of its own. Prose sharing a block with a
- * schema therefore lands in a field description in public/docs/api-docs.json,
- * where it reads as documentation and is invisible to review.
+ * schema therefore lands in a field description in the generated spec, where
+ * it reads as documentation and is invisible to review.
  *
- * This checks the generated file rather than the source. A rule about where
- * annotations may sit would flag every documented class that is in fact fine —
- * prose is only a problem once it reaches the published docs.
+ * This checks a freshly generated spec, not the committed public/docs/api-docs.json:
+ * that file is only ever updated by a manual `l5-swagger:generate` run
+ * (config/l5-swagger.php: generate_always is false), so checking it would let a
+ * leak sit invisible until someone else's unrelated change happens to
+ * regenerate the file.
  */
 class GeneratedSchemaDescriptionsTest extends TestCase
 {
@@ -42,16 +45,15 @@ class GeneratedSchemaDescriptionsTest extends TestCase
     }
 
     /**
+     * Scans the same path l5-swagger does (config/l5-swagger.php), matching
+     * the technique SwaggerCategoryEnumTest already uses.
+     *
      * @return array<string, mixed>
      */
     private function schemas(): array
     {
-        $path = base_path('public/docs/api-docs.json');
-
-        $this->assertFileExists($path, 'Run `php artisan l5-swagger:generate` first.');
-
         /** @var array<string, mixed> $document */
-        $document = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        $document = json_decode(Generator::scan([app_path()])->toJson(), true, 512, JSON_THROW_ON_ERROR);
 
         /** @var array<string, mixed> $schemas */
         $schemas = data_get($document, 'components.schemas', []);
@@ -113,7 +115,9 @@ class GeneratedSchemaDescriptionsTest extends TestCase
             $blocks = $matches[1];
 
             foreach ($blocks as [$block, $offset]) {
-                $head = trim(explode('@', $this->stripStars($block), 2)[0]);
+                $stripped = $this->stripStars($block);
+                $head = preg_split('/(^|\n)\s*@\w+/', $stripped, 2)[0];
+                $head = trim($head);
 
                 if ($head === '') {
                     continue;

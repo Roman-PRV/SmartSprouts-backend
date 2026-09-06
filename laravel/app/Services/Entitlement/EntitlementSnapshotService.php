@@ -16,9 +16,12 @@ use App\Models\User;
  * change to the response shape cannot reach enforcement. Nothing here decides
  * anything — every number comes from the same readers the gates use.
  *
- * The response schemas are annotated on EntitlementController::show(), which
- * references them — not here, so this class stays free of the HTTP contract.
+ * This class builds the payload; the @OA schemas describing it live on
+ * EntitlementController::show(). Keeping the annotations there means the shape
+ * is documented once, beside the route, instead of drifting between two files.
  *
+ * @phpstan-type EntitlementLimitsShape array{completed: int|null, started: int|null}
+ * @phpstan-type EntitlementTierShape array{key: string, limits: EntitlementLimitsShape, price_minor: int}
  * @phpstan-type EntitlementSubscriptionShape array{
  *     status: string,
  *     current_period_end: string,
@@ -38,13 +41,13 @@ class EntitlementSnapshotService
      * @return array{
      *     tier: string,
      *     is_exempt: bool,
-     *     limits: array{completed: int|null, started: int|null},
-     *     remaining: array{completed: int|null, started: int|null},
+     *     limits: EntitlementLimitsShape,
+     *     remaining: EntitlementLimitsShape,
      *     resets_at: string,
      *     purchasing_enabled: bool,
      *     subscription: EntitlementSubscriptionShape|null,
      *     currency: string,
-     *     tiers: list<array{key: string, limits: array{completed: int|null, started: int|null}, price_minor: int}>,
+     *     tiers: list<EntitlementTierShape>,
      * }
      *
      * @throws TierNotConfiguredException
@@ -120,7 +123,7 @@ class EntitlementSnapshotService
     /**
      * Sorted by rank rather than trusting the order the cases are declared in.
      *
-     * @return list<array{key: string, limits: array{completed: int|null, started: int|null}, price_minor: int}>
+     * @return list<EntitlementTierShape>
      *
      * @throws TierNotConfiguredException
      */

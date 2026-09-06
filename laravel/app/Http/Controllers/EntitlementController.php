@@ -20,6 +20,7 @@ class EntitlementController extends Controller
      *     type="object",
      *     title="Daily allowances",
      *     description="null means the counter is not enforced — never a large number, so the client branches on it instead of comparing.",
+     *     required={"completed", "started"},
      *
      *     @OA\Property(property="completed", type="integer", nullable=true, example=1),
      *     @OA\Property(property="started", type="integer", nullable=true, example=3)
@@ -30,6 +31,7 @@ class EntitlementController extends Controller
      *     type="object",
      *     title="Catalogue entry",
      *     description="Carries no display name: the client keys into its own billing translations by `key`.",
+     *     required={"key", "limits", "price_minor"},
      *
      *     @OA\Property(property="key", type="string", enum={"free", "plus", "premium", "unlimited"}, example="free"),
      *     @OA\Property(property="limits", ref="#/components/schemas/Entitlement.Limits"),
@@ -40,6 +42,7 @@ class EntitlementController extends Controller
      *     schema="Entitlement.Subscription",
      *     type="object",
      *     title="Subscription state",
+     *     required={"status", "current_period_end", "pending_tier", "cancel_at_period_end", "manage_url"},
      *
      *     @OA\Property(property="status", type="string", enum={"active", "cancelling", "past_due", "ended"}, example="active"),
      *     @OA\Property(property="current_period_end", type="string", format="date-time", description="End of the paid period. Only an active subscription renews on it — for the other statuses this is when access ends, or already ended.", example="2026-09-23T00:00:00Z"),
@@ -52,6 +55,7 @@ class EntitlementController extends Controller
      *     schema="Entitlement",
      *     type="object",
      *     title="Entitlement state",
+     *     required={"tier", "is_exempt", "limits", "remaining", "resets_at", "purchasing_enabled", "subscription", "currency", "tiers"},
      *
      *     @OA\Property(property="tier", type="string", enum={"free", "plus", "premium", "unlimited"}, description="`unlimited` for an exempt account too — they play identically.", example="free"),
      *     @OA\Property(property="is_exempt", type="boolean", description="Unlimited granted without payment. Suppresses every purchase entry point.", example=false),
