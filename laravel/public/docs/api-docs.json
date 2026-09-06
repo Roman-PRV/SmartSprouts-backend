@@ -1099,6 +1099,72 @@
                 },
                 "type": "object"
             },
+            "Arithmetic.AttemptRequest": {
+                "title": "Arithmetic Attempt Request",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "equation_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "equation_id": {
+                                    "type": "integer",
+                                    "maximum": 10,
+                                    "minimum": 1,
+                                    "example": 4
+                                },
+                                "answer": {
+                                    "type": "integer",
+                                    "example": 12
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Arithmetic.AttemptResponse": {
+                "title": "Arithmetic Attempt Response",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "equation_id": {
+                                    "type": "integer"
+                                },
+                                "operand_a": {
+                                    "type": "integer"
+                                },
+                                "operand_b": {
+                                    "type": "integer"
+                                },
+                                "operator": {
+                                    "type": "string"
+                                },
+                                "given_answer": {
+                                    "type": "integer"
+                                },
+                                "expected_answer": {
+                                    "type": "integer"
+                                },
+                                "correct": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "Admin.FindTheWrong.StoreItemRequest": {
                 "title": "Admin Store FindTheWrong Item Request",
                 "description": "JSON payload for creating a new polygon item under a level.",
@@ -1399,6 +1465,72 @@
                 },
                 "type": "object"
             },
+            "TrueFalse.AttemptRequest": {
+                "title": "TrueFalse Attempt Request",
+                "required": [
+                    "answers"
+                ],
+                "properties": {
+                    "answers": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "statement_id",
+                                "answer"
+                            ],
+                            "properties": {
+                                "statement_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "answer": {
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TrueFalse.AttemptResponse": {
+                "title": "TrueFalse Attempt Response",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "statement_id": {
+                                    "type": "integer"
+                                },
+                                "correct": {
+                                    "type": "boolean"
+                                },
+                                "is_true": {
+                                    "type": "boolean"
+                                },
+                                "explanation": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "statement_audio_url": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "nullable": true
+                                },
+                                "explanation_audio_url": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "nullable": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "Admin.TrueFalseImage.Level": {
                 "title": "Admin TrueFalseImage Level",
                 "properties": {
@@ -1629,138 +1761,6 @@
                         "type": "string",
                         "format": "uri",
                         "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "TrueFalse.AttemptRequest": {
-                "title": "TrueFalse Attempt Request",
-                "required": [
-                    "answers"
-                ],
-                "properties": {
-                    "answers": {
-                        "type": "array",
-                        "items": {
-                            "required": [
-                                "statement_id",
-                                "answer"
-                            ],
-                            "properties": {
-                                "statement_id": {
-                                    "type": "integer",
-                                    "example": 10
-                                },
-                                "answer": {
-                                    "type": "boolean",
-                                    "example": true
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "TrueFalse.AttemptResponse": {
-                "title": "TrueFalse Attempt Response",
-                "properties": {
-                    "results": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "statement_id": {
-                                    "type": "integer"
-                                },
-                                "correct": {
-                                    "type": "boolean"
-                                },
-                                "is_true": {
-                                    "type": "boolean"
-                                },
-                                "explanation": {
-                                    "type": "string",
-                                    "nullable": true
-                                },
-                                "statement_audio_url": {
-                                    "type": "string",
-                                    "format": "uri",
-                                    "nullable": true
-                                },
-                                "explanation_audio_url": {
-                                    "type": "string",
-                                    "format": "uri",
-                                    "nullable": true
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "Arithmetic.AttemptRequest": {
-                "title": "Arithmetic Attempt Request",
-                "required": [
-                    "answers"
-                ],
-                "properties": {
-                    "answers": {
-                        "type": "array",
-                        "items": {
-                            "required": [
-                                "equation_id",
-                                "answer"
-                            ],
-                            "properties": {
-                                "equation_id": {
-                                    "type": "integer",
-                                    "maximum": 10,
-                                    "minimum": 1,
-                                    "example": 4
-                                },
-                                "answer": {
-                                    "type": "integer",
-                                    "example": 12
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                },
-                "type": "object"
-            },
-            "Arithmetic.AttemptResponse": {
-                "title": "Arithmetic Attempt Response",
-                "properties": {
-                    "results": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "equation_id": {
-                                    "type": "integer"
-                                },
-                                "operand_a": {
-                                    "type": "integer"
-                                },
-                                "operand_b": {
-                                    "type": "integer"
-                                },
-                                "operator": {
-                                    "type": "string"
-                                },
-                                "given_answer": {
-                                    "type": "integer"
-                                },
-                                "expected_answer": {
-                                    "type": "integer"
-                                },
-                                "correct": {
-                                    "type": "boolean"
-                                }
-                            },
-                            "type": "object"
-                        }
                     }
                 },
                 "type": "object"
