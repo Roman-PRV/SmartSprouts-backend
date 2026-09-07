@@ -23,7 +23,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * `N ∘ b` — so all read and check logic lives here. A concrete game supplies
  * only the operation via symbol(), apply() and levelTitle(); content is
  * deterministic, so there are no tables, item models or admin screens.
- *
+ */
+/**
  * @OA\Schema(
  *     schema="Arithmetic.AttemptRequest",
  *     type="object",

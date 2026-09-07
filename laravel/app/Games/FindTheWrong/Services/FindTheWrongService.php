@@ -19,6 +19,11 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
+ * Reads and scores the find-the-wrong game. submit() validates the payload
+ * and scores it here, delegating persistence and item lookups to
+ * FindTheWrongAttemptService.
+ */
+/**
  * @OA\Schema(
  *     schema="FindTheWrong.AttemptRequest",
  *     type="object",

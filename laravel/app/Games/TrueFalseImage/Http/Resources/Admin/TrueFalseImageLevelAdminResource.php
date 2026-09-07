@@ -13,33 +13,33 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * cover image URL, per-locale title audio status, and the embedded statements
  * (each via the shared StatementAdminResource). Used by the single-level read
  * endpoint; the levels list uses the generic LevelAdminResource.
- *
- * @OA\Schema(
- *     schema="Admin.TrueFalseImage.Level",
- *     type="object",
- *     title="Admin TrueFalseImage Level",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="title", type="object", @OA\AdditionalProperties(type="string")),
- *     @OA\Property(property="image_url", type="string", format="uri", nullable=true),
- *     @OA\Property(
- *         property="title_audio",
- *         type="object",
- *
- *         @OA\AdditionalProperties(ref="#/components/schemas/Admin.AudioStatus")
- *     ),
- *
- *     @OA\Property(
- *         property="statements",
- *         type="array",
- *
- *         @OA\Items(ref="#/components/schemas/Admin.Statement")
- *     )
- * )
  */
 class TrueFalseImageLevelAdminResource extends JsonResource
 {
     /**
+     * @OA\Schema(
+     *     schema="Admin.TrueFalseImage.Level",
+     *     type="object",
+     *     title="Admin TrueFalseImage Level",
+     *
+     *     @OA\Property(property="id", type="integer", example=1),
+     *     @OA\Property(property="title", type="object", @OA\AdditionalProperties(type="string")),
+     *     @OA\Property(property="image_url", type="string", format="uri", nullable=true),
+     *     @OA\Property(
+     *         property="title_audio",
+     *         type="object",
+     *
+     *         @OA\AdditionalProperties(ref="#/components/schemas/Admin.AudioStatus")
+     *     ),
+     *
+     *     @OA\Property(
+     *         property="statements",
+     *         type="array",
+     *
+     *         @OA\Items(ref="#/components/schemas/Admin.Statement")
+     *     )
+     * )
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

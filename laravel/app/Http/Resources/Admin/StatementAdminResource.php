@@ -18,46 +18,46 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *
  * Reads are side-effect free: audio status comes from MediaUrlGenerator +
  * the stored path hash, never from Tts::getOrGenerate.
- *
- * @OA\Schema(
- *     schema="Admin.Statement",
- *     type="object",
- *     title="Admin Statement",
- *     description="Admin-side true/false statement with localized text and per-locale audio status.",
- *
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="level_id", type="integer", example=1),
- *     @OA\Property(property="is_true", type="boolean", example=true),
- *     @OA\Property(property="statement", type="object", @OA\AdditionalProperties(type="string")),
- *     @OA\Property(property="explanation", type="object", @OA\AdditionalProperties(type="string")),
- *     @OA\Property(
- *         property="statement_audio",
- *         type="object",
- *
- *         @OA\AdditionalProperties(ref="#/components/schemas/Admin.AudioStatus")
- *     ),
- *
- *     @OA\Property(
- *         property="explanation_audio",
- *         type="object",
- *
- *         @OA\AdditionalProperties(ref="#/components/schemas/Admin.AudioStatus")
- *     )
- * )
- *
- * @OA\Schema(
- *     schema="Admin.AudioStatus",
- *     type="object",
- *     title="Admin Audio Status",
- *     description="Per-locale TTS audio status.",
- *
- *     @OA\Property(property="url", type="string", format="uri", nullable=true),
- *     @OA\Property(property="is_stale", type="boolean", example=false)
- * )
  */
 class StatementAdminResource extends JsonResource
 {
     /**
+     * @OA\Schema(
+     *     schema="Admin.Statement",
+     *     type="object",
+     *     title="Admin Statement",
+     *     description="Admin-side true/false statement with localized text and per-locale audio status.",
+     *
+     *     @OA\Property(property="id", type="integer", example=1),
+     *     @OA\Property(property="level_id", type="integer", example=1),
+     *     @OA\Property(property="is_true", type="boolean", example=true),
+     *     @OA\Property(property="statement", type="object", @OA\AdditionalProperties(type="string")),
+     *     @OA\Property(property="explanation", type="object", @OA\AdditionalProperties(type="string")),
+     *     @OA\Property(
+     *         property="statement_audio",
+     *         type="object",
+     *
+     *         @OA\AdditionalProperties(ref="#/components/schemas/Admin.AudioStatus")
+     *     ),
+     *
+     *     @OA\Property(
+     *         property="explanation_audio",
+     *         type="object",
+     *
+     *         @OA\AdditionalProperties(ref="#/components/schemas/Admin.AudioStatus")
+     *     )
+     * )
+     *
+     * @OA\Schema(
+     *     schema="Admin.AudioStatus",
+     *     type="object",
+     *     title="Admin Audio Status",
+     *     description="Per-locale TTS audio status.",
+     *
+     *     @OA\Property(property="url", type="string", format="uri", nullable=true),
+     *     @OA\Property(property="is_stale", type="boolean", example=false)
+     * )
+     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array

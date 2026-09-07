@@ -686,6 +686,36 @@
                 ]
             }
         },
+        "/api/entitlement": {
+            "get": {
+                "tags": [
+                    "Entitlement"
+                ],
+                "summary": "Get the current tier, both allowances and the tier catalogue",
+                "description": "Called on app bootstrap and after any change to tier or usage. `remaining` is advisory for display — the server is authoritative, so a stale value must never gate the interface; let the request through and read the real answer.",
+                "operationId": "getEntitlement",
+                "responses": {
+                    "200": {
+                        "description": "The account's entitlement state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Entitlement"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/games": {
             "get": {
                 "tags": [
@@ -1084,7 +1114,6 @@
                             ],
                             "properties": {
                                 "equation_id": {
-                                    "description": "Shared engine for the arithmetic pair-match game family (multiplication,\naddition, …). Every game has an identical structure — ArithmeticConstants::LEVEL_COUNT\nlevels, level N being ArithmeticConstants::FACTS_PER_LEVEL facts of the form\n`N ∘ b` — so all read and check logic lives here. A concrete game supplies\nonly the operation via symbol(), apply() and levelTitle(); content is\ndeterministic, so there are no tables, item models or admin screens.",
                                     "type": "integer",
                                     "maximum": 10,
                                     "minimum": 1,
@@ -1327,7 +1356,6 @@
                 "title": "FindTheWrong.RevealItem",
                 "properties": {
                     "id": {
-                        "description": "Reveal-after-submit shape for a find-the-wrong item. Used for both found and\nmissed items in the submit response — `stars` is included only when set\n(found items 1..3); for missed items it's omitted.\n\n`stars` is injected via the second constructor argument so callers can\nbuild the resource per item with the right rating, without contorting\n`$this->resource` into a wrapper object.",
                         "type": "integer"
                     },
                     "stars": {
@@ -1452,7 +1480,6 @@
                             ],
                             "properties": {
                                 "statement_id": {
-                                    "description": "Shared engine for the statement-based true/false games (image + text). They\nare mechanically identical and differ only in their backing models, so the\nsubmit flow (validate → score → persist) lives here once. Each game supplies\nits own reads and scoring via fetchAllLevels()/fetchLevel()/check(), which\ntouch the game-specific models.",
                                     "type": "integer",
                                     "example": 10
                                 },
@@ -1508,7 +1535,6 @@
                 "title": "Admin TrueFalseImage Level",
                 "properties": {
                     "id": {
-                        "description": "Admin editor shape for a TrueFalseImage level: full title translations, the\ncover image URL, per-locale title audio status, and the embedded statements\n(each via the shared StatementAdminResource). Used by the single-level read\nendpoint; the levels list uses the generic LevelAdminResource.",
                         "type": "integer",
                         "example": 1
                     },
@@ -1609,7 +1635,6 @@
                 "title": "Admin TrueFalseText Level",
                 "properties": {
                     "id": {
-                        "description": "Admin editor shape for a TrueFalseText level: full title and text\ntranslations, optional cover image URL, per-locale audio status for both the\ntitle and the text body, and the embedded statements.",
                         "type": "integer",
                         "example": 1
                     },
@@ -1740,6 +1765,171 @@
                 },
                 "type": "object"
             },
+            "Entitlement.Limits": {
+                "title": "Daily allowances",
+                "description": "null means the counter is not enforced — never a large number, so the client branches on it instead of comparing.",
+                "required": [
+                    "completed",
+                    "started"
+                ],
+                "properties": {
+                    "completed": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "started": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Entitlement.Tier": {
+                "title": "Catalogue entry",
+                "description": "Carries no display name: the client keys into its own billing translations by `key`.",
+                "required": [
+                    "key",
+                    "limits",
+                    "price_minor"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "enum": [
+                            "free",
+                            "plus",
+                            "premium",
+                            "unlimited"
+                        ],
+                        "example": "free"
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/Entitlement.Limits"
+                    },
+                    "price_minor": {
+                        "description": "Monthly price in the payload's currency, minor units, net of VAT.",
+                        "type": "integer",
+                        "example": 0
+                    }
+                },
+                "type": "object"
+            },
+            "Entitlement.Subscription": {
+                "title": "Subscription state",
+                "required": [
+                    "status",
+                    "current_period_end",
+                    "pending_tier",
+                    "cancel_at_period_end",
+                    "manage_url"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "cancelling",
+                            "past_due",
+                            "ended"
+                        ],
+                        "example": "active"
+                    },
+                    "current_period_end": {
+                        "description": "End of the paid period. Only an active subscription renews on it — for the other statuses this is when access ends, or already ended.",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-09-23T00:00:00Z"
+                    },
+                    "pending_tier": {
+                        "description": "Set only while a downgrade is queued. It takes effect at current_period_end.",
+                        "type": "string",
+                        "example": "plus",
+                        "nullable": true
+                    },
+                    "cancel_at_period_end": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "manage_url": {
+                        "description": "The provider's billing portal. Null until a real purchase exists.",
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Entitlement": {
+                "title": "Entitlement state",
+                "required": [
+                    "tier",
+                    "is_exempt",
+                    "limits",
+                    "remaining",
+                    "resets_at",
+                    "purchasing_enabled",
+                    "subscription",
+                    "currency",
+                    "tiers"
+                ],
+                "properties": {
+                    "tier": {
+                        "description": "`unlimited` for an exempt account too — they play identically.",
+                        "type": "string",
+                        "enum": [
+                            "free",
+                            "plus",
+                            "premium",
+                            "unlimited"
+                        ],
+                        "example": "free"
+                    },
+                    "is_exempt": {
+                        "description": "Unlimited granted without payment. Suppresses every purchase entry point.",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/Entitlement.Limits"
+                    },
+                    "remaining": {
+                        "$ref": "#/components/schemas/Entitlement.Limits"
+                    },
+                    "resets_at": {
+                        "description": "UTC. Rendering it in the viewer's time is the client's job.",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-24T00:00:00Z"
+                    },
+                    "purchasing_enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "subscription": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Entitlement.Subscription"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "currency": {
+                        "description": "One currency covers every price, so it sits beside the catalogue rather than inside each entry.",
+                        "type": "string",
+                        "example": "EUR"
+                    },
+                    "tiers": {
+                        "description": "The whole catalogue in ladder order. The client holds no copy of allowances or prices.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Entitlement.Tier"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "Admin.RegenerateAudioRequest": {
                 "title": "Admin Regenerate Audio Request",
                 "description": "Selects which audio field and locale to regenerate.",
@@ -1749,7 +1939,6 @@
                 ],
                 "properties": {
                     "field": {
-                        "description": "Body for a per-(field, locale) TTS regeneration request, shared by the level\nand statement admin endpoints. Only the surface shape is validated here;\nwhether the field is a real audio attribute of the target model — and whether\nthe locale is supported — is the model-aware job of TtsRegenerationService,\nwhich surfaces a 422 for unknown values.",
                         "type": "string",
                         "example": "statement_audio_url"
                     },
@@ -1861,7 +2050,6 @@
                         ],
                         "properties": {
                             "uk": {
-                                "description": "Validates an admin \"create statement\" request, shared by both true/false\ngames (the statement shape is identical). `statement` is required in every\nlocale (it drives TTS); `explanation` is optional and per-locale independent.",
                                 "type": "string"
                             },
                             "en": {
@@ -1966,7 +2154,6 @@
                         ],
                         "properties": {
                             "uk": {
-                                "description": "Validates an admin \"update statement\" request, shared by both true/false\ngames. Same shape as the store request; `is_true` is required so the toggle\nalways has an explicit value on save.",
                                 "type": "string"
                             },
                             "en": {
@@ -2060,7 +2247,6 @@
                 "description": "Admin-side true/false statement with localized text and per-locale audio status.",
                 "properties": {
                     "id": {
-                        "description": "Admin shape for a true/false statement, shared by both games (the statement\nform is identical across them). Emits the full translations map for the\neditable text fields plus a per-locale `{ url, is_stale }` audio block for\neach TTS field, so the form can edit every locale and light up the\nregenerate button without recomputing any hash on the client.\n\nReads are side-effect free: audio status comes from MediaUrlGenerator +\nthe stored path hash, never from Tts::getOrGenerate.",
                         "type": "integer",
                         "example": 1
                     },
@@ -2116,7 +2302,6 @@
                 "type": "object"
             },
             "LevelDescriptionCollection": {
-                "description": "Player-facing level summary. `progress` is expected to be populated upstream by\nLevelProgressService::decorate(); when it is not (e.g. the undecorated\n`resources_default` show fallback) the field safely degrades to `not_started`\n— i.e. \"no progress data known\", never a played status.",
                 "type": "array",
                 "items": {
                     "$ref": "#/components/schemas/LevelDescription"
@@ -2127,7 +2312,6 @@
                 "description": "Level summary for the player level grid",
                 "properties": {
                     "id": {
-                        "description": "Transform the resource into an array.",
                         "type": "integer",
                         "example": 1
                     },
@@ -2444,6 +2628,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Entitlement",
+            "description": "Entitlement"
         },
         {
             "name": "Games",

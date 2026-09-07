@@ -16,7 +16,8 @@ use Illuminate\Validation\ValidationException;
  * submit flow (validate → score → persist) lives here once. Each game supplies
  * its own reads and scoring via fetchAllLevels()/fetchLevel()/check(), which
  * touch the game-specific models.
- *
+ */
+/**
  * @OA\Schema(
  *     schema="TrueFalse.AttemptRequest",
  *     type="object",
