@@ -43,6 +43,22 @@ services:
       - default
       - dev-local-network
 
+  # Off by default: it would prune the dev database on its own schedule.
+  # Start it with: docker compose --profile scheduler up
+  scheduler:
+    profiles: ["scheduler"]
+    image: smartsprouts-backend:dev
+    build:
+      context: ./laravel
+      dockerfile: docker/Dockerfile
+      target: dev
+    env_file:
+      - ./laravel/.env
+    volumes:
+      - ./laravel:/var/www
+      - vendor_data:/var/www/vendor
+      - ./laravel/storage:/var/www/storage
+
   # mysql host port binding (127.0.0.1:3306:3306) is now defined in base
   # docker-compose.yml — no need to duplicate here.
 

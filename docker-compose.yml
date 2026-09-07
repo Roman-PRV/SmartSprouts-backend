@@ -15,6 +15,7 @@
 # Development:
 #   docker compose up                  (auto-merges docker-compose.override.yml)
 #   docker compose --profile tts up    (also starts ukrainian-tts; defined in override)
+#   docker compose --profile scheduler up  (also starts the scheduler; off by default in dev)
 #
 # Production (Coolify):
 #   reads only this file. Env vars and domain are injected via the Coolify UI.
@@ -56,6 +57,29 @@ services:
     volumes:
       - laravel_public:/var/www/public
       - laravel_storage:/var/www/storage  # named volume in prod; bind-mounted in dev (override)
+    depends_on:
+      laravel:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    image: ghcr.io/roman-prv/smartsprouts-backend:latest
+    pull_policy: always
+    restart: unless-stopped
+    working_dir: /var/www
+    user: "33:33"
+    # Env vars are loaded per-environment, as for queue-worker above.
+    #
+    # schedule:work, not a `sleep 60` loop: it wakes at the top of every minute,
+    # so a task pinned to one minute of the day cannot be missed by accumulated
+    # drift. The schedule itself lives in app/Console/Kernel.php.
+    entrypoint: ["sh", "-c", "php artisan schedule:work --no-interaction"]
+    volumes:
+      - laravel_public:/var/www/public
+      - laravel_storage:/var/www/storage
     depends_on:
       laravel:
         condition: service_healthy
