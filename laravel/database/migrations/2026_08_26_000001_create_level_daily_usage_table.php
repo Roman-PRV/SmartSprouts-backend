@@ -37,6 +37,11 @@ return new class extends Migration
             // counters, so a separate index over that pair would be a second
             // tree paid for on the hottest insert in the system and read by
             // nothing.
+            //
+            // Kept user_id-first rather than reordered for the prune/report
+            // commands: that position is also what saves InnoDB a second index
+            // for the user_id foreign key, not worth trading for two nightly
+            // scans of a small table.
             $table->unique(['user_id', 'usage_date', 'game_id', 'level_id']);
         });
     }
