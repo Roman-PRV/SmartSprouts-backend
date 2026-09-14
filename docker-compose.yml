@@ -94,7 +94,7 @@ services:
     expose:
       - "3306"  # internal to docker network (for laravel container)
     ports:
-      - "127.0.0.1:3306:3306"  # host loopback only — reachable via SSH tunnel, NEVER publicly
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"  # host loopback only — reachable via SSH tunnel, NEVER publicly
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD?}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-laravel}
