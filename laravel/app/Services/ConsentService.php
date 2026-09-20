@@ -94,29 +94,6 @@ class ConsentService
     }
 
     /**
-     * Whether the user refused the current version of every document.
-     *
-     * Only meaningful while hasCurrentConsent() is false: accepting a version
-     * already refused wins without clearing anything, and after a version bump
-     * these rows stop matching what is in force.
-     */
-    public function hasDeclinedCurrent(User $user): bool
-    {
-        foreach ($this->currentVersions() as $type => $version) {
-            $declined = $user->consentDeclines()
-                ->where('type', $type)
-                ->where('document_version', $version)
-                ->exists();
-
-            if (! $declined) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Whether the user has accepted the current version of every document.
      *
      * False for Google-created accounts (no consent captured at creation),
@@ -132,6 +109,27 @@ class ConsentService
                 ->exists();
 
             if (! $accepted) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether refusal rows exist for every document version in force — which
+     * is not the same question as whether the account is restricted. stateFor()
+     * is what puts the two in the order that makes the answer true.
+     */
+    private function hasDeclinedCurrent(User $user): bool
+    {
+        foreach ($this->currentVersions() as $type => $version) {
+            $declined = $user->consentDeclines()
+                ->where('type', $type)
+                ->where('document_version', $version)
+                ->exists();
+
+            if (! $declined) {
                 return false;
             }
         }
