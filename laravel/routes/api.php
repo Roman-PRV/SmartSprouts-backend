@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('throttle:deletion-code');
     Route::put('profile/password', [ProfilePasswordController::class, 'update'])->name('profile.password.update');
     Route::post('profile/consents', [ConsentController::class, 'store'])->name('profile.consents.store');
+    Route::post('profile/consents/decline', [ConsentController::class, 'decline'])->name('profile.consents.decline');
 
     Route::get('entitlement', [EntitlementController::class, 'show'])->name('entitlement.show');
 

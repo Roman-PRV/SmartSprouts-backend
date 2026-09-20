@@ -6,6 +6,7 @@ use App\Http\Requests\AcceptConsentRequest;
 use App\Models\User;
 use App\Services\ConsentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ConsentController extends Controller
 {
@@ -73,5 +74,35 @@ class ConsentController extends Controller
         return new JsonResponse([
             'consent_current' => true,
         ], $recorded ? 201 : 200);
+    }
+
+    /**
+     * Record refusal of the current legal-document versions.
+     *
+     * Leaves the account restricted rather than locked out: play is refused
+     * while the profile, password change and account deletion stay reachable,
+     * so data-subject rights never depend on accepting commercial terms.
+     * Reversible — accepting later through store() restores full access.
+     *
+     * @OA\Post(
+     *     path="/api/profile/consents/decline",
+     *     summary="Decline the current legal documents",
+     *     description="Records a versioned refusal for the authenticated user, leaving the account in a restricted state. Idempotent.",
+     *     operationId="declineConsents",
+     *     tags={"Profile"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\Response(response=204, description="Refusal recorded, or already on record"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function decline(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $this->consentService->recordDecline($user);
+
+        return new JsonResponse(null, 204);
     }
 }

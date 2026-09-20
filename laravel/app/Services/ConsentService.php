@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\ConfigHelper;
 use App\Models\User;
 use App\Models\UserConsent;
+use App\Models\UserConsentDecline;
 use Illuminate\Support\Facades\DB;
 
 class ConsentService
@@ -45,6 +46,54 @@ class ConsentService
 
             return $recordedAny;
         });
+    }
+
+    /**
+     * Record refusal of the current Terms and Privacy Policy versions.
+     *
+     * One checkbox covers both documents, so a refusal covers both too. The
+     * acceptance trail is left untouched: a refusal is a state, not a
+     * retraction of evidence already given for an earlier version.
+     */
+    public function recordDecline(User $user): void
+    {
+        $declinedAt = now();
+
+        DB::transaction(function () use ($user, $declinedAt): void {
+            foreach ($this->currentVersions() as $type => $version) {
+                UserConsentDecline::query()->firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'type' => $type,
+                        'document_version' => $version,
+                    ],
+                    ['declined_at' => $declinedAt],
+                );
+            }
+        });
+    }
+
+    /**
+     * Whether the user refused the current version of every document.
+     *
+     * Only meaningful while hasCurrentConsent() is false: accepting a version
+     * already refused wins without clearing anything, and after a version bump
+     * these rows stop matching what is in force.
+     */
+    public function hasDeclinedCurrent(User $user): bool
+    {
+        foreach ($this->currentVersions() as $type => $version) {
+            $declined = $user->consentDeclines()
+                ->where('type', $type)
+                ->where('document_version', $version)
+                ->exists();
+
+            if (! $declined) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
