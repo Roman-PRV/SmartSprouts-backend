@@ -18,6 +18,9 @@ docker compose up -d
 # Start with the ukrainian-tts service
 docker compose --profile tts up -d
 
+# Start with the scheduler (off by default in dev — it prunes the local DB)
+docker compose --profile scheduler up -d
+
 # Rebuild after changes in Dockerfile
 docker compose build laravel
 docker compose up -d
@@ -30,11 +33,17 @@ The development stack runs `laravel` using the **`dev` stage** (Xdebug enabled, 
 ## Production (Coolify)
 
 Production is deployed by **Coolify**, which reads **only `docker-compose.yml`**
-(`docker-compose.override.yml` is dev-only and ignored). The `laravel` / `queue-worker`
-images are pulled from GHCR — CI builds the **`prod` stage** (no Xdebug, no dev
+(`docker-compose.override.yml` is dev-only and ignored). The `laravel` / `queue-worker` /
+`scheduler` images are pulled from GHCR — CI builds the **`prod` stage** (no Xdebug, no dev
 dependencies, optimized OPcache), pushes it, then triggers a Coolify webhook
 (see `.github/workflows/ci.yml`). Env vars and the domain are set in the Coolify UI,
 not in a committed file.
+
+`scheduler` runs `php artisan schedule:work`, which invokes whatever is registered
+in `app/Console/Kernel.php` — currently the daily usage-pruning and fair-use-report
+commands. It runs unconditionally in production (unlike `tts`, it carries no profile
+in the base compose file); in development it is opt-in via `--profile scheduler`
+so it does not prune the local database on its own schedule.
 
 Migrations run automatically on container startup: `APP_ENV=production` triggers
 `php artisan migrate --force --isolated` in `entrypoint.sh`.
