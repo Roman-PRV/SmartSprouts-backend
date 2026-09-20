@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
+ * Every account this factory creates accepts the documents in force, as
+ * registration does — so consent rows exist without a test asking for them.
+ * An account carrying none is the exception (a Google signup, an account
+ * predating the gate, one facing a version it has not answered), and tests
+ * that want it say withoutConsent().
+ *
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
@@ -29,12 +35,7 @@ class UserFactory extends Factory
     }
 
     /**
-     * Accept the documents in force, as registration does.
-     *
-     * Every account the app creates for itself records consent in the same
-     * transaction as the account row, so one carrying none is the exception —
-     * a Google signup, an account predating the gate, one facing a version it
-     * has not answered. Tests that want that exception ask for it by name.
+     * Write the consent rows described above after the account row lands.
      */
     public function configure(): static
     {

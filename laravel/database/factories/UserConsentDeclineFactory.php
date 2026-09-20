@@ -22,7 +22,7 @@ class UserConsentDeclineFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id' => User::factory()->withoutConsent(),
             'type' => UserConsent::TYPE_TERMS,
             'document_version' => config('legal.terms_version'),
             'declined_at' => now(),
