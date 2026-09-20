@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * An account's refusal of one legal document version.
+ * One document version covered by an account's refusal.
+ *
+ * A refusal answers the whole set in force at that moment, so a row can name a
+ * version the account had already accepted and is still bound by. The rows say
+ * what was refused together, never that this one document was rejected alone.
  *
  * Never cleared on a later acceptance: an acceptance of the same version wins
  * on its own, and after the next version bump these rows stop matching what is

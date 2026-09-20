@@ -50,6 +50,11 @@ class UserFactory extends Factory
                     'type' => $type,
                     'document_version' => $version,
                     'accepted_at' => now(),
+                    // Recorded because recordAcceptance() records them: without
+                    // these, a test asserting deletion clears the evidence has
+                    // nothing to clear.
+                    'ip_address' => fake()->ipv4(),
+                    'user_agent' => fake()->userAgent(),
                 ]);
             }
         });

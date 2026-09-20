@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\ConsentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ConsentController extends Controller
 {
@@ -46,7 +47,8 @@ class ConsentController extends Controller
      *
      *         @OA\JsonContent(
      *
-     *             @OA\Property(property="consent_current", type="boolean", example=true)
+     *             @OA\Property(property="consent_current", type="boolean", example=true),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Always false here: the acceptance just landed.")
      *         )
      *     ),
      *
@@ -56,7 +58,8 @@ class ConsentController extends Controller
      *
      *         @OA\JsonContent(
      *
-     *             @OA\Property(property="consent_current", type="boolean", example=true)
+     *             @OA\Property(property="consent_current", type="boolean", example=true),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Always false here: the acceptance just landed.")
      *         )
      *     ),
      *
@@ -72,7 +75,9 @@ class ConsentController extends Controller
         $recorded = $this->consentService->recordAcceptance($user, $request->ip(), $request->userAgent());
 
         return new JsonResponse([
+            // Literal values: the acceptance just landed.
             'consent_current' => true,
+            'consent_declined' => false,
         ], $recorded ? 201 : 200);
     }
 
@@ -96,13 +101,13 @@ class ConsentController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function decline(Request $request): JsonResponse
+    public function decline(Request $request): Response
     {
         /** @var User $user */
         $user = $request->user();
 
         $this->consentService->recordDecline($user);
 
-        return new JsonResponse(null, 204);
+        return response()->noContent();
     }
 }

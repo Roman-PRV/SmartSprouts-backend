@@ -667,6 +667,11 @@
                                         "consent_current": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Always false here: the acceptance just landed.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -683,6 +688,11 @@
                                         "consent_current": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Always false here: the acceptance just landed.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"

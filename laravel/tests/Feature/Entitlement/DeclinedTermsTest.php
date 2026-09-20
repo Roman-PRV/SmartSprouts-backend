@@ -37,6 +37,11 @@ class DeclinedTermsTest extends TestCase
             ->assertStatus(403)
             ->assertJsonPath('error_type', 'CONSENT_REQUIRED');
 
+        // Restricted, not switched off: looking around is not playing, so the
+        // browsing routes stay open.
+        $this->actingAs($user)->getJson('/api/games')->assertOk();
+        $this->actingAs($user)->getJson("/api/games/{$game->id}/levels")->assertOk();
+
         // Refused before anything was counted or scored: a restricted account
         // spends no allowance, so returning later finds the day untouched.
         $this->assertDatabaseCount('level_daily_usage', 0);
