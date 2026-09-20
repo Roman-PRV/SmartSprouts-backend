@@ -115,9 +115,13 @@ class LevelController extends Controller
      *
      *     @OA\Response(
      *         response=403,
-     *         description="Daily start allowance spent",
+     *         description="Consent not current, or the daily start allowance is spent",
      *
-     *         @OA\JsonContent(ref="#/components/schemas/DailyLimitReachedResponse")
+     *         @OA\JsonContent(oneOf={
+     *
+     *             @OA\Schema(ref="#/components/schemas/ConsentRequiredResponse"),
+     *             @OA\Schema(ref="#/components/schemas/DailyLimitReachedResponse")
+     *         })
      *     ),
      *
      *     @OA\Response(

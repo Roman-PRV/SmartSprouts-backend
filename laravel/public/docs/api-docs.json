@@ -341,11 +341,14 @@
                         }
                     },
                     "403": {
-                        "description": "Daily completion allowance spent, or the level was not opened today",
+                        "description": "Consent not current, daily completion allowance spent, or the level was not opened today",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ConsentRequiredResponse"
+                                        },
                                         {
                                             "$ref": "#/components/schemas/DailyLimitReachedResponse"
                                         },
@@ -965,11 +968,18 @@
                         }
                     },
                     "403": {
-                        "description": "Daily start allowance spent",
+                        "description": "Consent not current, or the daily start allowance is spent",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/DailyLimitReachedResponse"
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ConsentRequiredResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DailyLimitReachedResponse"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -2619,6 +2629,20 @@
                             }
                         },
                         "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ConsentRequiredResponse": {
+                "description": "403 while the account has not accepted the document versions in force — whether it refused them or never answered. Not a limit: no counter moved and nothing resets. The client sends the account to the consent gate.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Accept the current Terms to keep playing"
+                    },
+                    "error_type": {
+                        "type": "string",
+                        "example": "CONSENT_REQUIRED"
                     }
                 },
                 "type": "object"

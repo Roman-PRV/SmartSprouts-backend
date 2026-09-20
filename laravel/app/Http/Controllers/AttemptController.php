@@ -51,8 +51,9 @@ class AttemptController extends Controller
      *
      *     @OA\Response(response=400, description="Service misconfiguration for the game prefix", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
      *     @OA\Response(response=401, description="Unauthenticated", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-     *     @OA\Response(response=403, description="Daily completion allowance spent, or the level was not opened today", @OA\JsonContent(oneOf={
+     *     @OA\Response(response=403, description="Consent not current, daily completion allowance spent, or the level was not opened today", @OA\JsonContent(oneOf={
      *
+     *         @OA\Schema(ref="#/components/schemas/ConsentRequiredResponse"),
      *         @OA\Schema(ref="#/components/schemas/DailyLimitReachedResponse"),
      *         @OA\Schema(ref="#/components/schemas/LevelNotOpenedTodayResponse")
      *     })),
