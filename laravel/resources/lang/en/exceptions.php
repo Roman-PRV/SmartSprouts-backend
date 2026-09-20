@@ -45,7 +45,7 @@ return [
         'code_sent' => 'A confirmation code has been sent to your email.',
     ],
     'consent' => [
-        'not_current' => 'Accept the current Terms to keep playing',
+        'not_current' => 'Accept the current legal documents to keep playing',
     ],
 
     'entitlement' => [

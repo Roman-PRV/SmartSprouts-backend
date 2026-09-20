@@ -45,7 +45,7 @@ return [
         'code_sent' => 'Se ha enviado un código de confirmación a tu correo.',
     ],
     'consent' => [
-        'not_current' => 'Acepta los Términos vigentes para seguir jugando',
+        'not_current' => 'Acepta los documentos legales vigentes para seguir jugando',
     ],
 
     'entitlement' => [

@@ -2638,7 +2638,7 @@
                 "properties": {
                     "message": {
                         "type": "string",
-                        "example": "Accept the current Terms to keep playing"
+                        "example": "Accept the current legal documents to keep playing"
                     },
                     "error_type": {
                         "type": "string",
