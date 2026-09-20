@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilePasswordController;
 use App\Http\Middleware\EnforceLevelStart;
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureConsentCurrent;
 use App\Http\Middleware\GameMatches;
 use Illuminate\Support\Facades\Route;
 
@@ -72,11 +73,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // level only — listing them is not opening one.
     Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
         ->name('games.levels.show')
-        ->middleware(EnforceLevelStart::class)
+        ->middleware([EnsureConsentCurrent::class, EnforceLevelStart::class])
         ->whereNumber(['game', 'level']);
 
     Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
         ->name('games.levels.attempts')
+        ->middleware(EnsureConsentCurrent::class)
         ->whereNumber(['game', 'level']);
 
 });

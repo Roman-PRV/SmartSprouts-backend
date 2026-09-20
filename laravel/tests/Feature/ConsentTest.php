@@ -88,7 +88,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function login_response_reports_consent_current_for_the_account(): void
     {
-        $user = User::factory()->create(['email' => 'legacy@example.com']);
+        $user = User::factory()->withoutConsent()->create(['email' => 'legacy@example.com']);
 
         $this->postJson('/api/auth/login', [
             'email' => 'legacy@example.com',
@@ -152,7 +152,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function legacy_user_without_consent_rows_reports_consent_current_false(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
 
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/auth/me')
@@ -163,7 +163,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function version_bump_flips_consent_current_back_to_false(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
         UserConsent::factory()->for($user)->create();
         UserConsent::factory()->for($user)->privacy()->create();
 
@@ -192,7 +192,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function accepting_consents_requires_the_checkbox(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/profile/consents', ['accepted_terms' => false])
@@ -205,7 +205,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function accepting_consents_writes_rows_and_flips_consent_current(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/profile/consents', ['accepted_terms' => true])
@@ -232,7 +232,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function record_acceptance_is_idempotent_per_version_even_past_the_controller_guard(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
         $service = app(ConsentService::class);
 
         $service->recordAcceptance($user, '1.2.3.4', 'FirstAgent');
@@ -248,7 +248,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function repeated_acceptance_with_current_consent_writes_nothing(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/profile/consents', ['accepted_terms' => true])
@@ -265,7 +265,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function re_consent_appends_new_rows_instead_of_overwriting(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
         UserConsent::factory()->for($user)->create(['document_version' => '2020-01-01']);
         UserConsent::factory()->for($user)->privacy()->create(['document_version' => '2020-01-01']);
 
@@ -284,7 +284,7 @@ class ConsentTest extends TestCase
     /** @test */
     public function accepting_consents_after_a_single_document_bump_only_appends_the_changed_type(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutConsent()->create();
         UserConsent::factory()->for($user)->create();
         UserConsent::factory()->for($user)->privacy()->create();
 

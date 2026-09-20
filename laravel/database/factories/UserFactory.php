@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
+use App\Models\UserConsent;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -24,6 +26,48 @@ class UserFactory extends Factory
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * Accept the documents in force, as registration does.
+     *
+     * Every account the app creates for itself records consent in the same
+     * transaction as the account row, so one carrying none is the exception —
+     * a Google signup, an account predating the gate, one facing a version it
+     * has not answered. Tests that want that exception ask for it by name.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $versions = [
+                UserConsent::TYPE_TERMS => config('legal.terms_version'),
+                UserConsent::TYPE_PRIVACY => config('legal.privacy_version'),
+            ];
+
+            foreach ($versions as $type => $version) {
+                $user->consents()->create([
+                    'type' => $type,
+                    'document_version' => $version,
+                    'accepted_at' => now(),
+                ]);
+            }
+        });
+    }
+
+    /**
+     * An account with nothing on record for the current documents.
+     *
+     * Removes what configure() wrote instead of skipping it: after-creating
+     * callbacks are carried into every derived factory instance and there is
+     * no way to unregister one.
+     *
+     * @return $this
+     */
+    public function withoutConsent(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $user->consents()->delete();
+        });
     }
 
     /**

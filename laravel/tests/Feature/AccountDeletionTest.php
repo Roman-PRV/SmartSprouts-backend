@@ -7,7 +7,6 @@ use App\Mail\AccountDeletedMail;
 use App\Mail\AccountDeletionCodeMail;
 use App\Models\Game;
 use App\Models\User;
-use App\Models\UserConsent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -89,8 +88,6 @@ class AccountDeletionTest extends TestCase
         Mail::fake();
 
         $user = User::factory()->create();
-        UserConsent::factory()->for($user)->create();
-        UserConsent::factory()->for($user)->privacy()->create();
         $game = Game::factory()->create();
         $user->gameResults()->create([
             'game_id' => $game->id,
