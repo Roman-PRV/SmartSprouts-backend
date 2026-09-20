@@ -69,17 +69,21 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index'])
         ->whereNumber(['game']);
 
-    // Declared apart from the resource so the start gate lands on opening a
-    // level only — listing them is not opening one.
-    Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
-        ->name('games.levels.show')
-        ->middleware([EnsureConsentCurrent::class, EnforceLevelStart::class])
-        ->whereNumber(['game', 'level']);
+    // Playing, as opposed to looking around: both routes are refused while the
+    // account has not accepted the documents in force. Browsing games and
+    // listing levels stays outside — neither one is playing.
+    Route::middleware(EnsureConsentCurrent::class)->group(function () {
+        // Declared apart from the resource so the start gate lands on opening a
+        // level only — listing them is not opening one.
+        Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
+            ->name('games.levels.show')
+            ->middleware(EnforceLevelStart::class)
+            ->whereNumber(['game', 'level']);
 
-    Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
-        ->name('games.levels.attempts')
-        ->middleware(EnsureConsentCurrent::class)
-        ->whereNumber(['game', 'level']);
+        Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
+            ->name('games.levels.attempts')
+            ->whereNumber(['game', 'level']);
+    });
 
 });
 
