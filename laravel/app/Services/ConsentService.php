@@ -49,6 +49,26 @@ class ConsentService
     }
 
     /**
+     * The account's consent state as the auth payloads report it.
+     *
+     * The decline is read only when consent is not current — accepting wins
+     * over an earlier refusal without clearing it, so asking both questions
+     * independently would let a restricted state outlive the refusal it
+     * describes. Keeping that order here means no caller has to know it.
+     *
+     * @return array{consent_current: bool, consent_declined: bool}
+     */
+    public function stateFor(User $user): array
+    {
+        $current = $this->hasCurrentConsent($user);
+
+        return [
+            'consent_current' => $current,
+            'consent_declined' => ! $current && $this->hasDeclinedCurrent($user),
+        ];
+    }
+
+    /**
      * Record refusal of the current Terms and Privacy Policy versions.
      *
      * One checkbox covers both documents, so a refusal covers both too. The
