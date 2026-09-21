@@ -723,8 +723,26 @@
                 "description": "Records a versioned refusal for the authenticated user, leaving the account in a restricted state. Idempotent.",
                 "operationId": "declineConsents",
                 "responses": {
-                    "204": {
-                        "description": "Refusal recorded, or already on record"
+                    "200": {
+                        "description": "Refusal recorded, or already on record, with the state it left behind",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "consent_current": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "consent_declined": {
+                                            "description": "False when an acceptance of the same version outranks the refusal just recorded.",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"

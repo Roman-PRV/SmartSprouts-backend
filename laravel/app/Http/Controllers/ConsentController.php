@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\ConsentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class ConsentController extends Controller
 {
@@ -89,6 +88,11 @@ class ConsentController extends Controller
      * so data-subject rights never depend on accepting commercial terms.
      * Reversible — accepting later through store() restores full access.
      *
+     * Answers with the resulting state rather than an empty body, as store()
+     * does: a refusal does not always restrict, since an acceptance already on
+     * record for the same version outranks it. Reading the state back is the
+     * only way to know which happened, and it is this endpoint's job to say.
+     *
      * @OA\Post(
      *     path="/api/profile/consents/decline",
      *     summary="Decline the current legal documents",
@@ -97,17 +101,27 @@ class ConsentController extends Controller
      *     tags={"Profile"},
      *     security={{"sanctum": {}}},
      *
-     *     @OA\Response(response=204, description="Refusal recorded, or already on record"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Refusal recorded, or already on record, with the state it left behind",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="consent_current", type="boolean", example=false),
+     *             @OA\Property(property="consent_declined", type="boolean", example=true, description="False when an acceptance of the same version outranks the refusal just recorded.")
+     *         )
+     *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function decline(Request $request): Response
+    public function decline(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
 
         $this->consentService->recordDecline($user);
 
-        return response()->noContent();
+        return new JsonResponse($this->consentService->stateFor($user));
     }
 }

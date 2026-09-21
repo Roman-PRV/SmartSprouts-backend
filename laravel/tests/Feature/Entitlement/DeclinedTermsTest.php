@@ -27,7 +27,7 @@ class DeclinedTermsTest extends TestCase
         $user = User::factory()->withoutConsent()->create();
         $game = $this->arithmeticGame();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
 
         $this->actingAs($user)->getJson($this->openUrl($game, 1))
             ->assertStatus(403)
@@ -69,7 +69,7 @@ class DeclinedTermsTest extends TestCase
     {
         $user = User::factory()->withoutConsent()->create();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
 
         $this->actingAs($user)->getJson('/api/profile')->assertOk();
 
@@ -89,7 +89,7 @@ class DeclinedTermsTest extends TestCase
 
         $user = User::factory()->withoutConsent()->create();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
 
         $this->actingAs($user, 'sanctum')
             ->deleteJson('/api/profile', ['password' => 'password'])
@@ -103,8 +103,13 @@ class DeclinedTermsTest extends TestCase
     {
         $user = User::factory()->withoutConsent()->create();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')
+            ->assertOk()
+            ->assertJsonPath('consent_current', false)
+            ->assertJsonPath('consent_declined', true);
 
+        // The same answer survives a fresh session: the refusal was recorded,
+        // not just reported back.
         $this->actingAs($user)->getJson('/api/auth/me')
             ->assertOk()
             ->assertJsonPath('consent_current', false)
@@ -131,7 +136,7 @@ class DeclinedTermsTest extends TestCase
             'legal.privacy_version' => '2099-01-01',
         ]);
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
         $this->actingAs($user)->getJson($this->openUrl($game, 2))->assertStatus(403);
 
         $this->actingAs($user)->postJson('/api/profile/consents', ['accepted_terms' => true])->assertCreated();
@@ -147,10 +152,11 @@ class DeclinedTermsTest extends TestCase
     }
 
     /**
-     * Refusing a version already accepted does nothing, and says so with the
-     * same 204. The gate only offers the choice while consent is not current,
-     * so this is unreachable from the client — but it is the behaviour that
-     * keeps this endpoint from quietly becoming a consent-withdrawal feature.
+     * Refusing a version already accepted does nothing, and the response says
+     * so instead of leaving the client to assume otherwise. The gate only
+     * offers the choice while consent is not current, so this is unreachable
+     * from the client — but it is the behaviour that keeps this endpoint from
+     * quietly becoming a consent-withdrawal feature.
      *
      * @test
      */
@@ -159,7 +165,10 @@ class DeclinedTermsTest extends TestCase
         $user = User::factory()->create();
         $game = $this->arithmeticGame();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')
+            ->assertOk()
+            ->assertJsonPath('consent_current', true)
+            ->assertJsonPath('consent_declined', false);
 
         $this->actingAs($user)->getJson($this->openUrl($game, 1))->assertOk();
         $this->actingAs($user)->getJson('/api/auth/me')
@@ -172,7 +181,7 @@ class DeclinedTermsTest extends TestCase
     {
         $user = User::factory()->withoutConsent()->create();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
         $this->actingAs($user)->postJson('/api/profile/consents', ['accepted_terms' => true])->assertCreated();
 
         // The refusal rows are deliberately left behind: an acceptance of the
@@ -187,8 +196,8 @@ class DeclinedTermsTest extends TestCase
     {
         $user = User::factory()->withoutConsent()->create();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
 
         $this->assertDatabaseCount('user_consent_declines', 2);
     }
@@ -198,7 +207,7 @@ class DeclinedTermsTest extends TestCase
     {
         $user = User::factory()->withoutConsent()->create();
 
-        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertNoContent();
+        $this->actingAs($user)->postJson('/api/profile/consents/decline')->assertOk();
 
         config([
             'legal.terms_version' => '2099-01-01',
