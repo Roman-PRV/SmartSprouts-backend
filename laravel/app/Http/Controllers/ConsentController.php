@@ -6,6 +6,7 @@ use App\Http\Requests\AcceptConsentRequest;
 use App\Models\User;
 use App\Services\ConsentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ConsentController extends Controller
 {
@@ -45,7 +46,8 @@ class ConsentController extends Controller
      *
      *         @OA\JsonContent(
      *
-     *             @OA\Property(property="consent_current", type="boolean", example=true)
+     *             @OA\Property(property="consent_current", type="boolean", example=true),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Always false here: the acceptance just landed.")
      *         )
      *     ),
      *
@@ -55,7 +57,8 @@ class ConsentController extends Controller
      *
      *         @OA\JsonContent(
      *
-     *             @OA\Property(property="consent_current", type="boolean", example=true)
+     *             @OA\Property(property="consent_current", type="boolean", example=true),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Always false here: the acceptance just landed.")
      *         )
      *     ),
      *
@@ -71,7 +74,54 @@ class ConsentController extends Controller
         $recorded = $this->consentService->recordAcceptance($user, $request->ip(), $request->userAgent());
 
         return new JsonResponse([
+            // Literal values: the acceptance just landed.
             'consent_current' => true,
+            'consent_declined' => false,
         ], $recorded ? 201 : 200);
+    }
+
+    /**
+     * Record refusal of the current legal-document versions.
+     *
+     * Leaves the account restricted rather than locked out: play is refused
+     * while the profile, password change and account deletion stay reachable,
+     * so data-subject rights never depend on accepting commercial terms.
+     * Reversible — accepting later through store() restores full access.
+     *
+     * Answers with the resulting state rather than an empty body, as store()
+     * does: a refusal does not always restrict, since an acceptance already on
+     * record for the same version outranks it. Reading the state back is the
+     * only way to know which happened, and it is this endpoint's job to say.
+     *
+     * @OA\Post(
+     *     path="/api/profile/consents/decline",
+     *     summary="Decline the current legal documents",
+     *     description="Records a versioned refusal for the authenticated user, leaving the account in a restricted state. Idempotent.",
+     *     operationId="declineConsents",
+     *     tags={"Profile"},
+     *     security={{"sanctum": {}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Refusal recorded, or already on record, with the state it left behind",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="consent_current", type="boolean", example=false),
+     *             @OA\Property(property="consent_declined", type="boolean", example=true, description="False when an acceptance of the same version outranks the refusal just recorded.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function decline(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $this->consentService->recordDecline($user);
+
+        return new JsonResponse($this->consentService->stateFor($user));
     }
 }

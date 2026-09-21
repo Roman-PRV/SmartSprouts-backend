@@ -86,6 +86,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Document versions this account refused.
+     */
+    public function consentDeclines(): HasMany
+    {
+        return $this->hasMany(UserConsentDecline::class);
+    }
+
+    /**
      * The account's commercial relationship; absent means Free.
      */
     public function subscription(): HasOne

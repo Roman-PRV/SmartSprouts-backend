@@ -44,6 +44,10 @@ return [
         'invalid_code' => 'El código de eliminación no es válido o ha expirado.',
         'code_sent' => 'Se ha enviado un código de confirmación a tu correo.',
     ],
+    'consent' => [
+        'not_current' => 'Acepta los documentos legales vigentes para seguir jugando',
+    ],
+
     'entitlement' => [
         'exemption_not_found' => 'Esta cuenta no tiene ninguna exención de acceso.',
         'exemption_blocked_by_subscription' => 'Esta cuenta tiene una suscripción que todavía otorga un plan. Resuelve la suscripción antes de conceder una exención.',

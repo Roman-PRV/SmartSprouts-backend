@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\ConfigHelper;
 use App\Models\User;
 use App\Models\UserConsent;
+use App\Models\UserConsentDecline;
 use Illuminate\Support\Facades\DB;
 
 class ConsentService
@@ -48,6 +49,51 @@ class ConsentService
     }
 
     /**
+     * The account's consent state as the auth payloads report it.
+     *
+     * The decline is read only when consent is not current — accepting wins
+     * over an earlier refusal without clearing it, so asking both questions
+     * independently would let a restricted state outlive the refusal it
+     * describes. Keeping that order here means no caller has to know it.
+     *
+     * @return array{consent_current: bool, consent_declined: bool}
+     */
+    public function stateFor(User $user): array
+    {
+        $current = $this->hasCurrentConsent($user);
+
+        return [
+            'consent_current' => $current,
+            'consent_declined' => ! $current && $this->hasDeclinedCurrent($user),
+        ];
+    }
+
+    /**
+     * Record refusal of the current Terms and Privacy Policy versions.
+     *
+     * One checkbox covers both documents, so a refusal covers both too. The
+     * acceptance trail is left untouched: a refusal is a state, not a
+     * retraction of evidence already given for an earlier version.
+     */
+    public function recordDecline(User $user): void
+    {
+        $declinedAt = now();
+
+        DB::transaction(function () use ($user, $declinedAt): void {
+            foreach ($this->currentVersions() as $type => $version) {
+                UserConsentDecline::query()->firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'type' => $type,
+                        'document_version' => $version,
+                    ],
+                    ['declined_at' => $declinedAt],
+                );
+            }
+        });
+    }
+
+    /**
      * Whether the user has accepted the current version of every document.
      *
      * False for Google-created accounts (no consent captured at creation),
@@ -63,6 +109,27 @@ class ConsentService
                 ->exists();
 
             if (! $accepted) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether refusal rows exist for every document version in force — which
+     * is not the same question as whether the account is restricted. stateFor()
+     * is what puts the two in the order that makes the answer true.
+     */
+    private function hasDeclinedCurrent(User $user): bool
+    {
+        foreach ($this->currentVersions() as $type => $version) {
+            $declined = $user->consentDeclines()
+                ->where('type', $type)
+                ->where('document_version', $version)
+                ->exists();
+
+            if (! $declined) {
                 return false;
             }
         }

@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilePasswordController;
 use App\Http\Middleware\EnforceLevelStart;
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureConsentCurrent;
 use App\Http\Middleware\GameMatches;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('throttle:deletion-code');
     Route::put('profile/password', [ProfilePasswordController::class, 'update'])->name('profile.password.update');
     Route::post('profile/consents', [ConsentController::class, 'store'])->name('profile.consents.store');
+    Route::post('profile/consents/decline', [ConsentController::class, 'decline'])->name('profile.consents.decline');
 
     Route::get('entitlement', [EntitlementController::class, 'show'])->name('entitlement.show');
 
@@ -67,16 +69,21 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index'])
         ->whereNumber(['game']);
 
-    // Declared apart from the resource so the start gate lands on opening a
-    // level only — listing them is not opening one.
-    Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
-        ->name('games.levels.show')
-        ->middleware(EnforceLevelStart::class)
-        ->whereNumber(['game', 'level']);
+    // Playing, as opposed to looking around: both routes are refused while the
+    // account has not accepted the documents in force. Browsing games and
+    // listing levels stays outside — neither one is playing.
+    Route::middleware(EnsureConsentCurrent::class)->group(function () {
+        // Declared apart from the resource so the start gate lands on opening a
+        // level only — listing them is not opening one.
+        Route::get('games/{game}/levels/{level}', [LevelController::class, 'show'])
+            ->name('games.levels.show')
+            ->middleware(EnforceLevelStart::class)
+            ->whereNumber(['game', 'level']);
 
-    Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
-        ->name('games.levels.attempts')
-        ->whereNumber(['game', 'level']);
+        Route::post('games/{game}/levels/{level}/attempts', [AttemptController::class, 'store'])
+            ->name('games.levels.attempts')
+            ->whereNumber(['game', 'level']);
+    });
 
 });
 

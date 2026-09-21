@@ -53,7 +53,8 @@ class AuthController extends Controller
      *             @OA\Property(property="access_token", type="string"),
      *             @OA\Property(property="token_type", type="string", example="Bearer"),
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
-     *             @OA\Property(property="consent_current", type="boolean", example=true, description="Always true on registration (consent was just recorded); false elsewhere triggers the consent gate.")
+     *             @OA\Property(property="consent_current", type="boolean", example=true, description="Always true on registration (consent was just recorded); false elsewhere triggers the consent gate."),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Always false on registration. Elsewhere, true means the account refused the current versions and is restricted rather than merely unanswered.")
      *         )
      *     ),
      *
@@ -92,8 +93,9 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
-            // Literal true: registration just recorded the acceptance.
+            // Literal values: registration just recorded the acceptance.
             'consent_current' => true,
+            'consent_declined' => false,
         ], 201);
     }
 
@@ -127,7 +129,8 @@ class AuthController extends Controller
      *             @OA\Property(property="access_token", type="string"),
      *             @OA\Property(property="token_type", type="string", example="Bearer"),
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
-     *             @OA\Property(property="consent_current", type="boolean", example=true, description="Whether the account accepted the current legal-document versions; false triggers the blocking consent gate.")
+     *             @OA\Property(property="consent_current", type="boolean", example=true, description="Whether the account accepted the current legal-document versions; false triggers the blocking consent gate."),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Only meaningful while consent_current is false: true means the account refused the current versions, so the gate renders the restricted state rather than the plain re-consent prompt.")
      *         )
      *     ),
      *
@@ -151,7 +154,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserResource($user),
-            'consent_current' => $this->consentService->hasCurrentConsent($user),
+            ...$this->consentService->stateFor($user),
         ], 200);
     }
 
@@ -160,7 +163,9 @@ class AuthController extends Controller
      *
      * consent_current tells the client whether the user has accepted the
      * current legal-document versions; false triggers the blocking consent
-     * screen (Google signups, legacy accounts, version bumps).
+     * screen (Google signups, legacy accounts, version bumps). consent_declined
+     * separates the two reasons that screen can appear: a refusal of the
+     * current versions, or an account that has not answered yet.
      *
      * @OA\Get(
      *     path="/api/auth/me",
@@ -177,7 +182,8 @@ class AuthController extends Controller
      *         @OA\JsonContent(
      *
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
-     *             @OA\Property(property="consent_current", type="boolean", example=true, description="False for Google signups, legacy accounts, and after a document version bump; triggers the consent gate.")
+     *             @OA\Property(property="consent_current", type="boolean", example=true, description="False for Google signups, legacy accounts, and after a document version bump; triggers the consent gate."),
+     *             @OA\Property(property="consent_declined", type="boolean", example=false, description="Only meaningful while consent_current is false: true means the account refused the current versions, so the gate renders the restricted state rather than the plain re-consent prompt.")
      *         )
      *     ),
      *
@@ -191,7 +197,7 @@ class AuthController extends Controller
 
         return new JsonResponse([
             'user' => new UserResource($user),
-            'consent_current' => $this->consentService->hasCurrentConsent($user),
+            ...$this->consentService->stateFor($user),
         ]);
     }
 

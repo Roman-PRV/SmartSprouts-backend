@@ -341,11 +341,14 @@
                         }
                     },
                     "403": {
-                        "description": "Daily completion allowance spent, or the level was not opened today",
+                        "description": "Consent not current, daily completion allowance spent, or the level was not opened today",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ConsentRequiredResponse"
+                                        },
                                         {
                                             "$ref": "#/components/schemas/DailyLimitReachedResponse"
                                         },
@@ -456,6 +459,11 @@
                                             "description": "Always true on registration (consent was just recorded); false elsewhere triggers the consent gate.",
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Always false on registration. Elsewhere, true means the account refused the current versions and is restricted rather than merely unanswered.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -523,6 +531,11 @@
                                             "description": "Whether the account accepted the current legal-document versions; false triggers the blocking consent gate.",
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Only meaningful while consent_current is false: true means the account refused the current versions, so the gate renders the restricted state rather than the plain re-consent prompt.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -558,6 +571,11 @@
                                             "description": "False for Google signups, legacy accounts, and after a document version bump; triggers the consent gate.",
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Only meaningful while consent_current is false: true means the account refused the current versions, so the gate renders the restricted state rather than the plain re-consent prompt.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -649,6 +667,11 @@
                                         "consent_current": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Always false here: the acceptance just landed.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -665,6 +688,11 @@
                                         "consent_current": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "consent_declined": {
+                                            "description": "Always false here: the acceptance just landed.",
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -677,6 +705,47 @@
                     },
                     "422": {
                         "description": "Affirmation checkbox not accepted"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/profile/consents/decline": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Decline the current legal documents",
+                "description": "Records a versioned refusal for the authenticated user, leaving the account in a restricted state. Idempotent.",
+                "operationId": "declineConsents",
+                "responses": {
+                    "200": {
+                        "description": "Refusal recorded, or already on record, with the state it left behind",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "consent_current": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "consent_declined": {
+                                            "description": "False when an acceptance of the same version outranks the refusal just recorded.",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -927,11 +996,18 @@
                         }
                     },
                     "403": {
-                        "description": "Daily start allowance spent",
+                        "description": "Consent not current, or the daily start allowance is spent",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/DailyLimitReachedResponse"
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/ConsentRequiredResponse"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/DailyLimitReachedResponse"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -2581,6 +2657,20 @@
                             }
                         },
                         "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ConsentRequiredResponse": {
+                "description": "403 while the account has not accepted the document versions in force — whether it refused them or never answered. Not a limit: no counter moved and nothing resets. The client sends the account to the consent gate.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Accept the current legal documents to keep playing"
+                    },
+                    "error_type": {
+                        "type": "string",
+                        "example": "CONSENT_REQUIRED"
                     }
                 },
                 "type": "object"

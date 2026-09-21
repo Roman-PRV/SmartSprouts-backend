@@ -70,6 +70,15 @@ use Illuminate\Database\Eloquent\Model;
  * )
  *
  * @OA\Schema(
+ *   schema="ConsentRequiredResponse",
+ *   type="object",
+ *   description="403 while the account has not accepted the document versions in force — whether it refused them or never answered. Not a limit: no counter moved and nothing resets. The client sends the account to the consent gate.",
+ *
+ *   @OA\Property(property="message", type="string", example="Accept the current legal documents to keep playing"),
+ *   @OA\Property(property="error_type", type="string", example="CONSENT_REQUIRED")
+ * )
+ *
+ * @OA\Schema(
  *   schema="LevelNotOpenedTodayResponse",
  *   type="object",
  *   description="403 on submitting a level with no recorded open for today — either it was never opened, or the open expired at midnight. Not a limit: the client re-fetches the level and resubmits. A 404 on that re-fetch means the level is gone and the attempt cannot be recorded.",
