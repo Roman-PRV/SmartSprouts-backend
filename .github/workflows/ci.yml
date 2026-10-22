@@ -129,6 +129,9 @@ jobs:
           file: laravel/docker/Dockerfile
           target: prod
           push: true
+          # Re-resolve the base image on every build: with the layer cache
+          # below, a security patch must not depend on what the runner knows.
+          pull: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

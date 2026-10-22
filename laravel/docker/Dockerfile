@@ -1,7 +1,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 1: base — System packages, PHP extensions, Composer, application code
 # ─────────────────────────────────────────────────────────────────────────────
-FROM php:8.2-fpm AS base
+# Pinned, not floating: PHP 8.2.35 carries the fix for PH2Shell
+# (CVE-2026-109618 / CVE-2026-109619), remote code execution in the PHP
+# core disclosed 2026-10-21. A floating tag records nothing about what
+# shipped, and a cached layer can keep serving the version before it.
+FROM php:8.2.35-fpm AS base
 
 RUN apt-get update \
   && apt-get install -y \
