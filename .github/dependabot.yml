@@ -15,3 +15,17 @@ updates:
       actions:
         patterns:
           - "*"
+
+  # The PHP base image is pinned to an exact patch so the deployed version is
+  # readable from the diff. That only stays safe if something bumps it: a fix
+  # in the PHP core cannot wait for someone to notice, so this checks daily.
+  - package-ecosystem: docker
+    directory: /laravel/docker
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "fix(docker)"
+    labels:
+      - dependencies
+      - security
